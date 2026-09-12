@@ -1,0 +1,238 @@
+====================================================================================================
+FILE: data\raw\iovnbd_git\Synchronised V abd S datasets\Categorised IOVNB Dataset\M (Driver B)\S-M.csv
+====================================================================================================
+
+Encoding: cp1252
+
+Rows: 105,974
+Columns: 24
+
+COLUMN NAMES
+----------------------------------------------------------------------------------------------------
+  0 | GPS LATITUDE (degrees)
+  1 |  GPS LONGITUDE (degrees)
+  2 |  GPS ALTITUDE (m)
+  3 |  GPS SPEED (Kmh)
+  4 |  GPS ACCURACY (m)
+  5 |  GPS ORIENTATION (Â°)
+  6 | GPS SATELLITES IN RANGE
+  7 |  TIME SINCE START (ms)
+  8 |  DATE (YYYY-MO-DD HH-MI-SS_SSS)
+  9 |  ACCELEROMETER X (m/s²) 
+ 10 |  ACCELEROMETER Y (m/s²)
+ 11 |  ACCELEROMETER Z (m/s²)
+ 12 |  GRAVITY X (m/s²)
+ 13 |  GRAVITY Y (m/s²)
+ 14 |  GRAVITY Z (m/s²)
+ 15 |  GYROSCOPE Yaw (rad/s)
+ 16 |  GYROSCOPE Pitch (rad/s)
+ 17 |  GYROSCOPE Roll (rad/s)
+ 18 |  MAGNETIC FIELD X (Î¼T)
+ 19 |  MAGNETIC FIELD Y (Î¼T)
+ 20 |  MAGNETIC FIELD Z (Î¼T)
+ 21 |  ORIENTATION (Yaw) (Â°)
+ 22 |  ORIENTATION (Pitch) (Â°)
+ 23 |  ORIENTATION (Roll ) (Â°)
+
+DATA TYPES
+----------------------------------------------------------------------------------------------------
+GPS LATITUDE (degrees)             float64
+ GPS LONGITUDE (degrees)           float64
+ GPS ALTITUDE (m)                  float64
+ GPS SPEED (Kmh)                   float64
+ GPS ACCURACY (m)                  float64
+ GPS ORIENTATION (Â°)              float64
+GPS SATELLITES IN RANGE             object
+ TIME SINCE START (ms)               int64
+ DATE (YYYY-MO-DD HH-MI-SS_SSS)     object
+ ACCELEROMETER X (m/s²)            float64
+ ACCELEROMETER Y (m/s²)            float64
+ ACCELEROMETER Z (m/s²)            float64
+ GRAVITY X (m/s²)                  float64
+ GRAVITY Y (m/s²)                  float64
+ GRAVITY Z (m/s²)                  float64
+ GYROSCOPE Yaw (rad/s)             float64
+ GYROSCOPE Pitch (rad/s)           float64
+ GYROSCOPE Roll (rad/s)            float64
+ MAGNETIC FIELD X (Î¼T)            float64
+ MAGNETIC FIELD Y (Î¼T)            float64
+ MAGNETIC FIELD Z (Î¼T)            float64
+ ORIENTATION (Yaw) (Â°)            float64
+ ORIENTATION (Pitch) (Â°)          float64
+ ORIENTATION (Roll ) (Â°)          float64
+
+FIRST 5 ROWS
+----------------------------------------------------------------------------------------------------
+   GPS LATITUDE (degrees)   GPS LONGITUDE (degrees)   GPS ALTITUDE (m)   GPS SPEED (Kmh)   GPS ACCURACY (m)   GPS ORIENTATION (Â°) GPS SATELLITES IN RANGE   TIME SINCE START (ms)  DATE (YYYY-MO-DD HH-MI-SS_SSS)   ACCELEROMETER X (m/s²)    ACCELEROMETER Y (m/s²)   ACCELEROMETER Z (m/s²)   GRAVITY X (m/s²)   GRAVITY Y (m/s²)   GRAVITY Z (m/s²)   GYROSCOPE Yaw (rad/s)   GYROSCOPE Pitch (rad/s)   GYROSCOPE Roll (rad/s)   MAGNETIC FIELD X (Î¼T)   MAGNETIC FIELD Y (Î¼T)   MAGNETIC FIELD Z (Î¼T)   ORIENTATION (Yaw) (Â°)   ORIENTATION (Pitch) (Â°)   ORIENTATION (Roll ) (Â°)
+0               52.402565                 -1.503471             144.59              5.84                4.0                  92.89                 18 / 19                    4227         2019-09-07 09:13:29:506                   -0.9684                  -0.0227                   9.9665             0.0089            -0.0009             9.8066                 -0.0045                   -0.1089                  -0.0368                   -32.06                   -30.37                     5.00                   312.14                     -83.12                    -141.80
+1               52.402565                 -1.503471             144.59              5.84                4.0                  92.89                 18 / 19                    4327         2019-09-07 09:13:29:606                   -0.3069                  -1.3369                   9.9218            -0.0087             0.0096             9.8066                  0.0214                   -0.1285                  -0.0056                   -31.75                   -30.19                     5.38                   311.38                     -83.06                    -142.46
+2               52.402565                 -1.503471             144.59              5.84                4.0                  92.89                 18 / 19                    4427         2019-09-07 09:13:29:706                   -0.0226                  -2.0653                  10.0332             0.0210             0.0054             9.8066                 -0.0368                   -0.1373                   0.0092                   -31.56                   -29.94                     6.31                   311.87                     -82.96                    -143.69
+3               52.402565                 -1.503471             144.59              5.84                4.0                  92.89                 18 / 19                    4527         2019-09-07 09:13:29:806                    0.0734                  -1.5827                  10.2690            -0.0013             0.0182             9.8065                 -0.0183                   -0.1226                  -0.0184                   -32.12                   -30.50                     5.94                   310.70                     -83.13                    -144.90
+4               52.402565                 -1.503471             144.59              5.84                4.0                  92.89                 18 / 19                    4628         2019-09-07 09:13:29:907                    0.1095                  -0.0062                   9.9086             0.0059             0.0273             9.8065                 -0.0010                   -0.0649                  -0.0627                   -32.25                   -29.56                     5.81                   309.06                     -83.28                    -146.54
+
+LAST 5 ROWS
+----------------------------------------------------------------------------------------------------
+        GPS LATITUDE (degrees)   GPS LONGITUDE (degrees)   GPS ALTITUDE (m)   GPS SPEED (Kmh)   GPS ACCURACY (m)   GPS ORIENTATION (Â°) GPS SATELLITES IN RANGE   TIME SINCE START (ms)  DATE (YYYY-MO-DD HH-MI-SS_SSS)   ACCELEROMETER X (m/s²)    ACCELEROMETER Y (m/s²)   ACCELEROMETER Z (m/s²)   GRAVITY X (m/s²)   GRAVITY Y (m/s²)   GRAVITY Z (m/s²)   GYROSCOPE Yaw (rad/s)   GYROSCOPE Pitch (rad/s)   GYROSCOPE Roll (rad/s)   MAGNETIC FIELD X (Î¼T)   MAGNETIC FIELD Y (Î¼T)   MAGNETIC FIELD Z (Î¼T)   ORIENTATION (Yaw) (Â°)   ORIENTATION (Pitch) (Â°)   ORIENTATION (Roll ) (Â°)
+105969               52.413296                 -1.530721             144.23               0.0                2.0                  54.81                 20 / 21                 6175576         2019-09-07 12:10:08:730                   -0.1284                   0.0000                   9.8046             0.0007            -0.0005             9.8066                 -0.0139                   -0.0219                  -0.0201                   -39.62                   -24.31                     8.94                   303.42                     -82.96                    -155.61
+105970               52.413296                 -1.530721             144.23               0.0                2.0                  54.81                 20 / 21                 6175675         2019-09-07 12:10:08:829                   -0.1063                   0.1069                   9.6995            -0.0002             0.0008             9.8066                 -0.0063                   -0.0144                  -0.0204                   -39.50                   -24.25                     8.81                   303.69                     -82.97                    -155.58
+105971               52.413296                 -1.530721             144.23               0.0                2.0                  54.81                 20 / 21                 6175775         2019-09-07 12:10:08:929                    0.1164                  -0.0336                  10.0549             0.0023             0.0004             9.8065                 -0.0093                   -0.0178                  -0.0167                   -39.19                   -23.87                     9.13                   303.52                     -82.96                    -155.75
+105972               52.413296                 -1.530721             144.23               0.0                2.0                  54.81                 20 / 21                 6175875         2019-09-07 12:10:09:029                    0.1701                  -0.0640                   9.9823             0.0001             0.0004             9.8066                 -0.0106                   -0.0068                  -0.0189                   -39.25                   -23.94                     9.63                   304.96                     -82.96                    -155.76
+105973               52.413296                 -1.530721             144.23               0.0                2.0                  54.81                 20 / 21                 6175975         2019-09-07 12:10:09:129                    0.1376                  -0.1174                   9.8722            -0.0002             0.0001             9.8066                 -0.0007                   -0.0041                  -0.0077                   -39.12                   -23.44                     9.06                   303.63                     -82.97                    -155.79
+
+MISSING VALUES
+----------------------------------------------------------------------------------------------------
+No missing values detected.
+
+NUMERIC SUMMARY
+----------------------------------------------------------------------------------------------------
+                              count          mean           std         min           25%           50%           75%           max
+GPS LATITUDE (degrees)     105974.0  5.242443e+01  3.129758e-02   52.357857  5.240258e+01  5.242999e+01  5.244862e+01  5.247920e+01
+ GPS LONGITUDE (degrees)   105974.0 -1.502473e+00  4.535988e-02   -1.588746 -1.529287e+00 -1.501908e+00 -1.471319e+00 -1.378485e+00
+ GPS ALTITUDE (m)          105974.0  1.584001e+02  1.556796e+01  126.910000  1.457300e+02  1.573100e+02  1.703500e+02  1.963200e+02
+ GPS SPEED (Kmh)           105974.0  9.966049e+00  5.554728e+00    0.000000  6.410000e+00  1.019000e+01  1.342000e+01  2.702000e+01
+ GPS ACCURACY (m)          105974.0  3.183339e+00  9.973471e-01    2.000000  3.000000e+00  3.000000e+00  4.000000e+00  1.361753e+01
+ GPS ORIENTATION (Â°)      105974.0  1.837315e+02  1.049339e+02    0.030000  9.498000e+01  1.854800e+02  2.840600e+02  3.600000e+02
+ TIME SINCE START (ms)     105974.0  2.724125e+06  1.648479e+06   10.000000  1.327388e+06  2.652051e+06  3.976714e+06  6.175975e+06
+ ACCELEROMETER X (m/s²)    105974.0 -1.738289e-01  1.246090e+00  -39.649600 -6.913750e-01 -7.160000e-02  4.189000e-01  1.823630e+01
+ ACCELEROMETER Y (m/s²)    105974.0 -7.017688e-02  1.273956e+00  -39.361200 -4.876000e-01  3.000000e-04  4.891000e-01  1.280860e+01
+ ACCELEROMETER Z (m/s²)    105974.0  9.854226e+00  6.295748e-01  -19.576900  9.579800e+00  9.851300e+00  1.012160e+01  5.944610e+01
+ GRAVITY X (m/s²)          105974.0 -1.495952e-04  2.698708e-02   -4.259000 -6.100000e-03  0.000000e+00  5.800000e-03  2.178400e+00
+ GRAVITY Y (m/s²)          105974.0 -2.231274e-04  3.372343e-02   -6.367200 -6.000000e-03  0.000000e+00  6.100000e-03  2.673200e+00
+ GRAVITY Z (m/s²)          105974.0  9.806493e+00  9.823561e-03    7.063400  9.806500e+00  9.806600e+00  9.806600e+00  9.806700e+00
+ GYROSCOPE Yaw (rad/s)     105974.0 -2.044945e-03  9.439239e-02   -9.810800 -2.360000e-02 -1.800000e-03  1.880000e-02  5.873300e+00
+ GYROSCOPE Pitch (rad/s)   105974.0 -1.842270e-02  1.744663e-01   -8.448500 -3.380000e-02  2.500000e-03  3.510000e-02  1.266350e+01
+ GYROSCOPE Roll (rad/s)    105974.0  1.178290e-03  7.765651e-02   -3.847200 -2.120000e-02 -5.000000e-04  2.190000e-02  9.716900e+00
+ MAGNETIC FIELD X (Î¼T)    105974.0 -2.052843e+01  1.405720e+01  -52.500000 -3.087000e+01 -1.794000e+01 -1.025000e+01  5.800000e+01
+ MAGNETIC FIELD Y (Î¼T)    105974.0 -3.095634e+01  3.567407e+00 -107.620000 -3.300000e+01 -3.125000e+01 -2.850000e+01  3.531000e+01
+ MAGNETIC FIELD Z (Î¼T)    105974.0  1.330979e+01  1.295442e+01  -64.620000  8.100000e-01  1.375000e+01  2.531000e+01  5.825000e+01
+ ORIENTATION (Yaw) (Â°)    105974.0  2.437050e+02  1.157653e+02    0.000000  2.311900e+02  2.896600e+02  3.215275e+02  3.600000e+02
+ ORIENTATION (Pitch) (Â°)  105974.0 -8.176707e+01  3.099880e+00  -89.930000 -8.337000e+01 -8.172000e+01 -8.026000e+01  7.364000e+01
+ ORIENTATION (Roll ) (Â°)  105974.0 -1.272129e+02  8.753663e+01 -180.000000 -1.610400e+02 -1.507700e+02 -1.418700e+02  1.800000e+02
+
+====================================================================================================
+FILE: data\raw\iovnbd_git\Synchronised V abd S datasets\Categorised IOVNB Dataset\M (Driver B)\V-M.csv
+====================================================================================================
+
+Encoding: utf-8
+
+Rows: 105,974
+Columns: 29
+
+COLUMN NAMES
+----------------------------------------------------------------------------------------------------
+  0 | No of GPS Satellites Available
+  1 |  Time Since Start of Day (seconds)
+  2 |  Latitude (degrees)
+  3 |  Longitude (degrees)
+  4 |  Velocity (km/hr)
+  5 |  Heading (degrees)
+  6 |  Height (km)
+  7 |  Vertical velocity (km/hr)
+  8 |  Sample period (seconds)
+  9 |  Steering Angle (degrees)
+ 10 |  Wheel Speed Front Left (rad/sec)
+ 11 |  Wheel Speed Front Right (rad/sec)
+ 12 |  Wheel Speed Rear Left (rad/sec)
+ 13 |  Wheel Speed Rear Right (rad/sec)
+ 14 |  Yaw Rate (deg/sec)
+ 15 |  Indicated Vehicle Speed (km/hr)
+ 16 |  Indicated Longitudinal Acceleration (g)
+ 17 |  Indicated Lateral Acceleration (g)
+ 18 |  Handbrake (0 or 1)
+ 19 |  Gear Requested (Number fof gear employed 1-5)
+ 20 |  Gear (Number fof gear employed 1-5)
+ 21 |  Engine Speed (rev/min)
+ 22 |  Coolant Temperature (degrees)
+ 23 |  Clutch Position (0 or 1)
+ 24 |  Brake Pressure (psi)
+ 25 |  Brake Position (0 or 1)
+ 26 |  Battery Voltage (volts)
+ 27 |  Air Temperature (degrees)
+ 28 |  Accelerator Pedal Position (0 or 1)
+
+DATA TYPES
+----------------------------------------------------------------------------------------------------
+No of GPS Satellites Available                    float64
+ Time Since Start of Day (seconds)                float64
+ Latitude (degrees)                               float64
+ Longitude (degrees)                              float64
+ Velocity (km/hr)                                 float64
+ Heading (degrees)                                float64
+ Height (km)                                      float64
+ Vertical velocity (km/hr)                        float64
+ Sample period (seconds)                          float64
+ Steering Angle (degrees)                         float64
+ Wheel Speed Front Left (rad/sec)                 float64
+ Wheel Speed Front Right (rad/sec)                float64
+ Wheel Speed Rear Left (rad/sec)                  float64
+ Wheel Speed Rear Right (rad/sec)                 float64
+ Yaw Rate (deg/sec)                               float64
+ Indicated Vehicle Speed (km/hr)                  float64
+ Indicated Longitudinal Acceleration (g)          float64
+ Indicated Lateral Acceleration (g)               float64
+ Handbrake (0 or 1)                               float64
+ Gear Requested (Number fof gear employed 1-5)    float64
+ Gear (Number fof gear employed 1-5)              float64
+ Engine Speed (rev/min)                           float64
+ Coolant Temperature (degrees)                    float64
+ Clutch Position (0 or 1)                         float64
+ Brake Pressure (psi)                             float64
+ Brake Position (0 or 1)                          float64
+ Battery Voltage (volts)                          float64
+ Air Temperature (degrees)                        float64
+ Accelerator Pedal Position (0 or 1)              float64
+
+FIRST 5 ROWS
+----------------------------------------------------------------------------------------------------
+   No of GPS Satellites Available   Time Since Start of Day (seconds)   Latitude (degrees)   Longitude (degrees)   Velocity (km/hr)   Heading (degrees)   Height (km)   Vertical velocity (km/hr)   Sample period (seconds)   Steering Angle (degrees)   Wheel Speed Front Left (rad/sec)   Wheel Speed Front Right (rad/sec)   Wheel Speed Rear Left (rad/sec)   Wheel Speed Rear Right (rad/sec)   Yaw Rate (deg/sec)   Indicated Vehicle Speed (km/hr)   Indicated Longitudinal Acceleration (g)   Indicated Lateral Acceleration (g)   Handbrake (0 or 1)   Gear Requested (Number fof gear employed 1-5)   Gear (Number fof gear employed 1-5)   Engine Speed (rev/min)   Coolant Temperature (degrees)   Clutch Position (0 or 1)   Brake Pressure (psi)   Brake Position (0 or 1)   Battery Voltage (volts)   Air Temperature (degrees)   Accelerator Pedal Position (0 or 1)
+0                           136.0                             29608.4            52.402564             -1.503483             19.652              44.112         98.03                       -0.16                       0.1                      240.2                           20.39000                            20.04000                             20.34                           19.98000            -4.199982                             20.10                                   0.04998                             -0.10914                  0.0                                             2.0                                   3.0                   1778.0                            48.0                        0.0               0.009979                       0.0                      14.1                       14.25                                  13.0
+1                           136.0                             29608.5            52.402568             -1.503477             20.120              44.851         98.00                       -0.18                       0.1                      246.1                           20.89000                            20.39000                             20.86                           20.25999            -5.399994                             20.55                                   0.06936                             -0.12954                  0.0                                             2.0                                   3.0                   1784.0                            48.0                        0.0              -0.220001                       0.0                      14.3                       14.25                                  12.5
+2                           136.0                             29608.6            52.402571             -1.503471             20.214              45.233         98.00                       -0.17                       0.1                      252.4                           21.32999                            20.53000                             21.20                           20.56000            -6.399994                             20.93                                   0.05916                             -0.12954                  0.0                                             3.0                                   3.0                   1771.0                            48.0                        0.0              -0.220001                       0.0                      14.3                       14.25                                  12.0
+3                           136.0                             29608.7            52.402575             -1.503465             20.682              45.769         97.95                       -0.20                       0.1                      256.8                           21.37000                            20.71000                             21.37                           20.62000            -7.299988                             21.05                                   0.02958                             -0.13974                  0.0                                             3.0                                   3.0                   1815.0                            48.0                        0.0              -0.220001                       0.0                      14.3                       14.25                                  12.0
+4                           136.0                             29608.8            52.402578             -1.503459             21.067              46.261         97.94                       -0.19                       0.1                      260.1                           21.73000                            20.93999                             21.75                           20.85000            -8.000000                             21.27                                   0.01938                             -0.13974                  0.0                                             3.0                                   3.0                   1844.0                            48.0                        0.0              -0.220001                       0.0                      14.2                       14.25                                  12.0
+
+LAST 5 ROWS
+----------------------------------------------------------------------------------------------------
+        No of GPS Satellites Available   Time Since Start of Day (seconds)   Latitude (degrees)   Longitude (degrees)   Velocity (km/hr)   Heading (degrees)   Height (km)   Vertical velocity (km/hr)   Sample period (seconds)   Steering Angle (degrees)   Wheel Speed Front Left (rad/sec)   Wheel Speed Front Right (rad/sec)   Wheel Speed Rear Left (rad/sec)   Wheel Speed Rear Right (rad/sec)   Yaw Rate (deg/sec)   Indicated Vehicle Speed (km/hr)   Indicated Longitudinal Acceleration (g)   Indicated Lateral Acceleration (g)   Handbrake (0 or 1)   Gear Requested (Number fof gear employed 1-5)   Gear (Number fof gear employed 1-5)   Engine Speed (rev/min)   Coolant Temperature (degrees)   Clutch Position (0 or 1)   Brake Pressure (psi)   Brake Position (0 or 1)   Battery Voltage (volts)   Air Temperature (degrees)   Accelerator Pedal Position (0 or 1)
+105969                            11.0                             40205.3            52.413279             -1.530698              0.072              97.666         90.93                       -0.01                       0.1                      437.7                                0.0                                 0.0                               0.0                                0.0                  0.0                               0.0                                       0.0                              0.01938                  0.0                                             0.0                                   0.0                    758.0                            91.0                        0.0               0.029999                       0.0                      13.7                        16.5                                   0.0
+105970                            11.0                             40205.4            52.413279             -1.530698              0.029              97.666         90.93                       -0.00                       0.1                      437.7                                0.0                                 0.0                               0.0                                0.0                  0.0                               0.0                                       0.0                              0.00918                  0.0                                             0.0                                   0.0                    763.0                            91.0                        0.0              -0.200012                       0.0                      13.7                        16.5                                   0.0
+105971                            11.0                             40205.5            52.413279             -1.530698              0.040              97.666         90.92                       -0.01                       0.1                      437.7                                0.0                                 0.0                               0.0                                0.0                  0.0                               0.0                                       0.0                              0.00918                  0.0                                             0.0                                   0.0                    763.0                            91.0                        0.0              -0.200012                       0.0                      13.7                        16.5                                   0.0
+105972                            11.0                             40205.6            52.413279             -1.530698              0.104              97.666         90.91                       -0.01                       0.1                      437.7                                0.0                                 0.0                               0.0                                0.0                  0.0                               0.0                                       0.0                              0.01938                  0.0                                             0.0                                   0.0                    761.0                            91.0                        0.0               0.029999                       0.0                      13.7                        16.5                                   0.0
+105973                            11.0                             40205.7            52.413279             -1.530698              0.061              97.666         90.91                       -0.00                       0.1                      437.7                                0.0                                 0.0                               0.0                                0.0                  0.0                               0.0                                       0.0                              0.00918                  0.0                                             0.0                                   0.0                    761.0                            91.0                        0.0               0.029999                       0.0                      13.7                        16.5                                   0.0
+
+MISSING VALUES
+----------------------------------------------------------------------------------------------------
+No missing values detected.
+
+NUMERIC SUMMARY
+----------------------------------------------------------------------------------------------------
+                                                   count          mean          std           min           25%           50%           75%           max
+No of GPS Satellites Available                  105974.0    124.633372    40.164503      0.000000    138.000000    139.000000    139.000000    140.000000
+ Time Since Start of Day (seconds)              105974.0  34907.049999  3059.220307  29608.400000  32257.725000  34907.050000  37556.375000  40205.700000
+ Latitude (degrees)                             105974.0     52.424425     0.031307     52.357830     52.402595     52.430042     52.448641     52.479323
+ Longitude (degrees)                            105974.0     -1.502472     0.045369     -1.588719     -1.529248     -1.501889     -1.471313     -1.378415
+ Velocity (km/hr)                               105974.0     35.705738    20.399813      0.000000     23.515000     36.443000     48.060000    100.688000
+ Heading (degrees)                              105974.0    184.399079   104.922340      0.001000     93.861000    189.153000    285.116500    359.999000
+ Height (km)                                    105974.0    107.147476    16.160339     71.220000     94.310000    106.350000    119.380000    148.760000
+ Vertical velocity (km/hr)                      105974.0      0.011851     0.293100     -2.330000     -0.120000      0.000000      0.130000      3.020000
+ Sample period (seconds)                        105974.0      0.100001     0.000307      0.099000      0.100000      0.100000      0.100000      0.200000
+ Steering Angle (degrees)                       105974.0    210.247331    67.038706      0.000000    197.300000    202.100000    206.500000    662.000000
+ Wheel Speed Front Left (rad/sec)               105974.0     36.073372    20.450973      0.000000     24.310000     36.759990     48.470000    100.830000
+ Wheel Speed Front Right (rad/sec)              105974.0     35.963183    20.476887      0.000000     23.790000     36.700000     48.399990    100.790000
+ Wheel Speed Rear Left (rad/sec)                105974.0     35.983849    20.450999      0.000000     24.062500     36.679990     48.390000    100.790000
+ Wheel Speed Rear Right (rad/sec)               105974.0     35.791781    20.425977      0.000000     23.560000     36.560000     48.220000    100.350000
+ Yaw Rate (deg/sec)                             105974.0     -1.283375     8.955682    -66.000000     -0.899994      0.000000      0.700012     49.800020
+ Indicated Vehicle Speed (km/hr)                105974.0     36.016466    20.459541      0.000000     23.940000     36.710000     48.440000    100.810000
+ Indicated Longitudinal Acceleration (g)        105974.0     -0.003636     0.083567     -1.010820     -0.029580      0.000000      0.029580      0.439620
+ Indicated Lateral Acceleration (g)             105974.0     -0.017141     0.131321     -0.900660     -0.019380      0.000000      0.019380      0.870060
+ Handbrake (0 or 1)                             105974.0      0.015900     0.125090      0.000000      0.000000      0.000000      0.000000      1.000000
+ Gear Requested (Number fof gear employed 1-5)  105974.0      3.774237     1.714381      0.000000      3.000000      4.000000      5.000000     14.000000
+ Gear (Number fof gear employed 1-5)            105974.0      2.932276     0.444869      0.000000      3.000000      3.000000      3.000000      5.000000
+ Engine Speed (rev/min)                         105974.0   1538.488894   496.912009    738.000000   1264.000000   1514.000000   1742.000000   6332.000000
+ Coolant Temperature (degrees)                  105974.0     88.046672     5.538179     48.000000     86.000000     87.000000     90.000000    102.000000
+ Clutch Position (0 or 1)                       105974.0      0.000000     0.000000      0.000000      0.000000      0.000000      0.000000      0.000000
+ Brake Pressure (psi)                           105974.0      2.217248     7.688638     -1.459991     -0.029999     -0.010010      0.029999    192.850000
+ Brake Position (0 or 1)                        105974.0      0.213779     0.409974      0.000000      0.000000      0.000000      0.000000      1.000000
+ Battery Voltage (volts)                        105974.0     13.898362     0.200969     12.800000     13.700000     13.900000     14.000000     14.400000
+ Air Temperature (degrees)                      105974.0     15.073518     1.004352     13.500000     14.250000     15.000000     15.750000     17.250000
+ Accelerator Pedal Position (0 or 1)            105974.0      8.486501    11.296163      0.000000      0.000000      5.500000     14.500000     99.000000
