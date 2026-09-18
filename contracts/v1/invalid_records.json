@@ -1,0 +1,237 @@
+[
+  {
+    "name": "unknown_version",
+    "input": "{\"contract_version\":\"2.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"9007199254740993\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[0,0,9.80665],\"accuracy\":\"high\"}}}",
+    "code": "INVALID_VERSION"
+  },
+  {
+    "name": "unknown_source",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"vbox\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"9007199254740993\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[0,0,9.80665],\"accuracy\":\"high\"}}}",
+    "code": "INVALID_ENUM"
+  },
+  {
+    "name": "unknown_event",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"rotation_vector\",\"t_ns\":\"9007199254740993\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[0,0,9.80665],\"accuracy\":\"high\"}}}",
+    "code": "INVALID_ENUM"
+  },
+  {
+    "name": "unknown_key",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"9007199254740993\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[0,0,9.80665],\"accuracy\":\"high\"}},\"extra\":true}",
+    "code": "INVALID_KEYS"
+  },
+  {
+    "name": "missing_nullable",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"2\",\"type\":\"gnss\",\"t_ns\":\"9007199274740993\",\"received_ns\":\"9007199279740993\",\"data\":{\"latitude_deg\":12.9716,\"longitude_deg\":77.5946,\"altitude_m\":null,\"altitude_reference\":null,\"bearing_deg\":null,\"horizontal_accuracy_m\":3.5,\"vertical_accuracy_m\":null,\"satellites_used\":null,\"provider\":\"fixture\",\"utc_ms\":null}}}",
+    "code": "INVALID_KEYS"
+  },
+  {
+    "name": "null_required",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"9007199254740993\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":null,\"accuracy\":\"high\"}}}",
+    "code": "INVALID_SHAPE"
+  },
+  {
+    "name": "string_number",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"9007199254740993\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[\"0\",0,9.80665],\"accuracy\":\"high\"}}}",
+    "code": "INVALID_TYPE"
+  },
+  {
+    "name": "boolean_number",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"9007199254740993\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[true,0,9.80665],\"accuracy\":\"high\"}}}",
+    "code": "INVALID_TYPE"
+  },
+  {
+    "name": "numeric_timestamp",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":42,\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[0,0,9.80665],\"accuracy\":\"high\"}}}",
+    "code": "INVALID_TYPE"
+  },
+  {
+    "name": "timestamp_overflow",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"9223372036854775808\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[0,0,9.80665],\"accuracy\":\"high\"}}}",
+    "code": "OUT_OF_RANGE"
+  },
+  {
+    "name": "timestamp_leading_zero",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"01\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[0,0,9.80665],\"accuracy\":\"high\"}}}",
+    "code": "OUT_OF_RANGE"
+  },
+  {
+    "name": "negative_timestamp",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"-1\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[0,0,9.80665],\"accuracy\":\"high\"}}}",
+    "code": "OUT_OF_RANGE"
+  },
+  {
+    "name": "early_receipt",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"9007199254740993\",\"received_ns\":\"0\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[0,0,9.80665],\"accuracy\":\"high\"}}}",
+    "code": "INVARIANT"
+  },
+  {
+    "name": "wrong_frame",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"9007199254740993\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"enu\",\"unit\":\"m/s^2\",\"xyz\":[0,0,9.80665],\"accuracy\":\"high\"}}}",
+    "code": "INVALID_ENUM"
+  },
+  {
+    "name": "wrong_unit_pair",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"9007199254740993\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"rad/s\",\"xyz\":[0,0,9.80665],\"accuracy\":\"high\"}}}",
+    "code": "INVARIANT"
+  },
+  {
+    "name": "wrong_accuracy",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"9007199254740993\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[0,0,9.80665],\"accuracy\":\"perfect\"}}}",
+    "code": "INVALID_ENUM"
+  },
+  {
+    "name": "latitude_range",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"2\",\"type\":\"gnss\",\"t_ns\":\"9007199274740993\",\"received_ns\":\"9007199279740993\",\"data\":{\"latitude_deg\":91,\"longitude_deg\":77.5946,\"altitude_m\":null,\"altitude_reference\":null,\"speed_m_s\":null,\"bearing_deg\":null,\"horizontal_accuracy_m\":3.5,\"vertical_accuracy_m\":null,\"satellites_used\":null,\"provider\":\"fixture\",\"utc_ms\":null}}}",
+    "code": "OUT_OF_RANGE"
+  },
+  {
+    "name": "longitude_range",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"2\",\"type\":\"gnss\",\"t_ns\":\"9007199274740993\",\"received_ns\":\"9007199279740993\",\"data\":{\"latitude_deg\":12.9716,\"longitude_deg\":-181,\"altitude_m\":null,\"altitude_reference\":null,\"speed_m_s\":null,\"bearing_deg\":null,\"horizontal_accuracy_m\":3.5,\"vertical_accuracy_m\":null,\"satellites_used\":null,\"provider\":\"fixture\",\"utc_ms\":null}}}",
+    "code": "OUT_OF_RANGE"
+  },
+  {
+    "name": "negative_speed",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"2\",\"type\":\"gnss\",\"t_ns\":\"9007199274740993\",\"received_ns\":\"9007199279740993\",\"data\":{\"latitude_deg\":12.9716,\"longitude_deg\":77.5946,\"altitude_m\":null,\"altitude_reference\":null,\"speed_m_s\":-1,\"bearing_deg\":null,\"horizontal_accuracy_m\":3.5,\"vertical_accuracy_m\":null,\"satellites_used\":null,\"provider\":\"fixture\",\"utc_ms\":null}}}",
+    "code": "OUT_OF_RANGE"
+  },
+  {
+    "name": "bearing_range",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"2\",\"type\":\"gnss\",\"t_ns\":\"9007199274740993\",\"received_ns\":\"9007199279740993\",\"data\":{\"latitude_deg\":12.9716,\"longitude_deg\":77.5946,\"altitude_m\":null,\"altitude_reference\":null,\"speed_m_s\":null,\"bearing_deg\":360,\"horizontal_accuracy_m\":3.5,\"vertical_accuracy_m\":null,\"satellites_used\":null,\"provider\":\"fixture\",\"utc_ms\":null}}}",
+    "code": "OUT_OF_RANGE"
+  },
+  {
+    "name": "negative_accuracy",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"2\",\"type\":\"gnss\",\"t_ns\":\"9007199274740993\",\"received_ns\":\"9007199279740993\",\"data\":{\"latitude_deg\":12.9716,\"longitude_deg\":77.5946,\"altitude_m\":null,\"altitude_reference\":null,\"speed_m_s\":null,\"bearing_deg\":null,\"horizontal_accuracy_m\":-1,\"vertical_accuracy_m\":null,\"satellites_used\":null,\"provider\":\"fixture\",\"utc_ms\":null}}}",
+    "code": "OUT_OF_RANGE"
+  },
+  {
+    "name": "float_satellites",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"2\",\"type\":\"gnss\",\"t_ns\":\"9007199274740993\",\"received_ns\":\"9007199279740993\",\"data\":{\"latitude_deg\":12.9716,\"longitude_deg\":77.5946,\"altitude_m\":null,\"altitude_reference\":null,\"speed_m_s\":null,\"bearing_deg\":null,\"horizontal_accuracy_m\":3.5,\"vertical_accuracy_m\":null,\"satellites_used\":1.5,\"provider\":\"fixture\",\"utc_ms\":null}}}",
+    "code": "INVALID_TYPE"
+  },
+  {
+    "name": "altitude_datum_mismatch",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"2\",\"type\":\"gnss\",\"t_ns\":\"9007199274740993\",\"received_ns\":\"9007199279740993\",\"data\":{\"latitude_deg\":12.9716,\"longitude_deg\":77.5946,\"altitude_m\":null,\"altitude_reference\":\"msl\",\"speed_m_s\":null,\"bearing_deg\":null,\"horizontal_accuracy_m\":3.5,\"vertical_accuracy_m\":null,\"satellites_used\":null,\"provider\":\"fixture\",\"utc_ms\":null}}}",
+    "code": "INVARIANT"
+  },
+  {
+    "name": "empty_provider",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"2\",\"type\":\"gnss\",\"t_ns\":\"9007199274740993\",\"received_ns\":\"9007199279740993\",\"data\":{\"latitude_deg\":12.9716,\"longitude_deg\":77.5946,\"altitude_m\":null,\"altitude_reference\":null,\"speed_m_s\":null,\"bearing_deg\":null,\"horizontal_accuracy_m\":3.5,\"vertical_accuracy_m\":null,\"satellites_used\":null,\"provider\":\"\",\"utc_ms\":null}}}",
+    "code": "OUT_OF_RANGE"
+  },
+  {
+    "name": "nonunit_quaternion",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"3\",\"type\":\"calibration\",\"t_ns\":\"9007199284740993\",\"received_ns\":\"9007199289740993\",\"data\":{\"id\":\"fixture-cal\",\"status\":\"valid\",\"q_vehicle_from_device_wxyz\":[2,0,0,0],\"gyro_bias_rad_s\":[0.01,-0.02,0.03],\"accelerometer_bias_m_s2\":null,\"confidence\":0.8}}}",
+    "code": "INVALID_ROTATION"
+  },
+  {
+    "name": "reflection_as_quaternion",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"3\",\"type\":\"calibration\",\"t_ns\":\"9007199284740993\",\"received_ns\":\"9007199289740993\",\"data\":{\"id\":\"fixture-cal\",\"status\":\"valid\",\"q_vehicle_from_device_wxyz\":[[-1,0,0],[0,1,0],[0,0,1]],\"gyro_bias_rad_s\":[0.01,-0.02,0.03],\"accelerometer_bias_m_s2\":null,\"confidence\":0.8}}}",
+    "code": "INVALID_SHAPE"
+  },
+  {
+    "name": "missing_valid_bias",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"3\",\"type\":\"calibration\",\"t_ns\":\"9007199284740993\",\"received_ns\":\"9007199289740993\",\"data\":{\"id\":\"fixture-cal\",\"status\":\"valid\",\"q_vehicle_from_device_wxyz\":[1,0,0,0],\"gyro_bias_rad_s\":null,\"accelerometer_bias_m_s2\":null,\"confidence\":0.8}}}",
+    "code": "INVARIANT"
+  },
+  {
+    "name": "negative_calibration_confidence",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"3\",\"type\":\"calibration\",\"t_ns\":\"9007199284740993\",\"received_ns\":\"9007199289740993\",\"data\":{\"id\":\"fixture-cal\",\"status\":\"valid\",\"q_vehicle_from_device_wxyz\":[1,0,0,0],\"gyro_bias_rad_s\":[0.01,-0.02,0.03],\"accelerometer_bias_m_s2\":null,\"confidence\":-0.1}}}",
+    "code": "OUT_OF_RANGE"
+  },
+  {
+    "name": "missing_tracking_origin",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"4\",\"type\":\"navigation\",\"t_ns\":\"9007199294740993\",\"received_ns\":\"9007199299740993\",\"data\":{\"status\":\"tracking\",\"initialization_mode\":\"deployable\",\"origin_wgs84_deg_m\":null,\"position_enu_m\":[1.25,-2.5,0],\"velocity_enu_m_s\":[0,10,0],\"q_enu_from_vehicle_wxyz\":[0.7071067811865476,0,0,0.7071067811865476],\"heading_deg\":0,\"calibration_id\":\"fixture-cal\",\"gnss_used_after_initialization\":false}}}",
+    "code": "INVARIANT"
+  },
+  {
+    "name": "unavailable_but_position",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"4\",\"type\":\"navigation\",\"t_ns\":\"9007199294740993\",\"received_ns\":\"9007199299740993\",\"data\":{\"status\":\"failed\",\"initialization_mode\":\"deployable\",\"origin_wgs84_deg_m\":[12.9716,77.5946,0],\"position_enu_m\":[1.25,-2.5,0],\"velocity_enu_m_s\":[0,10,0],\"q_enu_from_vehicle_wxyz\":[0.7071067811865476,0,0,0.7071067811865476],\"heading_deg\":0,\"calibration_id\":\"fixture-cal\",\"gnss_used_after_initialization\":false}}}",
+    "code": "INVARIANT"
+  },
+  {
+    "name": "numeric_boolean",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"4\",\"type\":\"navigation\",\"t_ns\":\"9007199294740993\",\"received_ns\":\"9007199299740993\",\"data\":{\"status\":\"tracking\",\"initialization_mode\":\"deployable\",\"origin_wgs84_deg_m\":[12.9716,77.5946,0],\"position_enu_m\":[1.25,-2.5,0],\"velocity_enu_m_s\":[0,10,0],\"q_enu_from_vehicle_wxyz\":[0.7071067811865476,0,0,0.7071067811865476],\"heading_deg\":0,\"calibration_id\":\"fixture-cal\",\"gnss_used_after_initialization\":0}}}",
+    "code": "INVALID_TYPE"
+  },
+  {
+    "name": "unknown_mode",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"4\",\"type\":\"navigation\",\"t_ns\":\"9007199294740993\",\"received_ns\":\"9007199299740993\",\"data\":{\"status\":\"tracking\",\"initialization_mode\":\"mixed\",\"origin_wgs84_deg_m\":[12.9716,77.5946,0],\"position_enu_m\":[1.25,-2.5,0],\"velocity_enu_m_s\":[0,10,0],\"q_enu_from_vehicle_wxyz\":[0.7071067811865476,0,0,0.7071067811865476],\"heading_deg\":0,\"calibration_id\":\"fixture-cal\",\"gnss_used_after_initialization\":false}}}",
+    "code": "INVALID_ENUM"
+  },
+  {
+    "name": "probability_unvalidated",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"6\",\"type\":\"confidence\",\"t_ns\":\"9007199314740993\",\"received_ns\":\"9007199319740993\",\"data\":{\"state\":\"unvalidated\",\"probability\":0.5,\"horizontal_accuracy_95_m\":null,\"speed_std_m_s\":null}}}",
+    "code": "INVARIANT"
+  },
+  {
+    "name": "bad_reason",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"5\",\"type\":\"gnss_quality\",\"t_ns\":\"9007199304740993\",\"received_ns\":\"9007199309740993\",\"data\":{\"state\":\"unavailable\",\"fix_age_s\":null,\"satellites_used\":null,\"reasons\":[\"bad reason\"]}}}",
+    "code": "OUT_OF_RANGE"
+  },
+  {
+    "name": "negative_count",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"7\",\"type\":\"diagnostic\",\"t_ns\":\"9007199324740993\",\"received_ns\":\"9007199329740993\",\"data\":{\"severity\":\"warning\",\"code\":\"SIMULATED_INPUT\",\"message\":\"Synthetic contract fixture; not live sensor data.\",\"dropped_count\":-1}}}",
+    "code": "OUT_OF_RANGE"
+  },
+  {
+    "name": "bad_diagnostic_code",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"7\",\"type\":\"diagnostic\",\"t_ns\":\"9007199324740993\",\"received_ns\":\"9007199329740993\",\"data\":{\"severity\":\"warning\",\"code\":\"location leaked\",\"message\":\"Synthetic contract fixture; not live sensor data.\",\"dropped_count\":1}}}",
+    "code": "OUT_OF_RANGE"
+  },
+  {
+    "name": "duplicate_key",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"source\":\"real\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"9007199254740993\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[0,0,9.80665],\"accuracy\":\"high\"}}}",
+    "code": "DUPLICATE_KEY"
+  },
+  {
+    "name": "nested_duplicate",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"9007199254740993\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"sensor\":\"gyroscope\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[0,0,9.80665],\"accuracy\":\"high\"}}}",
+    "code": "DUPLICATE_KEY"
+  },
+  {
+    "name": "nan_literal",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"9007199254740993\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[0,0,NaN],\"accuracy\":\"high\"}}}",
+    "code": "MALFORMED_JSON"
+  },
+  {
+    "name": "infinity_exponent",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"9007199254740993\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[0,0,1e999],\"accuracy\":\"high\"}}}",
+    "code": "NONFINITE"
+  },
+  {
+    "name": "truncated",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"9007199254740993\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[0,0,9.80665],\"accuracy\":\"hi",
+    "code": "MALFORMED_JSON"
+  },
+  {
+    "name": "trailing_value",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"9007199254740993\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[0,0,9.80665],\"accuracy\":\"high\"}}} {}",
+    "code": "MALFORMED_JSON"
+  },
+  {
+    "name": "comment",
+    "input": "/* comment */{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"9007199254740993\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[0,0,9.80665],\"accuracy\":\"high\"}}}",
+    "code": "MALFORMED_JSON"
+  },
+  {
+    "name": "bom",
+    "input": "﻿{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"9007199254740993\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[0,0,9.80665],\"accuracy\":\"high\"}}}",
+    "code": "MALFORMED_JSON"
+  },
+  {
+    "name": "unpaired_surrogate",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"\\ud800\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"imu\",\"t_ns\":\"9007199254740993\",\"received_ns\":\"9007199259740993\",\"data\":{\"sensor\":\"accelerometer\",\"frame\":\"android_device\",\"unit\":\"m/s^2\",\"xyz\":[0,0,9.80665],\"accuracy\":\"high\"}}}",
+    "code": "INVALID_UNICODE"
+  },
+  {
+    "name": "integer_exponent",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"7\",\"type\":\"diagnostic\",\"t_ns\":\"9007199324740993\",\"received_ns\":\"9007199329740993\",\"data\":{\"severity\":\"warning\",\"code\":\"SIMULATED_INPUT\",\"message\":\"Synthetic contract fixture; not live sensor data.\",\"dropped_count\":1e0}}}",
+    "code": "INVALID_TYPE"
+  },
+  {
+    "name": "integer_decimal",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"7\",\"type\":\"diagnostic\",\"t_ns\":\"9007199324740993\",\"received_ns\":\"9007199329740993\",\"data\":{\"severity\":\"warning\",\"code\":\"SIMULATED_INPUT\",\"message\":\"Synthetic contract fixture; not live sensor data.\",\"dropped_count\":1.0}}}",
+    "code": "INVALID_TYPE"
+  }
+]

@@ -4,17 +4,11 @@ import numpy as np
 import pandas as pd
 
 
-DATA_ROOT = Path("data/raw/iovnbd_git")
+if __package__:
+    from .common import dataset_parser, m_pair_from_args
+else:
+    from common import dataset_parser, m_pair_from_args
 
-BASE = (
-    DATA_ROOT
-    / "Synchronised V abd S datasets"
-    / "Categorised IOVNB Dataset"
-    / "M (Driver B)"
-)
-
-S_FILE = BASE / "S-M.csv"
-V_FILE = BASE / "V-M.csv"
 
 EARTH_RADIUS_M = 6_371_000.0
 
@@ -104,6 +98,9 @@ def haversine_m(
 
 
 def main() -> None:
+    parser = dataset_parser("IO-VNBD estimate time alignment (M, Driver B)")
+    args = parser.parse_args()
+    _, S_FILE, V_FILE = m_pair_from_args(parser, args)
 
     print("=" * 100)
     print("IO-VNBD TIME ALIGNMENT SEARCH")

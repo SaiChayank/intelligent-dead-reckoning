@@ -2,39 +2,14 @@ from pathlib import Path
 import pandas as pd
 
 
-DATA_ROOT = Path("data/raw/iovnbd_git")
+if __package__:
+    from .common import dataset_parser, m_pair_from_args, detect_encoding
+else:
+    from common import dataset_parser, m_pair_from_args, detect_encoding
 
-BASE = (
-    DATA_ROOT
-    / "Synchronised V abd S datasets"
-    / "Categorised IOVNB Dataset"
-    / "M (Driver B)"
-)
-
-S_FILE = BASE / "S-M.csv"
-V_FILE = BASE / "V-M.csv"
 
 REPORT_DIR = Path("reports")
 REPORT_FILE = REPORT_DIR / "data_schema_raw.txt"
-
-
-def detect_encoding(path: Path) -> str:
-    encodings = [
-        "utf-8",
-        "utf-8-sig",
-        "cp1252",
-        "latin-1",
-    ]
-
-    for encoding in encodings:
-        try:
-            with open(path, "r", encoding=encoding) as f:
-                f.read(10000)
-            return encoding
-        except UnicodeDecodeError:
-            continue
-
-    raise RuntimeError(f"Could not determine encoding for {path}")
 
 
 def inspect_csv(path: Path) -> str:
@@ -48,7 +23,7 @@ def inspect_csv(path: Path) -> str:
         output.append(f"ERROR: FILE NOT FOUND: {path}")
         return "\n".join(output)
 
-    encoding = detect_encoding(path)
+    encoding = detect_encoding(path, sample_chars=10000)
     output.append(f"\nEncoding: {encoding}")
 
     df = pd.read_csv(path, encoding=encoding)
@@ -98,7 +73,10 @@ def inspect_csv(path: Path) -> str:
 
 
 def main() -> None:
-    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    parser = dataset_parser("IO-VNBD inspect dataset (M, Driver B)")
+    parser.add_argument("--no-write", action="store_true", help="Print results without saving a report.")
+    args = parser.parse_args()
+    _, S_FILE, V_FILE = m_pair_from_args(parser, args)
 
     print("IO-VNBD DATASET INSPECTION")
     print("=" * 100)
@@ -110,15 +88,15 @@ def main() -> None:
 
     final_report = "\n\n".join(sections)
 
-    REPORT_FILE.write_text(
-        final_report,
-        encoding="utf-8"
-    )
+    if not args.no_write:
+        REPORT_DIR.mkdir(parents=True, exist_ok=True)
+        REPORT_FILE.write_text(final_report, encoding="utf-8")
 
     print(final_report)
 
     print("\n" + "=" * 100)
-    print(f"REPORT SAVED TO: {REPORT_FILE}")
+    if not args.no_write:
+        print(f"REPORT SAVED TO: {REPORT_FILE}")
     print("=" * 100)
 
 

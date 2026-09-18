@@ -1,0 +1,37 @@
+{
+  "analysis_source_sha256": {
+    "__init__.py": "c143ed0cfac049d1c8891d07121badf0f4a9cf2b3b67507a0b4a63476689fb3a",
+    "audit.py": "784260f757761a70ea69eb39666c38cb9a8245874c08dd17d14eda14b9e2ecbd",
+    "reporting.py": "4400736b5a6d391c8e17727880bfc15067e6eea93d6b4735b5f401d4cfeb61fb",
+    "schema.py": "cdfa390a32247237562d3fdb6996f6143bd970b63527a75233d4de686d59bbbb",
+    "statistics.py": "f2878d6f65f2319508dd123e032ce315f2e1201e645b22e5dcd519b09e46c1d6"
+  },
+  "byte_identical_repeat": true,
+  "first_output_sha256": {
+    "data_dictionary.md": "3a50ebef1e0fb7c4c69b8f6edf8b9bbf77680f3bcda72ad1f4255ff31c8ad396",
+    "data_schema.md": "ca36e45b9ef29e417e39625d72666d5a1627a44d12514d7522118e91edeaa43f",
+    "phase0_evidence.json": "f11f1ce9e506aa1c0be74f080783d1087f3d2ba2290a9a930162b177cf29313c",
+    "phase0_inventory.json": "f1031a8122779e637949b82a78598880dd82c55b89954b34b908e789ea3ddd11",
+    "schema_registry.json": "acd59ee9bb88b4f5161033a1d38b34da8e5274441ff7de22a3776b1de134cd17",
+    "synchronization_analysis.md": "7046397d7f0604358027cb796e7b4ce4aedb739fae8fadf2c6fb141465727886"
+  },
+  "full_analysis_runs": 2,
+  "generated_reports_checked_for_placeholder_markers": true,
+  "raw_files_checked": 1186,
+  "raw_manifest_sha256_after": "96021b29a77188be0bd4f287047783591d198a849d09635c2538ca33d960b17b",
+  "raw_manifest_sha256_before": "96021b29a77188be0bd4f287047783591d198a849d09635c2538ca33d960b17b",
+  "raw_sha256_size_mtime_unchanged": true,
+  "runtime": {
+    "numpy": "2.3.5",
+    "pandas": "3.0.1",
+    "python": "3.12.14"
+  },
+  "second_output_sha256": {
+    "data_dictionary.md": "3a50ebef1e0fb7c4c69b8f6edf8b9bbf77680f3bcda72ad1f4255ff31c8ad396",
+    "data_schema.md": "ca36e45b9ef29e417e39625d72666d5a1627a44d12514d7522118e91edeaa43f",
+    "phase0_evidence.json": "f11f1ce9e506aa1c0be74f080783d1087f3d2ba2290a9a930162b177cf29313c",
+    "phase0_inventory.json": "f1031a8122779e637949b82a78598880dd82c55b89954b34b908e789ea3ddd11",
+    "schema_registry.json": "acd59ee9bb88b4f5161033a1d38b34da8e5274441ff7de22a3776b1de134cd17",
+    "synchronization_analysis.md": "7046397d7f0604358027cb796e7b4ce4aedb739fae8fadf2c6fb141465727886"
+  }
+}

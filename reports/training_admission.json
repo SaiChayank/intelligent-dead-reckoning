@@ -1,0 +1,1462 @@
+{
+  "version": "1.0.0",
+  "decision": "no-go",
+  "scope": "Existing Phase 0 smartphone/VBOX pairs; audit copies are not independent sequences.",
+  "approved_sequence_names": [],
+  "conditional_diagnostic_sequence_names": [
+    "m",
+    "s2",
+    "vta16",
+    "vta2",
+    "vta26",
+    "vta30",
+    "vta8",
+    "vtb2",
+    "vw11",
+    "vw14c"
+  ],
+  "policy": "No pair is approved for Phase 2. Preserve duplicate/overlap-linked complete recordings in one split group. Conditional candidates still need physical frame and IMU-label alignment validation; no per-test-sequence fitted lags may be imported.",
+  "unpaired_recordings": "Not approved for supervised VBOX velocity labels without separately verified reference correspondence.",
+  "pairs": [
+    {
+      "id": "categorized/m",
+      "sequence": "m",
+      "split_group": "recording-m",
+      "historical_alignment_class": "approximate",
+      "approved_for_training": false,
+      "disposition": "conditional_diagnostic_candidate_only",
+      "alignment_reason": "Equal rows, speed correlation >=0.9, median separation <=30 m, supported speed unit; still not proof of synchronous IMU labels.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/s1",
+      "sequence": "s1",
+      "split_group": "recording-s1",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/s2",
+      "sequence": "s2",
+      "split_group": "recording-s2",
+      "historical_alignment_class": "approximate",
+      "approved_for_training": false,
+      "disposition": "conditional_diagnostic_candidate_only",
+      "alignment_reason": "Equal rows, speed correlation >=0.9, median separation <=30 m, supported speed unit; still not proof of synchronous IMU labels.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/s3a",
+      "sequence": "s3a",
+      "split_group": "recording-s3a",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/s3b",
+      "sequence": "s3b",
+      "split_group": "recording-s3b",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/s3c",
+      "sequence": "s3c",
+      "split_group": "recording-s3c",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/s4",
+      "sequence": "s4",
+      "split_group": "recording-s4",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "same-row median position disagreement above 200 m",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vfa01",
+      "sequence": "vfa01",
+      "split_group": "recording-vfa01",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "unequal row counts",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vfa02",
+      "sequence": "vfa02",
+      "split_group": "recording-vfa02",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "unequal row counts",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta10",
+      "sequence": "vta10",
+      "split_group": "recording-vta10",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta11",
+      "sequence": "vta11",
+      "split_group": "recording-vta11",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta12",
+      "sequence": "vta12",
+      "split_group": "recording-vta12",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta13",
+      "sequence": "vta13",
+      "split_group": "recording-vta13",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta14",
+      "sequence": "vta14",
+      "split_group": "recording-vta14",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta15",
+      "sequence": "vta15",
+      "split_group": "recording-vta15",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta16",
+      "sequence": "vta16",
+      "split_group": "recording-vta16",
+      "historical_alignment_class": "approximate",
+      "approved_for_training": false,
+      "disposition": "conditional_diagnostic_candidate_only",
+      "alignment_reason": "Equal rows, speed correlation >=0.9, median separation <=30 m, supported speed unit; still not proof of synchronous IMU labels.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta17",
+      "sequence": "vta17",
+      "split_group": "recording-vta17",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta19",
+      "sequence": "vta19",
+      "split_group": "recording-vta19",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta1a",
+      "sequence": "vta1a",
+      "split_group": "recording-vta1a",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "same-row median position disagreement above 200 m",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta1b",
+      "sequence": "vta1b",
+      "split_group": "recording-vta1b",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "unequal row counts",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta2",
+      "sequence": "vta2",
+      "split_group": "recording-vta2",
+      "historical_alignment_class": "approximate",
+      "approved_for_training": false,
+      "disposition": "conditional_diagnostic_candidate_only",
+      "alignment_reason": "Equal rows, speed correlation >=0.9, median separation <=30 m, supported speed unit; still not proof of synchronous IMU labels.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta20",
+      "sequence": "vta20",
+      "split_group": "recording-vta20",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta21",
+      "sequence": "vta21",
+      "split_group": "recording-vta21",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta22",
+      "sequence": "vta22",
+      "split_group": "recording-vta22",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta23",
+      "sequence": "vta23",
+      "split_group": "recording-vta23",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta24",
+      "sequence": "vta24",
+      "split_group": "recording-vta24",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta25",
+      "sequence": "vta25",
+      "split_group": "recording-vta25",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta26",
+      "sequence": "vta26",
+      "split_group": "recording-vta26",
+      "historical_alignment_class": "approximate",
+      "approved_for_training": false,
+      "disposition": "conditional_diagnostic_candidate_only",
+      "alignment_reason": "Equal rows, speed correlation >=0.9, median separation <=30 m, supported speed unit; still not proof of synchronous IMU labels.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta27",
+      "sequence": "vta27",
+      "split_group": "recording-vta27",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "same-row median position disagreement above 200 m",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta28",
+      "sequence": "vta28",
+      "split_group": "recording-vta28",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta29",
+      "sequence": "vta29",
+      "split_group": "recording-vta29",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta3",
+      "sequence": "vta3",
+      "split_group": "recording-vta3",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta30",
+      "sequence": "vta30",
+      "split_group": "recording-vta30",
+      "historical_alignment_class": "approximate",
+      "approved_for_training": false,
+      "disposition": "conditional_diagnostic_candidate_only",
+      "alignment_reason": "Equal rows, speed correlation >=0.9, median separation <=30 m, supported speed unit; still not proof of synchronous IMU labels.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta4",
+      "sequence": "vta4",
+      "split_group": "recording-vta4",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta5",
+      "sequence": "vta5",
+      "split_group": "recording-vta5",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta6",
+      "sequence": "vta6",
+      "split_group": "recording-vta6",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta7",
+      "sequence": "vta7",
+      "split_group": "recording-vta7",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta8",
+      "sequence": "vta8",
+      "split_group": "recording-vta8",
+      "historical_alignment_class": "approximate",
+      "approved_for_training": false,
+      "disposition": "conditional_diagnostic_candidate_only",
+      "alignment_reason": "Equal rows, speed correlation >=0.9, median separation <=30 m, supported speed unit; still not proof of synchronous IMU labels.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vta9",
+      "sequence": "vta9",
+      "split_group": "recording-vta9",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vtb1",
+      "sequence": "vtb1",
+      "split_group": "recording-vtb1",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vtb10",
+      "sequence": "vtb10",
+      "split_group": "recording-vtb10",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "unequal row counts",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vtb11",
+      "sequence": "vtb11",
+      "split_group": "recording-vtb11",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vtb12",
+      "sequence": "vtb12",
+      "split_group": "recording-vtb12",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vtb2",
+      "sequence": "vtb2",
+      "split_group": "recording-vtb2",
+      "historical_alignment_class": "approximate",
+      "approved_for_training": false,
+      "disposition": "conditional_diagnostic_candidate_only",
+      "alignment_reason": "Equal rows, speed correlation >=0.9, median separation <=30 m, supported speed unit; still not proof of synchronous IMU labels.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vtb3",
+      "sequence": "vtb3",
+      "split_group": "recording-vtb3",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vtb4",
+      "sequence": "vtb4",
+      "split_group": "recording-vtb4",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vtb5",
+      "sequence": "vtb5",
+      "split_group": "recording-vtb5",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "same-row median position disagreement above 200 m",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vtb6",
+      "sequence": "vtb6",
+      "split_group": "recording-vtb6",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vtb7",
+      "sequence": "vtb7",
+      "split_group": "recording-vtb7",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vtb8",
+      "sequence": "vtb8",
+      "split_group": "recording-vtb8",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vtb9",
+      "sequence": "vtb9",
+      "split_group": "recording-vtb9",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vw1",
+      "sequence": "vw1",
+      "split_group": "recording-vw1",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "unequal row counts",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vw10",
+      "sequence": "vw10",
+      "split_group": "recording-vw10",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vw11",
+      "sequence": "vw11",
+      "split_group": "recording-vw11",
+      "historical_alignment_class": "approximate",
+      "approved_for_training": false,
+      "disposition": "conditional_diagnostic_candidate_only",
+      "alignment_reason": "Equal rows, speed correlation >=0.9, median separation <=30 m, supported speed unit; still not proof of synchronous IMU labels.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vw12",
+      "sequence": "vw12",
+      "split_group": "recording-vw12",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vw13",
+      "sequence": "vw13",
+      "split_group": "recording-vw13",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vw14a",
+      "sequence": "vw14a",
+      "split_group": "recording-vw14a",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vw14b",
+      "sequence": "vw14b",
+      "split_group": "recording-vw14b",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vw14c",
+      "sequence": "vw14c",
+      "split_group": "recording-vw14c",
+      "historical_alignment_class": "approximate",
+      "approved_for_training": false,
+      "disposition": "conditional_diagnostic_candidate_only",
+      "alignment_reason": "Equal rows, speed correlation >=0.9, median separation <=30 m, supported speed unit; still not proof of synchronous IMU labels.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vw15",
+      "sequence": "vw15",
+      "split_group": "recording-vw15",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "unequal row counts",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vw16a",
+      "sequence": "vw16a",
+      "split_group": "recording-vw16a",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "same-row median position disagreement above 200 m",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vw16b",
+      "sequence": "vw16b",
+      "split_group": "recording-vw16b",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vw17",
+      "sequence": "vw17",
+      "split_group": "recording-vw17",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vw2",
+      "sequence": "vw2",
+      "split_group": "recording-vw2",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "unequal row counts",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vw3",
+      "sequence": "vw3",
+      "split_group": "recording-vw3",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vw4",
+      "sequence": "vw4",
+      "split_group": "recording-vw4",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "unequal row counts",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vw5",
+      "sequence": "vw5",
+      "split_group": "recording-vw5",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vw6",
+      "sequence": "vw6",
+      "split_group": "recording-vw6",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vw7",
+      "sequence": "vw7",
+      "split_group": "recording-vw7",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vw8",
+      "sequence": "vw8",
+      "split_group": "recording-vw8",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/vw9",
+      "sequence": "vw9",
+      "split_group": "recording-vw9",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "unequal row counts",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "categorized/y1",
+      "sequence": "y1",
+      "split_group": "recording-y1",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "same-row median position disagreement above 200 m",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/m",
+      "sequence": "m",
+      "split_group": "recording-m",
+      "historical_alignment_class": "approximate",
+      "approved_for_training": false,
+      "disposition": "conditional_diagnostic_candidate_only",
+      "alignment_reason": "Equal rows, speed correlation >=0.9, median separation <=30 m, supported speed unit; still not proof of synchronous IMU labels.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/s1",
+      "sequence": "s1",
+      "split_group": "recording-s1",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/s2",
+      "sequence": "s2",
+      "split_group": "recording-s2",
+      "historical_alignment_class": "approximate",
+      "approved_for_training": false,
+      "disposition": "conditional_diagnostic_candidate_only",
+      "alignment_reason": "Equal rows, speed correlation >=0.9, median separation <=30 m, supported speed unit; still not proof of synchronous IMU labels.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/s3a",
+      "sequence": "s3a",
+      "split_group": "recording-s3a",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/s3b",
+      "sequence": "s3b",
+      "split_group": "recording-s3b",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/s3c",
+      "sequence": "s3c",
+      "split_group": "recording-s3c",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/s4",
+      "sequence": "s4",
+      "split_group": "recording-s4",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "same-row median position disagreement above 200 m",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vfa01",
+      "sequence": "vfa01",
+      "split_group": "recording-vfa01",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "unequal row counts",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vfa02",
+      "sequence": "vfa02",
+      "split_group": "recording-vfa02",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "unequal row counts",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta10",
+      "sequence": "vta10",
+      "split_group": "recording-vta10",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta11",
+      "sequence": "vta11",
+      "split_group": "recording-vta11",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta12",
+      "sequence": "vta12",
+      "split_group": "recording-vta12",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta13",
+      "sequence": "vta13",
+      "split_group": "recording-vta13",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta14",
+      "sequence": "vta14",
+      "split_group": "recording-vta14",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta15",
+      "sequence": "vta15",
+      "split_group": "recording-vta15",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta16",
+      "sequence": "vta16",
+      "split_group": "recording-vta16",
+      "historical_alignment_class": "approximate",
+      "approved_for_training": false,
+      "disposition": "conditional_diagnostic_candidate_only",
+      "alignment_reason": "Equal rows, speed correlation >=0.9, median separation <=30 m, supported speed unit; still not proof of synchronous IMU labels.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta17",
+      "sequence": "vta17",
+      "split_group": "recording-vta17",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta19",
+      "sequence": "vta19",
+      "split_group": "recording-vta19",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta1a",
+      "sequence": "vta1a",
+      "split_group": "recording-vta1a",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "same-row median position disagreement above 200 m",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta1b",
+      "sequence": "vta1b",
+      "split_group": "recording-vta1b",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "unequal row counts",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta2",
+      "sequence": "vta2",
+      "split_group": "recording-vta2",
+      "historical_alignment_class": "approximate",
+      "approved_for_training": false,
+      "disposition": "conditional_diagnostic_candidate_only",
+      "alignment_reason": "Equal rows, speed correlation >=0.9, median separation <=30 m, supported speed unit; still not proof of synchronous IMU labels.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta20",
+      "sequence": "vta20",
+      "split_group": "recording-vta20",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta21",
+      "sequence": "vta21",
+      "split_group": "recording-vta21",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta22",
+      "sequence": "vta22",
+      "split_group": "recording-vta22",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta23",
+      "sequence": "vta23",
+      "split_group": "recording-vta23",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta24",
+      "sequence": "vta24",
+      "split_group": "recording-vta24",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta25",
+      "sequence": "vta25",
+      "split_group": "recording-vta25",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta26",
+      "sequence": "vta26",
+      "split_group": "recording-vta26",
+      "historical_alignment_class": "approximate",
+      "approved_for_training": false,
+      "disposition": "conditional_diagnostic_candidate_only",
+      "alignment_reason": "Equal rows, speed correlation >=0.9, median separation <=30 m, supported speed unit; still not proof of synchronous IMU labels.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta27",
+      "sequence": "vta27",
+      "split_group": "recording-vta27",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "same-row median position disagreement above 200 m",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta28",
+      "sequence": "vta28",
+      "split_group": "recording-vta28",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta29",
+      "sequence": "vta29",
+      "split_group": "recording-vta29",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta3",
+      "sequence": "vta3",
+      "split_group": "recording-vta3",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta30",
+      "sequence": "vta30",
+      "split_group": "recording-vta30",
+      "historical_alignment_class": "approximate",
+      "approved_for_training": false,
+      "disposition": "conditional_diagnostic_candidate_only",
+      "alignment_reason": "Equal rows, speed correlation >=0.9, median separation <=30 m, supported speed unit; still not proof of synchronous IMU labels.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta4",
+      "sequence": "vta4",
+      "split_group": "recording-vta4",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta5",
+      "sequence": "vta5",
+      "split_group": "recording-vta5",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta6",
+      "sequence": "vta6",
+      "split_group": "recording-vta6",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta7",
+      "sequence": "vta7",
+      "split_group": "recording-vta7",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta8",
+      "sequence": "vta8",
+      "split_group": "recording-vta8",
+      "historical_alignment_class": "approximate",
+      "approved_for_training": false,
+      "disposition": "conditional_diagnostic_candidate_only",
+      "alignment_reason": "Equal rows, speed correlation >=0.9, median separation <=30 m, supported speed unit; still not proof of synchronous IMU labels.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vta9",
+      "sequence": "vta9",
+      "split_group": "recording-vta9",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vtb1",
+      "sequence": "vtb1",
+      "split_group": "recording-vtb1",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vtb10",
+      "sequence": "vtb10",
+      "split_group": "recording-vtb10",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "unequal row counts",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vtb11",
+      "sequence": "vtb11",
+      "split_group": "recording-vtb11",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vtb12",
+      "sequence": "vtb12",
+      "split_group": "recording-vtb12",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vtb2",
+      "sequence": "vtb2",
+      "split_group": "recording-vtb2",
+      "historical_alignment_class": "approximate",
+      "approved_for_training": false,
+      "disposition": "conditional_diagnostic_candidate_only",
+      "alignment_reason": "Equal rows, speed correlation >=0.9, median separation <=30 m, supported speed unit; still not proof of synchronous IMU labels.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vtb3",
+      "sequence": "vtb3",
+      "split_group": "recording-vtb3",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vtb4",
+      "sequence": "vtb4",
+      "split_group": "recording-vtb4",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vtb5",
+      "sequence": "vtb5",
+      "split_group": "recording-vtb5",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "same-row median position disagreement above 200 m",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vtb6",
+      "sequence": "vtb6",
+      "split_group": "recording-vtb6",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vtb7",
+      "sequence": "vtb7",
+      "split_group": "recording-vtb7",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vtb8",
+      "sequence": "vtb8",
+      "split_group": "recording-vtb8",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vtb9",
+      "sequence": "vtb9",
+      "split_group": "recording-vtb9",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vw1",
+      "sequence": "vw1",
+      "split_group": "recording-vw1",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "unequal row counts",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vw10",
+      "sequence": "vw10",
+      "split_group": "recording-vw10",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vw11",
+      "sequence": "vw11",
+      "split_group": "recording-vw11",
+      "historical_alignment_class": "approximate",
+      "approved_for_training": false,
+      "disposition": "conditional_diagnostic_candidate_only",
+      "alignment_reason": "Equal rows, speed correlation >=0.9, median separation <=30 m, supported speed unit; still not proof of synchronous IMU labels.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vw12",
+      "sequence": "vw12",
+      "split_group": "recording-vw12",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vw13",
+      "sequence": "vw13",
+      "split_group": "recording-vw13",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vw14a",
+      "sequence": "vw14a",
+      "split_group": "recording-vw14a",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vw14b",
+      "sequence": "vw14b",
+      "split_group": "recording-vw14b",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vw14c",
+      "sequence": "vw14c",
+      "split_group": "recording-vw14c",
+      "historical_alignment_class": "approximate",
+      "approved_for_training": false,
+      "disposition": "conditional_diagnostic_candidate_only",
+      "alignment_reason": "Equal rows, speed correlation >=0.9, median separation <=30 m, supported speed unit; still not proof of synchronous IMU labels.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vw15",
+      "sequence": "vw15",
+      "split_group": "recording-vw15",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "unequal row counts",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vw16a",
+      "sequence": "vw16a",
+      "split_group": "recording-vw16a",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "same-row median position disagreement above 200 m",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vw16b",
+      "sequence": "vw16b",
+      "split_group": "recording-vw16b",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vw17",
+      "sequence": "vw17",
+      "split_group": "recording-vw17",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vw2",
+      "sequence": "vw2",
+      "split_group": "recording-vw2",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "unequal row counts",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vw3",
+      "sequence": "vw3",
+      "split_group": "recording-vw3",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vw4",
+      "sequence": "vw4",
+      "split_group": "recording-vw4",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "unequal row counts",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vw5",
+      "sequence": "vw5",
+      "split_group": "recording-vw5",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vw6",
+      "sequence": "vw6",
+      "split_group": "recording-vw6",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vw7",
+      "sequence": "vw7",
+      "split_group": "recording-vw7",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vw8",
+      "sequence": "vw8",
+      "split_group": "recording-vw8",
+      "historical_alignment_class": "uncertain",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "Insufficient dynamics/unit evidence or cross-sensor agreement outside conservative diagnostic thresholds.",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/vw9",
+      "sequence": "vw9",
+      "split_group": "recording-vw9",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "unequal row counts",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    },
+    {
+      "id": "uncategorized/y1",
+      "sequence": "y1",
+      "split_group": "recording-y1",
+      "historical_alignment_class": "unusable",
+      "approved_for_training": false,
+      "disposition": "quarantined",
+      "alignment_reason": "same-row median position disagreement above 200 m",
+      "blocking_reason": "Verified complete IMU frame, IMU-to-label alignment, reproducible corrected baseline and deployable preprocessing parity have not passed."
+    }
+  ]
+}

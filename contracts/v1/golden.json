@@ -1,0 +1,155 @@
+{
+  "contract_version": "1.0.0",
+  "session_id": "golden-sim",
+  "source": "simulation",
+  "events": [
+    {
+      "event_id": "0",
+      "type": "imu",
+      "t_ns": "9007199254740993",
+      "received_ns": "9007199259740993",
+      "data": {
+        "sensor": "accelerometer",
+        "frame": "android_device",
+        "unit": "m/s^2",
+        "xyz": [
+          0,
+          0,
+          9.80665
+        ],
+        "accuracy": "high"
+      }
+    },
+    {
+      "event_id": "1",
+      "type": "imu",
+      "t_ns": "9007199264740993",
+      "received_ns": "9007199269740993",
+      "data": {
+        "sensor": "gyroscope",
+        "frame": "android_device",
+        "unit": "rad/s",
+        "xyz": [
+          0,
+          0,
+          -0.5
+        ],
+        "accuracy": "unreliable"
+      }
+    },
+    {
+      "event_id": "2",
+      "type": "gnss",
+      "t_ns": "9007199274740993",
+      "received_ns": "9007199279740993",
+      "data": {
+        "latitude_deg": 12.9716,
+        "longitude_deg": 77.5946,
+        "altitude_m": null,
+        "altitude_reference": null,
+        "speed_m_s": null,
+        "bearing_deg": null,
+        "horizontal_accuracy_m": 3.5,
+        "vertical_accuracy_m": null,
+        "satellites_used": null,
+        "provider": "fixture",
+        "utc_ms": null
+      }
+    },
+    {
+      "event_id": "3",
+      "type": "calibration",
+      "t_ns": "9007199284740993",
+      "received_ns": "9007199289740993",
+      "data": {
+        "id": "fixture-cal",
+        "status": "valid",
+        "q_vehicle_from_device_wxyz": [
+          1,
+          0,
+          0,
+          0
+        ],
+        "gyro_bias_rad_s": [
+          0.01,
+          -0.02,
+          0.03
+        ],
+        "accelerometer_bias_m_s2": null,
+        "confidence": 0.8
+      }
+    },
+    {
+      "event_id": "4",
+      "type": "navigation",
+      "t_ns": "9007199294740993",
+      "received_ns": "9007199299740993",
+      "data": {
+        "status": "tracking",
+        "initialization_mode": "deployable",
+        "origin_wgs84_deg_m": [
+          12.9716,
+          77.5946,
+          0
+        ],
+        "position_enu_m": [
+          1.25,
+          -2.5,
+          0
+        ],
+        "velocity_enu_m_s": [
+          0,
+          10,
+          0
+        ],
+        "q_enu_from_vehicle_wxyz": [
+          0.7071067811865476,
+          0,
+          0,
+          0.7071067811865476
+        ],
+        "heading_deg": 0,
+        "calibration_id": "fixture-cal",
+        "gnss_used_after_initialization": false
+      }
+    },
+    {
+      "event_id": "5",
+      "type": "gnss_quality",
+      "t_ns": "9007199304740993",
+      "received_ns": "9007199309740993",
+      "data": {
+        "state": "unavailable",
+        "fix_age_s": null,
+        "satellites_used": null,
+        "reasons": [
+          "NO_FIX"
+        ]
+      }
+    },
+    {
+      "event_id": "6",
+      "type": "confidence",
+      "t_ns": "9007199314740993",
+      "received_ns": "9007199319740993",
+      "data": {
+        "state": "unvalidated",
+        "probability": null,
+        "horizontal_accuracy_95_m": null,
+        "speed_std_m_s": null
+      }
+    },
+    {
+      "event_id": "7",
+      "type": "diagnostic",
+      "t_ns": "9007199324740993",
+      "received_ns": "9007199329740993",
+      "data": {
+        "severity": "warning",
+        "code": "SIMULATED_INPUT",
+        "message": "Synthetic contract fixture; not live sensor data.",
+        "dropped_count": 1
+      }
+    }
+  ]
+}
