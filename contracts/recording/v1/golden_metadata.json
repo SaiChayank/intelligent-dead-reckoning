@@ -1,0 +1,67 @@
+{
+  "recording_contract_version": "1.0.0",
+  "measurement_contract_version": "1.0.0",
+  "recording_id": "golden-recording",
+  "acquisition_session_id": "golden-acquisition",
+  "source": "real",
+  "start_state": "recording",
+  "end_state": null,
+  "completion_state": "open",
+  "recovery_state": "none",
+  "created_utc_ms": "1789900000000",
+  "started_utc_ms": "1789900000100",
+  "ended_utc_ms": null,
+  "clock": {
+    "domain": "android_elapsed_realtime_ns",
+    "boot_id": "fixture-boot-id",
+    "session_clock_id": "fixture-session-clock",
+    "origin_ns": "9007199254740993",
+    "started_ns": "9007199254740993",
+    "ended_ns": null
+  },
+  "device": {
+    "manufacturer": "OnePlus",
+    "model": "CPH2585",
+    "os_name": "Android",
+    "os_version": "16",
+    "api_level": 36
+  },
+  "application": {
+    "package_name": "com.intelligentdeadreckoning.app",
+    "version_name": "0.1.0-demo",
+    "version_code": 1,
+    "source_version": null
+  },
+  "sensors": [
+    {
+      "sensor": "accelerometer",
+      "name": "fixture accelerometer",
+      "vendor": "fixture vendor",
+      "available": true,
+      "requested_hz": 100.0,
+      "measured_hz": 98.8
+    },
+    {
+      "sensor": "gyroscope",
+      "name": "fixture gyroscope",
+      "vendor": "fixture vendor",
+      "available": true,
+      "requested_hz": 100.0,
+      "measured_hz": 98.8
+    }
+  ],
+  "source_configuration": {
+    "location_permission": "precise",
+    "location_service_enabled": true,
+    "gps_provider_enabled": true,
+    "network_provider_enabled": true,
+    "satellite_status_enabled": true,
+    "foreground_only": true
+  },
+  "calibration": {
+    "state": "not_applied",
+    "calibration_id": null
+  },
+  "record_count": null,
+  "channel_counts": null
+}

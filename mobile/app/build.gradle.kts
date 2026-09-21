@@ -25,8 +25,15 @@ android {
         }
     }
     testOptions { unitTests.isReturnDefaultValues = false }
-    sourceSets.getByName("test").resources.srcDir(rootProject.file("../contracts/v1"))
-    sourceSets.getByName("main").kotlin.srcDir(rootProject.file("../contracts/v1/kotlin"))
+    sourceSets.getByName("test").resources.srcDirs(
+        rootProject.file("../contracts/v1"),
+        rootProject.file("../contracts/recording/v1"),
+    )
+
+    sourceSets.getByName("main").kotlin.srcDirs(
+        rootProject.file("../contracts/v1/kotlin"),
+        rootProject.file("../contracts/recording/v1/kotlin"),
+    )
     lint { abortOnError = true }
 }
 
