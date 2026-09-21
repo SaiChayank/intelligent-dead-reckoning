@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.intelligentdeadreckoning.app.simulation.*
 import com.intelligentdeadreckoning.app.acquisition.*
+import com.intelligentdeadreckoning.contracts.v1.Sensor
 import java.util.Locale
 import kotlin.math.cos
 import kotlin.math.sin
@@ -101,11 +102,35 @@ fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
                         .padding(top = 8.dp, bottom = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(20.dp),
                 ) {
-                    if (source == InputSource.REAL && selected != Screen.ABOUT) {
-                        RealDiagnostics(capture, onStart, onStop, onPermission, onSettings)
-                    } else when (selected) {
-                        Screen.DASHBOARD -> Dashboard(state, onStart, onStop)
-                        Screen.DIAGNOSTICS -> Diagnostics(state, onStart, onStop)
+                    when (selected) {
+                        Screen.DASHBOARD -> {
+                            if (source == InputSource.REAL) {
+                                RealDashboard(
+                                    state = capture,
+                                    start = onStart,
+                                    stop = onStop,
+                                    permission = onPermission,
+                                    settings = onSettings,
+                                )
+                            } else {
+                                Dashboard(state, onStart, onStop)
+                            }
+                        }
+
+                        Screen.DIAGNOSTICS -> {
+                            if (source == InputSource.REAL) {
+                                RealDiagnostics(
+                                    state = capture,
+                                    start = onStart,
+                                    stop = onStop,
+                                    permission = onPermission,
+                                    settings = onSettings,
+                                )
+                            } else {
+                                Diagnostics(state, onStart, onStop)
+                            }
+                        }
+
                         Screen.ABOUT -> About()
                     }
                 }
@@ -170,6 +195,151 @@ private fun SessionControls(state: SimulationState, onStart: () -> Unit, onStop:
             modifier = Modifier.testTag("session_message"),
         )
     }
+}
+
+@Composable
+private fun ColumnScope.RealDashboard(
+    state: CaptureState,
+    start: () -> Unit,
+    stop: () -> Unit,
+    permission: () -> Unit,
+    settings: () -> Unit,
+) {
+    Column {
+        Text(
+            "Live measurements",
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = (-1).sp,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            "Foreground phone sensors and permitted location.",
+            color = Muted,
+            style = MaterialTheme.typography.bodyMedium,
+        )
+    }
+
+    Surface(
+        shape = RoundedCornerShape(24.dp),
+        color = Panel,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(
+                if (state.running) "Running" else "Stopped",
+                modifier = Modifier.testTag("real_status"),
+                color = Lime,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+
+            Text(state.message, color = Muted)
+
+            Text(
+                "Location: ${state.permission.name}",
+                modifier = Modifier.testTag("location_permission"),
+            )
+
+            Text(
+                "GNSS: ${state.quality.state.wire}",
+                color = Muted,
+            )
+
+            val availableSensors = Sensor.entries.count {
+                state.sensors[it]?.available == true
+            }
+
+            Text(
+                "Sensors available: $availableSensors / ${Sensor.entries.size}",
+                color = Muted,
+            )
+
+            Text(
+                "Accepted ${state.accepted} · dropped ${state.dropped} · invalid ${state.invalid}",
+                color = Muted,
+            )
+
+            Text(
+                "Queue ${state.queueDepth}/256 · peak ${state.queueHighWater}",
+                color = Muted,
+            )
+        }
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Button(
+            onClick = start,
+            enabled = !state.running,
+            modifier = Modifier
+                .weight(1.4f)
+                .heightIn(min = 56.dp)
+                .testTag("real_start"),
+        ) {
+            Text("Start sensors", fontWeight = FontWeight.Bold)
+        }
+
+        OutlinedButton(
+            onClick = stop,
+            enabled = state.running,
+            modifier = Modifier
+                .weight(1f)
+                .heightIn(min = 56.dp)
+                .testTag("real_stop"),
+        ) {
+            Text("Stop", fontWeight = FontWeight.Bold)
+        }
+    }
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        OutlinedButton(
+            onClick = permission,
+            modifier = Modifier.testTag("grant_location"),
+        ) {
+            Text("Allow location")
+        }
+
+        TextButton(onClick = settings) {
+            Text("App settings")
+        }
+    }
+
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = Panel,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(
+                "Detailed diagnostics",
+                fontWeight = FontWeight.SemiBold,
+            )
+
+            Text(
+                "Open the Diagnostics tab for per-sensor values, measured rates, timestamps, GNSS fields, queue statistics and diagnostic events.",
+                color = Muted,
+                style = MaterialTheme.typography.bodySmall,
+                lineHeight = 19.sp,
+            )
+        }
+    }
+
+    Text(
+        "Foreground acquisition only · recording off · navigation not running",
+        color = Muted,
+        style = MaterialTheme.typography.bodySmall,
+    )
 }
 
 @Composable

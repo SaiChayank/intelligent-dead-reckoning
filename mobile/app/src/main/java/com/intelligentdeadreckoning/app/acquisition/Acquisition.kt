@@ -219,7 +219,15 @@ class AcquisitionProcessor(val header: Header, val originNs: Long, private val e
         val fix = tracks.values.map { it.latest }.filter { it.event.data is GnssMeasurement }.maxByOrNull { it.event.t_ns }
         val age = fix?.let { elapsedSeconds(maxOf(now, it.event.t_ns), it.event.t_ns) }
         val quality = when {
-            access !in listOf(LocationAccess.PRECISE, LocationAccess.APPROXIMATE) -> GnssQualityState(GnssState.DENIED, null, null, listOf("PERMISSION_DENIED"))
+            access !in listOf(LocationAccess.PRECISE, LocationAccess.APPROXIMATE) -> {
+                val reason = when (access) {
+                    LocationAccess.NOT_REQUESTED -> "LOCATION_NOT_REQUESTED"
+                    LocationAccess.DENIED -> "PERMISSION_DENIED"
+                    LocationAccess.REVOKED -> "PERMISSION_REVOKED"
+                    else -> "LOCATION_UNAVAILABLE"
+                }
+                GnssQualityState(GnssState.DENIED, null, null, listOf(reason))
+            }
             !providerEnabled -> GnssQualityState(GnssState.UNAVAILABLE, age, null, listOf("PROVIDER_DISABLED"))
             age == null -> GnssQualityState(GnssState.ACQUIRING, null, satellites, listOf("NO_FIX"))
             age > 5 -> GnssQualityState(GnssState.STALE, age, satellites, listOf("STALE_FIX"))
