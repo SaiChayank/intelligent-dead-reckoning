@@ -21,7 +21,12 @@ is still planned. It is a standalone Gradle project inside the existing reposito
 - Scrollable screens, system-inset handling, labelled controls and disabled
   buttons for invalid transitions. This first visual design uses a fixed dark theme.
 
-Not implemented: recording/export/replay, rotation-vector events, maps, INS, AI,
+Optional foreground local recording subscribes to the Phone sensors stream, with
+explicit Start/Stop, bounded writing and interrupted-session recovery. See
+[recording architecture and device acceptance](RECORDING.md). Its new physical
+device gate is separate from the frozen acquisition verification.
+
+Not implemented: export/replay, rotation-vector events, maps, INS, AI,
 fusion, calibration or shared-core implementation. Host tests/build pass;
 connected-device acquisition acceptance still requires the procedure linked above.
 

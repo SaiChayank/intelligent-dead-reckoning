@@ -32,13 +32,15 @@ class MainActivity : ComponentActivity() {
             val state by session.state.collectAsStateWithLifecycle()
             val source by session.source.collectAsStateWithLifecycle()
             val capture by session.capture.collectAsStateWithLifecycle()
+            val recording by session.recording.collectAsStateWithLifecycle()
             IdrTheme { IdrApp(state, session::start, session::stop, source, capture, session::select,
                 onPermission = {
                     session.markPermissionRequested()
                     permissions.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
                 }, onSettings = {
                     startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri()))
-                }) }
+                }, recording = recording, onStartRecording = session::startRecording,
+                onStopRecording = session::stopRecording) }
         }
     }
 

@@ -32,6 +32,8 @@ import androidx.compose.ui.unit.sp
 import com.intelligentdeadreckoning.app.simulation.*
 import com.intelligentdeadreckoning.app.acquisition.*
 import com.intelligentdeadreckoning.contracts.v1.Sensor
+import com.intelligentdeadreckoning.app.recording.RecorderState
+import com.intelligentdeadreckoning.app.recording.RecorderPhase
 import java.util.Locale
 import kotlin.math.cos
 import kotlin.math.sin
@@ -41,7 +43,9 @@ private enum class Screen(val title: String) { DASHBOARD("Dashboard"), DIAGNOSTI
 @Composable
 fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
            source: InputSource = InputSource.SIMULATION, capture: CaptureState = CaptureState(),
-           onSource: (InputSource) -> Unit = {}, onPermission: () -> Unit = {}, onSettings: () -> Unit = {}) {
+           onSource: (InputSource) -> Unit = {}, onPermission: () -> Unit = {}, onSettings: () -> Unit = {},
+           recording: RecorderState = RecorderState(), onStartRecording: () -> Unit = {},
+           onStopRecording: () -> Unit = {}) {
     var selected by rememberSaveable { mutableStateOf(Screen.DASHBOARD) }
     BackHandler(enabled = selected != Screen.DASHBOARD) { selected = Screen.DASHBOARD }
     Scaffold(
@@ -102,6 +106,23 @@ fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
                         .padding(top = 8.dp, bottom = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(20.dp),
                 ) {
+                    if (selected != Screen.ABOUT) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Local recording · ${recording.phase.name.lowercase()}", modifier = Modifier.testTag("recording_status"))
+                            Text(recording.message, style = MaterialTheme.typography.bodySmall)
+                            Text("Written ${recording.written} · dropped ${recording.dropped} · write errors ${recording.writeErrors} · ID gaps ${recording.eventIdGaps}",
+                                style = MaterialTheme.typography.bodySmall)
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Button(onClick = onStartRecording,
+                                    enabled = source == InputSource.REAL && capture.running && capture.sensors.isNotEmpty() && !recording.busy,
+                                    modifier = Modifier.testTag("recording_start")) { Text("Start recording") }
+                                OutlinedButton(onClick = onStopRecording,
+                                    enabled = recording.phase in listOf(RecorderPhase.STARTING, RecorderPhase.RECORDING) && recording.recordingId != null,
+                                    modifier = Modifier.testTag("recording_stop")) { Text("Stop recording") }
+                            }
+                            if (source == InputSource.SIMULATION) Text("Recording requires the Phone sensors acquisition stream.", style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
                     when (selected) {
                         Screen.DASHBOARD -> {
                             if (source == InputSource.REAL) {
