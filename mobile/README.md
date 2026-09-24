@@ -6,6 +6,10 @@ is still planned. It is a standalone Gradle project inside the existing reposito
 
 ## What works
 
+- Optional central Hyderabad offline map preview: bundled tiles, camera controls, attribution and an explicitly started synthetic marker/heading/trail demo. A v1 navigation presentation adapter is tested but not connected to a real engine. No live position or routing yet. See [map scope, build results and device gate](OFFLINE_MAP.md).
+- Recording details, paged local sessions and explicit local ZIP export through Android's document picker are implemented. See [export workflow and device-validation gate](EXPORT.md).
+- Read-only local replay supports start/pause/resume/stop with explicit `replay_real` / `replay_simulation` labels. See [replay policy and verification](REPLAY.md).
+
 - Kotlin + Jetpack Compose / Material 3 UI: Dashboard, Diagnostics and About.
 - A visible `SIMULATION` or `REAL PHONE` banner on every screen and an explicit
   source selector. Simulation values remain scripted demo data.
@@ -26,7 +30,7 @@ explicit Start/Stop, bounded writing and interrupted-session recovery. See
 [recording architecture and device acceptance](RECORDING.md). Its new physical
 device gate is separate from the frozen acquisition verification.
 
-Not implemented: export/replay, rotation-vector events, maps, INS, AI,
+Not implemented: ZIP import, replay seek/speed controls, rotation-vector events, live map positioning/routing, INS, AI,
 fusion, calibration or shared-core implementation. Host tests/build pass;
 connected-device acquisition acceptance still requires the procedure linked above.
 

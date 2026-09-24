@@ -7,6 +7,9 @@ import java.nio.file.LinkOption.NOFOLLOW_LINKS
 import java.util.zip.*
 
 data class SavedSession(val id: String, val metadata: RecordingMetadata?, val bytes: Long?, val error: String? = null) {
+    val replayable: Boolean get() = error == null && metadata != null &&
+        (metadata.completionState == CompletionState.COMPLETED ||
+            (metadata.completionState == CompletionState.INCOMPLETE && metadata.recoveryState == RecoveryState.RECOVERED))
     val exportable: Boolean get() = error == null && metadata != null &&
         metadata.completionState != CompletionState.OPEN && metadata.recoveryState != RecoveryState.REQUIRED
     val durationNs: Long? get() = metadata?.clock?.let { c -> c.endedNs?.minus(c.startedNs) }
@@ -26,9 +29,14 @@ class SessionFiles(rootProvider: () -> File) {
         require(Files.isRegularFile(it.toPath(), NOFOLLOW_LINKS)) { "Missing or unsafe $name" }
     }
     private fun metadataBytes(dir: File): ByteArray = file(dir, "metadata.json").inputStream().use {
-        val bytes = it.readNBytes(262145)
-        require(bytes.size <= 262144) { "Metadata exceeds contract limit" }
-        bytes
+        val out = ByteArrayOutputStream()
+        val buffer = ByteArray(8192)
+        while (true) {
+            val n = it.read(buffer); if (n < 0) break
+            require(out.size() + n <= 262144) { "Metadata exceeds contract limit" }
+            out.write(buffer, 0, n)
+        }
+        out.toByteArray()
     }
     fun inspect(id: String): SavedSession = try {
         val dir = directory(id)
@@ -37,6 +45,13 @@ class SessionFiles(rootProvider: () -> File) {
         require(metadata.recordingId == id) { "Metadata/session ID mismatch" }
         SavedSession(id, metadata, Math.addExact(raw.size.toLong(), file(dir, "measurements.jsonl").length()))
     } catch (e: Exception) { SavedSession(id, null, null, e.message ?: e.javaClass.simpleName) }
+
+    /** Caller owns the stream. Never opens a writer or performs recovery. */
+    fun openReplay(id: String): Pair<RecordingMetadata, InputStream> {
+        val summary = inspect(id)
+        require(summary.replayable) { summary.error ?: "Replay requires completed or recovered incomplete session" }
+        return summary.metadata!! to file(directory(id), "measurements.jsonl").inputStream().buffered()
+    }
 
     /** Bounded 20-item pages, stable lexicographic ID order (not chronological). */
     fun list(after: String? = null): SessionPage {

@@ -40,6 +40,7 @@ android {
 kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
 
 dependencies {
+    implementation("org.maplibre.gl:android-sdk-opengl:13.6.1")
     val composeBom = platform("androidx.compose:compose-bom:2026.02.01")
     implementation(composeBom)
     androidTestImplementation(composeBom)

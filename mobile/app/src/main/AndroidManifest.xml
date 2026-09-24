@@ -2,6 +2,11 @@
 <!-- Foreground-only capture. No network, background location, notification or service permission. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+    <!-- Offline map enhancement must not inherit network access from its renderer. -->
+    <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" tools:node="remove" />
+    <uses-feature android:name="android.hardware.wifi" tools:node="remove" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false" />

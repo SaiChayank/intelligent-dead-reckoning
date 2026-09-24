@@ -35,17 +35,27 @@ import com.intelligentdeadreckoning.contracts.v1.Sensor
 import com.intelligentdeadreckoning.app.recording.RecorderState
 import com.intelligentdeadreckoning.app.recording.RecorderPhase
 import java.util.Locale
+import com.intelligentdeadreckoning.app.sessions.*
+import com.intelligentdeadreckoning.app.replay.*
 import kotlin.math.cos
 import kotlin.math.sin
 
-private enum class Screen(val title: String) { DASHBOARD("Dashboard"), DIAGNOSTICS("Diagnostics"), ABOUT("About") }
+private enum class Screen(val title: String) { DASHBOARD("Dashboard"), DIAGNOSTICS("Diagnostics"), MAP("Map"), ABOUT("About") }
 
 @Composable
 fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
            source: InputSource = InputSource.SIMULATION, capture: CaptureState = CaptureState(),
            onSource: (InputSource) -> Unit = {}, onPermission: () -> Unit = {}, onSettings: () -> Unit = {},
            recording: RecorderState = RecorderState(), onStartRecording: () -> Unit = {},
-           onStopRecording: () -> Unit = {}) {
+           onStopRecording: () -> Unit = {}, library: SessionPage = SessionPage(), libraryError: String? = null,
+           currentSession: SavedSession? = null, elapsedNs: Long? = null, export: ExportState = ExportState(),
+           onRefreshSessions: (String?) -> Unit = {}, onExport: (String) -> Unit = {},
+           replay: ReplayState = ReplayState(), replayVisible: Boolean = false, onReplay: (String) -> Unit = {},
+           onPauseReplay: () -> Unit = {}, onResumeReplay: () -> Unit = {}, onStopReplay: () -> Unit = {}) {
+    var sessionsOpen by rememberSaveable { mutableStateOf(false) }
+    var detailsOpen by rememberSaveable { mutableStateOf(false) }
+    if (sessionsOpen) SessionDialog(library, libraryError, recording.busy || export.busy || replay.busy, export.message,
+        onRefreshSessions, onExport, { sessionsOpen = false }, onReplay)
     var selected by rememberSaveable { mutableStateOf(Screen.DASHBOARD) }
     BackHandler(enabled = selected != Screen.DASHBOARD) { selected = Screen.DASHBOARD }
     Scaffold(
@@ -88,9 +98,9 @@ fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
                 ) {
                     Box(Modifier.size(6.dp).background(Amber, CircleShape))
                     Spacer(Modifier.width(8.dp))
-                    Text(if (source == InputSource.SIMULATION) "SIMULATION" else "REAL PHONE", color = Amber, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    Text(if (replayVisible) replay.source?.wire ?: "REPLAY" else if (source == InputSource.SIMULATION) "SIMULATION" else "REAL PHONE", color = Amber, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                     Spacer(Modifier.width(8.dp))
-                    Text(if (source == InputSource.SIMULATION) "Demo data · not live sensors" else "Measured · foreground only", color = Amber, fontSize = 11.sp, modifier = Modifier.weight(1f))
+                    Text(if (replayVisible) "Recorded playback · not live" else if (source == InputSource.SIMULATION) "Demo data · not live sensors" else "Measured · foreground only", color = Amber, fontSize = 11.sp, modifier = Modifier.weight(1f))
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     FilterChip(selected = source == InputSource.SIMULATION, onClick = { onSource(InputSource.SIMULATION) },
@@ -106,7 +116,7 @@ fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
                         .padding(top = 8.dp, bottom = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(20.dp),
                 ) {
-                    if (selected != Screen.ABOUT) {
+                    if (selected != Screen.ABOUT && selected != Screen.MAP) {
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text("Local recording · ${recording.phase.name.lowercase()}", modifier = Modifier.testTag("recording_status"))
                             Text(recording.message, style = MaterialTheme.typography.bodySmall)
@@ -114,16 +124,23 @@ fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
                                 style = MaterialTheme.typography.bodySmall)
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Button(onClick = onStartRecording,
-                                    enabled = source == InputSource.REAL && capture.running && capture.sensors.isNotEmpty() && !recording.busy,
+                                    enabled = !replayVisible && !replay.busy && source == InputSource.REAL && capture.running && capture.sensors.isNotEmpty() && !recording.busy && !export.busy,
                                     modifier = Modifier.testTag("recording_start")) { Text("Start recording") }
                                 OutlinedButton(onClick = onStopRecording,
                                     enabled = recording.phase in listOf(RecorderPhase.STARTING, RecorderPhase.RECORDING) && recording.recordingId != null,
                                     modifier = Modifier.testTag("recording_stop")) { Text("Stop recording") }
                             }
                             if (source == InputSource.SIMULATION) Text("Recording requires the Phone sensors acquisition stream.", style = MaterialTheme.typography.bodySmall)
+                            Row {
+                                TextButton(onClick = { detailsOpen = !detailsOpen }) { Text("Recording details") }
+                                TextButton(onClick = { sessionsOpen = true; onRefreshSessions(null) }, modifier = Modifier.testTag("saved_sessions")) { Text("Saved sessions") }
+                            }
+                            if (detailsOpen) Text("Session: ${recording.recordingId ?: "none"}\nSource: ${currentSession?.metadata?.source ?: "unknown"}\nElapsed: ${elapsedNs?.let { "${it / 1_000_000_000L} s" } ?: "unknown"}\nPrivate files: ${currentSession?.bytes?.let { "$it bytes (snapshot)" } ?: "unknown"}", style = MaterialTheme.typography.bodySmall)
+                            if (export.phase != ExportPhase.IDLE) Text("Export copy · ${export.message}", style = MaterialTheme.typography.bodySmall)
                         }
                     }
-                    when (selected) {
+                    if (replayVisible && selected != Screen.ABOUT && selected != Screen.MAP) ReplayPanel(replay, onPauseReplay, onResumeReplay, onStopReplay)
+                    else when (selected) {
                         Screen.DASHBOARD -> {
                             if (source == InputSource.REAL) {
                                 RealDashboard(
@@ -152,6 +169,7 @@ fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
                             }
                         }
 
+                        Screen.MAP -> OfflineMapScreen()
                         Screen.ABOUT -> About()
                     }
                 }
@@ -512,6 +530,11 @@ private fun NavigationGlyph(screen: Screen, selected: Boolean) {
                     lineTo(w * .55f, w * .85f); lineTo(w * .7f, w * .4f); lineTo(w, w * .4f)
                 }
                 drawPath(path, color, style = Stroke(1.7.dp.toPx(), cap = StrokeCap.Round))
+            }
+            Screen.MAP -> {
+                drawRect(color, Offset(w*.1f,w*.15f), Size(w*.8f,w*.7f), style = Stroke(1.7.dp.toPx()))
+                drawLine(color,Offset(w*.37f,w*.15f),Offset(w*.37f,w*.85f),1.7.dp.toPx())
+                drawLine(color,Offset(w*.64f,w*.15f),Offset(w*.64f,w*.85f),1.7.dp.toPx())
             }
             Screen.ABOUT -> {
                 drawCircle(color, w * .4f, style = Stroke(1.7.dp.toPx()))

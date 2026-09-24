@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "id": "hyderabad-v1",
+  "bounds": [
+    78.35,
+    17.3,
+    78.6,
+    17.55
+  ],
+  "min_zoom": 10,
+  "max_zoom": 14,
+  "tile_count": 247,
+  "source": "https://tiles.openfreemap.org/planet/20260913_164504_pt/{z}/{x}/{y}.pbf",
+  "source_snapshot": "20260913_164504_pt",
+  "files": [
+    {
+      "path": "hyderabad.mbtiles",
+      "bytes": 22532096,
+      "sha256": "abc4b19e3bd667b81f12083b536dd7f391d042f2b0694cff1304c5ba35418ec3"
+    },
+    {
+      "path": "fonts/Noto Sans Regular/0-255.pbf",
+      "bytes": 76580,
+      "sha256": "ef1f38a3f1978591e846e9eaddf8a54f7047f546fc6aaed7872cc53151a5de78"
+    },
+    {
+      "path": "fonts/Noto Sans Regular/256-511.pbf",
+      "bytes": 127219,
+      "sha256": "992557f9e2574cfb9a75e16c7b52832578849772b7c9a6e480d6213fb008fe5d"
+    },
+    {
+      "path": "fonts/Noto Sans Regular/512-767.pbf",
+      "bytes": 95728,
+      "sha256": "a4c5cdf9623cb0bf7e9c6b0e8be4bf38b524bc29819dd2276c8ca63d5e43dd21"
+    },
+    {
+      "path": "fonts/Noto Sans Regular/768-1023.pbf",
+      "bytes": 74752,
+      "sha256": "6e27cdd6edce5b11c469a24b333ecefc0d4b082491b71d6924ce0be6eeba71c3"
+    }
+  ]
+}
