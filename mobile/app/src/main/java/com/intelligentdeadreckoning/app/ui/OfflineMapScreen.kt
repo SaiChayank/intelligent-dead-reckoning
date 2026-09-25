@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
@@ -30,49 +31,29 @@ fun OfflineMapScreen() {
     var error by remember { mutableStateOf<String?>(null) }
     var renderer by remember { mutableStateOf<MapRenderer?>(null) }
     var ready by remember { mutableStateOf(false) }
-    var demoRunning by remember { mutableStateOf(false) }
-    var demoLabel by remember { mutableStateOf("Synthetic demo stopped — not your location") }
-    var presentation by remember { mutableStateOf(MapPresentation(Source.SIMULATION)) }
+    val demo = remember { MapDemoController() }
+    var snapshot by remember { mutableStateOf(demo.state) }
+    var overlays by remember { mutableStateOf(DemoOverlays()) }
+    var showControls by remember { mutableStateOf(false) }
+    fun update(action: () -> Unit) { action(); snapshot = demo.state }
     val owner = LocalLifecycleOwner.current
     DisposableEffect(owner) {
         val observer = LifecycleEventObserver { _, event ->
             if(event == Lifecycle.Event.ON_STOP) {
-                demoRunning = false
-                demoLabel = "Synthetic demo stopped in background — restart explicitly"
-                presentation = MapPresentation(Source.SIMULATION)
-                renderer?.present(presentation)
+                update { demo.stop() }
+                renderer?.present(snapshot.presentation,overlays)
             }
         }
         owner.lifecycle.addObserver(observer)
         onDispose { owner.lifecycle.removeObserver(observer) }
     }
-    LaunchedEffect(demoRunning,renderer) {
-        if(!demoRunning) {
-            presentation = MapPresentation(Source.SIMULATION)
-            renderer?.present(presentation)
-            return@LaunchedEffect
-        }
-        val adapter = NavigationPresentation(SyntheticMapDemo.header,InitializationMode.DEPLOYABLE)
-        val start = SystemClock.elapsedRealtimeNanos()
-        var first = true
-        while(demoRunning) {
-            val now = SystemClock.elapsedRealtimeNanos()
-            val elapsed = (now-start)/1_000_000L
-            if(elapsed > SyntheticMapDemo.DURATION_MS) {
-                demoRunning = false; demoLabel = "Synthetic demo completed — no navigation running"
-                break
-            }
-            val record = SyntheticMapDemo.record(elapsed,start)
-            // Deliberately synthetic uncertainty, not a calibrated sensor accuracy claim.
-            val confidence = Record(record.header,record.event.copy(event_id = "${elapsed+100000}",
-                data = Confidence(ConfidenceState.CALIBRATED,null,if(elapsed in 10000..<20000) 35.0 else 8.0,null)))
-            presentation = adapter.accept(record,now,confidence)
-            demoLabel = SyntheticMapDemo.scenario(elapsed)
-            renderer?.present(presentation)
-            if(first) { presentation.point?.let { renderer?.focus(it) }; first = false }
-            delay(50) // bounded 20 Hz display target; delayed ticks are skipped, never queued
+    LaunchedEffect(snapshot.playback) {
+        while(demo.state.playback == DemoPlayback.RUNNING) {
+            snapshot = demo.tick(SystemClock.elapsedRealtimeNanos())
+            delay(50)
         }
     }
+    LaunchedEffect(snapshot,overlays,renderer) { renderer?.present(snapshot.presentation,overlays) }
     LaunchedEffect(Unit) {
         try { pack = withContext(Dispatchers.IO) { OfflineMapPack(context.applicationContext).install() } }
         catch (e: kotlinx.coroutines.CancellationException) { throw e }
@@ -82,14 +63,37 @@ fun OfflineMapScreen() {
         Text("Hyderabad · offline map", style = MaterialTheme.typography.titleLarge)
         Text("Optional map preview · no live position, DR, routing or navigation", modifier = Modifier.testTag("map_mode"))
         Text("MAP SOURCE: SYNTHETIC UI FIXTURE — independent of acquisition", Modifier.testTag("map_source"))
-        Text(demoLabel, Modifier.testTag("map_demo_status"))
+        Text(snapshot.label, Modifier.testTag("map_demo_status"))
+        Text("${snapshot.playback} · ${snapshot.rate}× playback · ${snapshot.elapsedMs/1000}s / 30s",Modifier.testTag("demo_clock"))
         Row {
-            TextButton(onClick = { demoRunning = true },enabled = ready && !demoRunning,
+            TextButton(onClick = {
+                update { demo.start(SystemClock.elapsedRealtimeNanos()) }
+                snapshot.presentation.point?.let { renderer?.focus(it) }
+            },enabled = ready && snapshot.playback !in listOf(DemoPlayback.RUNNING,DemoPlayback.PAUSED),
                 modifier = Modifier.testTag("map_demo_start")) { Text("Start synthetic demo") }
-            TextButton(onClick = { demoRunning = false; demoLabel = "Synthetic demo stopped — not your location" },
-                enabled = demoRunning,modifier = Modifier.testTag("map_demo_stop")) { Text("Stop demo") }
+            TextButton(onClick = { update { demo.stop() } },
+                enabled = snapshot.playback in listOf(DemoPlayback.RUNNING,DemoPlayback.PAUSED),modifier = Modifier.testTag("map_demo_stop")) { Text("Stop demo") }
         }
-        if(demoRunning) Text("${presentation.status} · heading ${presentation.headingDegrees?.toInt() ?: "unavailable"}° · speed ${presentation.speedMetresPerSecond?.toInt() ?: "unavailable"} m/s · synthetic 95% radius ${presentation.accuracy95Metres ?: "unavailable"} m")
+        Row {
+            TextButton(onClick = { update {
+                if(snapshot.playback == DemoPlayback.PAUSED) demo.resume(SystemClock.elapsedRealtimeNanos())
+                else demo.pause(SystemClock.elapsedRealtimeNanos())
+            } },enabled = snapshot.playback in listOf(DemoPlayback.RUNNING,DemoPlayback.PAUSED),modifier = Modifier.testTag("demo_pause")) {
+                Text(if(snapshot.playback == DemoPlayback.PAUSED) "Resume" else "Pause")
+            }
+            TextButton(onClick = { update { demo.reset() } },modifier = Modifier.testTag("demo_reset")) { Text("Reset") }
+            TextButton(onClick = { showControls = !showControls },modifier = Modifier.testTag("demo_options")) { Text(if(showControls) "Hide options" else "Demo options") }
+        }
+        if(showControls) MapDemoControls(snapshot,overlays,
+            onScenario = { update { demo.select(it) } },
+            onRate = { update { demo.rate(it,SystemClock.elapsedRealtimeNanos()) } },
+            onSignal = { update { demo.signal(it,SystemClock.elapsedRealtimeNanos()) } },
+            onOverlays = { overlays = it })
+        if(snapshot.playback != DemoPlayback.IDLE) {
+            Text("SYNTHETIC HUD · distance ${"%.1f".format(java.util.Locale.ROOT,snapshot.distanceM)} m · outage total ${snapshot.outageMs/1000.0}s / ${"%.1f".format(java.util.Locale.ROOT,snapshot.outageDistanceM)} m",Modifier.testTag("demo_stats"))
+            Text("Current outage ${snapshot.currentOutageMs/1000.0}s · heading ${snapshot.presentation.headingDegrees?.let { "%.1f".format(java.util.Locale.ROOT,it) } ?: "—"}° · speed ${snapshot.presentation.speedMetresPerSecond?.let { "%.1f".format(java.util.Locale.ROOT,it) } ?: "—"} m/s")
+        }
+        Text("Purple: scripted reference · Red: illustrative drift, NOT measured INS/AI results · Amber: automatic outage segment",style = MaterialTheme.typography.bodySmall)
         Text("Central coverage: 17.30–17.55° N, 78.35–78.60° E. Not the whole city.", style = MaterialTheme.typography.bodySmall)
         when {
             error != null -> Text("Map unavailable: $error. No network fallback.", Modifier.testTag("map_error"))
@@ -98,7 +102,7 @@ fun OfflineMapScreen() {
                 Text(if (ready) "Offline map loaded · ${pack!!.tiles} tiles" else "Loading local style…", Modifier.testTag("map_status"))
                 NativeOfflineMap(pack!!, { renderer = it; ready = true }, {
                     ready = false
-                    demoRunning = false
+                    update { demo.stop() }
                     renderer = null
                     error = it
                 })
@@ -172,5 +176,13 @@ private fun NativeOfflineMap(pack: InstalledMap, onReady: (MapRenderer) -> Unit,
             view.onDestroy()
         }
     }
-    AndroidView(factory = { view }, modifier = Modifier.fillMaxWidth().height(380.dp).testTag("offline_map"))
+    Box(Modifier.fillMaxWidth().height(380.dp).testTag("offline_map")) {
+        AndroidView(factory = { view }, modifier = Modifier.matchParentSize())
+        Surface(modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth(),
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)) {
+            Text("OpenFreeMap · © OpenMapTiles · © OpenStreetMap contributors\nopenstreetmap.org/copyright",
+                modifier = Modifier.padding(4.dp).testTag("map_attribution"),
+                style = MaterialTheme.typography.labelSmall)
+        }
+    }
 }

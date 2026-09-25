@@ -8,6 +8,8 @@ data class MapPresentation(
     val source: Source, val point: MapPoint? = null, val headingDegrees: Double? = null,
     val speedMetresPerSecond: Double? = null, val accuracy95Metres: Double? = null,
     val trail: List<MapPoint> = emptyList(), val status: String = "No navigation position",
+    val comparisonPoint: MapPoint? = null, val comparisonTrail: List<MapPoint> = emptyList(),
+    val scenarioPath: List<MapPoint> = emptyList(), val outagePath: List<MapPoint> = emptyList(),
 )
 
 /** Display conversion only: exact WGS84 origin + ENU -> ECEF -> geographic position.
@@ -93,15 +95,18 @@ object SyntheticMapDemo {
         elapsedMs < 20_000 -> "SYNTHETIC DR scenario (no INS running)"
         else -> "SYNTHETIC GNSS recovery scenario (no fusion running)"
     }
-    fun record(elapsedMs: Long, startNs: Long): Record {
+    fun record(elapsedMs: Long, startNs: Long, scenario: DemoScenario = DemoScenario.CURVE): Record {
         require(elapsedMs in 0..DURATION_MS && startNs >= 0)
         val t = elapsedMs/1000.0
-        val angle = t/15.0
+        val direction = if(scenario == DemoScenario.RIGHT_CURVE) -1 else 1
+        val angle = if(scenario == DemoScenario.STRAIGHT) 0.0 else direction*t/15.0
         val heading = (90.0-Math.toDegrees(angle)+360)%360
         val yaw = angle
         val nav = NavigationState(if(t in 10.0..<20.0) NavigationStatus.DEGRADED else NavigationStatus.TRACKING,
-            InitializationMode.DEPLOYABLE,GeoOrigin(17.425,78.475,500.0),
-            Vector3(150*sin(angle),150*(1-cos(angle)),0.0),Vector3(10*cos(angle),10*sin(angle),0.0),
+            InitializationMode.DEPLOYABLE,GeoOrigin(17.435,78.445,500.0),
+            if(scenario == DemoScenario.STRAIGHT) Vector3(10*t,0.0,0.0)
+            else Vector3(direction*150*sin(angle),direction*150*(1-cos(angle)),0.0),
+            Vector3(10*cos(angle),10*sin(angle),0.0),
             Quaternion(cos(yaw/2),0.0,0.0,sin(yaw/2)),heading,"synthetic-only",false)
         val stamp = Math.addExact(startNs,Math.multiplyExact(elapsedMs,1_000_000L))
         return Record(header,Event(elapsedMs.toString(),stamp,stamp,nav))

@@ -1,5 +1,11 @@
 # Optional offline map — Stages 1 and 2
 
+The subsequent [reference-inspired presentation controls](MAP_DEMO_FEATURES.md)
+extend this demo with pause/resume/reset, playback rates, scenario selection,
+manual synthetic signal overrides, comparison traces, counters and overlay toggles.
+The original Stage 2 implementation notes below describe its initial behavior;
+the linked guide defines the extended controls.
+
 This is an enhancement, not a change to SIH requirements or the navigation
 architecture. The Map tab is a renderer-only preview with an explicitly started
 synthetic position demo. It does not subscribe to acquisition, replay or a running
@@ -146,11 +152,16 @@ prove native execution on a 16 KB page-size device. Pack verification passes all
 It counted 146,029 feature occurrences across zoom levels, not unique objects.
 These checks do not establish that the GPU actually renders the map.
 
-## Required device/emulator gate — NOT YET VERIFIED
+## Device verification
 
-No phone was connected for this stage; no emulator AVD/system image was available.
-OfflineMapDeviceTest compiles but has not been executed. Do not describe Stage 1
-as device-verified. On a connected phone/emulator, run:
+The first physical-device acceptance run is documented in
+[MAP_DEVICE_VERIFICATION.md](MAP_DEVICE_VERIFICATION.md). The earlier host-only
+results above are historical, not the current device status.
+
+### Original device procedure
+
+No phone was connected during the original host-only implementation. On a
+connected phone/emulator, the standard runner command is:
 
 ```powershell
 .\gradlew.bat connectedDebugAndroidTest --console=plain

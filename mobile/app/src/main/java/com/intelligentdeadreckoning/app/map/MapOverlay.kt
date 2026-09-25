@@ -13,15 +13,23 @@ object MapOverlay {
         val next = asin(sin(lat)*cos(d)+cos(lat)*sin(d)*cos(b))
         return listOf(Math.toDegrees(lon+atan2(sin(b)*sin(d)*cos(lat),cos(d)-sin(lat)*sin(next))),Math.toDegrees(next))
     }
-    fun json(state: MapPresentation): String {
+    fun json(state: MapPresentation, overlays: DemoOverlays = DemoOverlays()): String {
         val features = mutableListOf<Map<String,Any>>()
         fun add(kind: String,type: String,coordinates: Any) {
             features += mapOf("type" to "Feature","properties" to mapOf("kind" to kind),
                 "geometry" to mapOf("type" to type,"coordinates" to coordinates))
         }
         state.point?.let { p ->
-            if(state.trail.size >= 2) add("trail","LineString",state.trail.map { listOf(it.longitude,it.latitude) })
-            state.accuracy95Metres?.takeIf { it > 0 }?.let { radius ->
+            if(state.source == com.intelligentdeadreckoning.contracts.v1.Source.SIMULATION) {
+                if(overlays.scenario && state.scenarioPath.size >= 2) add("scenario","LineString",state.scenarioPath.map { listOf(it.longitude,it.latitude) })
+                if(overlays.scenario && state.outagePath.size >= 2) add("outage","LineString",state.outagePath.map { listOf(it.longitude,it.latitude) })
+                if(overlays.comparison) {
+                    if(state.comparisonTrail.size >= 2) add("comparison-trail","LineString",state.comparisonTrail.map { listOf(it.longitude,it.latitude) })
+                    state.comparisonPoint?.let { add("comparison","Point",listOf(it.longitude,it.latitude)) }
+                }
+            }
+            if(overlays.trail && state.trail.size >= 2) add("trail","LineString",state.trail.map { listOf(it.longitude,it.latitude) })
+            state.accuracy95Metres?.takeIf { overlays.uncertainty && it > 0 }?.let { radius ->
                 // Avoid painting near-global circles; large uncertainty stays available as text.
                 if(radius <= 10000) {
                     val ring = (0 until 64).map { offset(p,radius,it*360.0/64) }

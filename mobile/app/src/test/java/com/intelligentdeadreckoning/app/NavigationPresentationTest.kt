@@ -22,7 +22,7 @@ class NavigationPresentationTest {
     }
     @Test fun hyderabadOriginAndHeadingSpeedPreserved() {
         val state = adapter().accept(record(),epoch)
-        assertEquals(17.425,state.point!!.latitude,1e-10); assertEquals(78.475,state.point.longitude,1e-10)
+        assertEquals(17.435,state.point!!.latitude,1e-10); assertEquals(78.445,state.point.longitude,1e-10)
         assertEquals(90.0,state.headingDegrees!!,0.0); assertEquals(10.0,state.speedMetresPerSecond!!,1e-12)
         assertEquals(Source.SIMULATION,state.source); assertNull(state.accuracy95Metres)
     }
@@ -96,7 +96,7 @@ class NavigationPresentationTest {
         val state = adapter().accept(record(),epoch).copy(accuracy95Metres = 8.0)
         val features = JsonParser.parseString(MapOverlay.json(state)).asJsonObject["features"].asJsonArray
         val point = features.first { it.asJsonObject["properties"].asJsonObject["kind"].asString == "position" }.asJsonObject
-        assertEquals(78.475,point["geometry"].asJsonObject["coordinates"].asJsonArray[0].asDouble,1e-10)
+        assertEquals(78.445,point["geometry"].asJsonObject["coordinates"].asJsonArray[0].asDouble,1e-10)
         features.filter { it.asJsonObject["geometry"].asJsonObject["type"].asString == "Polygon" }.forEach {
             val ring = it.asJsonObject["geometry"].asJsonObject["coordinates"].asJsonArray[0].asJsonArray
             // Last circle point is explicitly closed, not approximately closed.
