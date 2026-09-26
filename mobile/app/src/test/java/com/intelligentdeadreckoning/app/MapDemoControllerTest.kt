@@ -115,4 +115,51 @@ class MapDemoControllerTest {
         val real = d.state.presentation.copy(source=Source.REAL)
         assertFalse(MapOverlay.json(real).contains("comparison-trail"))
     }
+    @Test fun repeatedRunsNeverRetainPreviousSessionGeometryOrCounters() {
+        val d = MapDemoController()
+        repeat(30) { run ->
+            d.select(DemoScenario.entries[run % DemoScenario.entries.size])
+            val start = origin + run * 60_000_000_000L
+            d.start(start)
+            assertEquals(0L,d.state.outageMs)
+            assertEquals(1,d.state.presentation.trail.size)
+            assertEquals(1,d.state.presentation.comparisonTrail.size)
+            for (ms in 500L..30_000L step 500) d.tick(start + ms * 1_000_000)
+            assertEquals(DemoPlayback.COMPLETED,d.state.playback)
+            assertEquals(300.0,d.state.distanceM,0.0)
+            assertEquals(10_000L,d.state.outageMs)
+            assertTrue(d.state.presentation.trail.size <= 61)
+            assertTrue(d.state.presentation.comparisonTrail.size <= 61)
+            d.stop()
+            assertNull(d.state.presentation.point)
+            assertTrue(d.state.presentation.scenarioPath.isEmpty())
+        }
+    }
+    @Test fun hugeClockGapCompletesWithoutOverflowAtEveryPlaybackRate() {
+        for (rate in listOf(0.5,1.0,2.0)) {
+            val d = MapDemoController()
+            d.rate(rate,0); d.start(0); d.tick(Long.MAX_VALUE)
+            assertEquals(DemoPlayback.COMPLETED,d.state.playback)
+            assertEquals(30_000L,d.state.elapsedMs)
+            assertEquals(300.0,d.state.distanceM,0.0)
+            assertEquals(10_000L,d.state.outageMs)
+            assertEquals(d.state.presentation.point,d.state.presentation.comparisonPoint)
+        }
+    }
+    @Test fun completedCountersAreIndependentOfCadenceAndPlaybackSpeed() {
+        for (rate in listOf(0.5,1.0,2.0)) for (stepMs in listOf(17L,250L,7000L)) {
+            val d = started(); d.rate(rate,origin)
+            var elapsed = 0L
+            while (d.state.playback == DemoPlayback.RUNNING) {
+                elapsed += stepMs
+                d.tick(origin + elapsed * 1_000_000)
+            }
+            assertEquals(30_000L,d.state.elapsedMs)
+            assertEquals(10_000L,d.state.outageMs)
+            assertEquals(100.0,d.state.outageDistanceM,0.0)
+            assertEquals(0L,d.state.currentOutageMs)
+            assertTrue(d.state.presentation.trail.size <= 512)
+            assertTrue(d.state.presentation.comparisonTrail.size <= 512)
+        }
+    }
 }

@@ -93,3 +93,100 @@ Physical test class is `com.intelligentdeadreckoning.app.OfflineMapDeviceTest`.
 Use the direct `adb install -r` and `am instrument` commands documented in
 MAP_DEVICE_VERIFICATION.md if the host Gradle UTP directory remains inaccessible.
 Never clear application data to work around test-runner problems.
+
+## Verification results and continuation handoff
+
+Confirmed on 2026-09-25:
+
+- Host build succeeded with **132 JVM tests, zero failures/errors/skips**,
+  including 16 MapDemoController tests. Both APKs built; lint reported 0 errors
+  and 8 existing warnings. The final regression test covers a signal-control
+  click arriving after the virtual run has completed.
+- The expanded physical-device suite completed **OK (5 tests), 40.102 seconds**
+  on the connected OnePlus CPH2585 before that final completion-label fix.
+  Scenario/rate selection, pause/resume/reset, signal overrides, overlay controls,
+  camera movement, lifecycle behavior and screenshot collection passed.
+- Real device screenshots under ignored
+  `mobile/artifacts/map-demo-controls-20260925/` show comparison traces, scenario
+  geometry, synthetic statistics and attribution. No benchmark claims follow
+  from these screenshots.
+- All 88 existing recording-file SHA-256 hashes matched the pre-test inventory
+  after that completed run. Map assets passed the read-only pack verifier.
+- The final completion-label fix passed host tests. Its subsequent device rerun
+  was interrupted before the final suite summary was retrieved; do not count it
+  as a second completed device pass.
+
+On continuation, commit `da84645` already contains the implementation and final
+fix. Git was clean and synchronized with the locally recorded origin/main.
+The old test process was no longer available and `adb devices -l` listed no
+connected device. Therefore no new recording-integrity or physical-device claim
+was made during continuation.
+
+### Final-build acceptance completed — 2026-09-25
+
+- Installed the existing final app and test APKs with `adb install -r`, preserving
+  app data. Direct `OfflineMapDeviceTest` instrumentation passed **OK (5 tests),
+  41.45 seconds** on OnePlus CPH2585. This closes the pending final-build recheck.
+- The first attempt had 2 failures out of 5: a Compose startup timeout and a
+  missing Compose hierarchy. A complete rerun passed without source changes.
+  The precise transient startup cause remains unproven; leave the phone unlocked
+  and untouched during instrumentation. Do not describe the first run as passing.
+- Fresh pre-install and post-test inventories contained **88 recording files**
+  with identical paths and SHA-256 hashes. No recording was started or deleted.
+- Repeated the documented offline Gradle build/check command: **BUILD SUCCESSFUL
+  in 17s**, 80 tasks (79 up-to-date). The retained JVM results contain **132 tests,
+  0 failures/errors/skips**; this invocation reused those results, not 132 fresh
+  executions. Lint remains **0 errors, 8 warnings**. SDK XML-version and restricted
+  analytics-settings warnings were non-fatal.
+- `python mobile/tools/verify_hyderabad_pack.py` passed read-only verification:
+  5 files, 247 tiles, 146,029 vector features. No pack regeneration was performed.
+- Only this verification guide was edited during the final continuation. No raw
+  data, acquisition, recording, contracts or algorithm source was modified.
+
+**READY: the bounded offline map + synthetic demo feature is complete and verified
+on this phone.** Human pinch/rotation ergonomics, prolonged performance/battery
+testing and disposable-install storage fault tests remain outside this acceptance.
+Real GNSS/DR fusion, routing, map matching and turn-by-turn navigation are not
+implemented by this feature. Do not present the synthetic demo as real navigation.
+
+### Regression hardening — 2026-09-26
+
+Added three deterministic JVM tests, without changing runtime behavior:
+
+- Thirty complete start/stop runs across all scenarios verify that geometry and
+  counters do not carry over between runs.
+- A `Long.MAX_VALUE` clock gap at each supported playback rate verifies bounded
+  arithmetic, completion and comparison convergence.
+- Nine cadence/rate combinations verify identical final distance/outage counters
+  and the 512-point trail bounds.
+
+Fresh execution from `mobile/`:
+
+```powershell
+.\gradlew.bat testDebugUnitTest --offline --console=plain '-Pkotlin.compiler.execution.strategy=in-process'
+```
+
+Result: **BUILD SUCCESSFUL in 30s; 135 tests, 0 failures/errors/skips**, including
+19 MapDemoController tests. These results are fresh, not reused test results.
+Existing SDK XML/analytics warnings and a nullable-receiver compiler warning in
+StrictContractTest.kt remain; no test failed. No phone operations were performed
+in this continuation, and no production source, raw data or recordings changed.
+These deterministic tests are not evidence of real-device memory or battery usage.
+
+## Remaining manual acceptance checklist
+
+Owner: device tester. Use the synthetic Map screen, not real acquisition.
+
+1. Pinch and rotate the map; check readable attribution, smooth gestures and that
+   North/Hyderabad controls restore the expected camera. Record phone/OS and result.
+2. If convenient, enable airplane mode manually, reopen Map and verify local tiles
+   still render. Restore connectivity afterward. This checks offline rendering,
+   **not** real GNSS-denied navigation or GNSS recovery.
+3. Exercise repeated demos for 15 minutes; note rendering stalls, crashes and
+   thermal/battery observations. Quantitative performance claims require profiling
+   and a controlled baseline, not a short subjective check.
+
+Storage-full/corrupt-pack tests belong on a disposable install owned by a developer;
+never alter this phone's existing recordings to simulate a failure. Real navigation
+integration requires a separate reviewed contract/engine task and is not the next
+automatic action. No AI/EKF readiness approval is implied by this map acceptance.
