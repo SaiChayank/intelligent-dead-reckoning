@@ -10,6 +10,10 @@ data class MapPresentation(
     val trail: List<MapPoint> = emptyList(), val status: String = "No navigation position",
     val comparisonPoint: MapPoint? = null, val comparisonTrail: List<MapPoint> = emptyList(),
     val scenarioPath: List<MapPoint> = emptyList(), val outagePath: List<MapPoint> = emptyList(),
+    /** Recorded fixes split at every gap. Empty for the synthetic fixture, which has no gaps. */
+    val trailSegments: List<List<MapPoint>> = emptyList(),
+    /** Platform-reported horizontal accuracy radius (68%). Never a calibrated 95% value. */
+    val fixRadiusMetres: Double? = null,
 )
 
 /** Display conversion only: exact WGS84 origin + ENU -> ECEF -> geographic position.

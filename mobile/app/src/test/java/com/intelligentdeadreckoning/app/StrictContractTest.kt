@@ -148,7 +148,7 @@ class StrictContractTest {
         val input = if (external == null) canonical else File(external).inputStream().use { Codec.readJsonl(it).toList() }
         assertEquals(canonical, input)
         val output = File("build/contract_interop/kotlin.jsonl")
-        output.parentFile.mkdirs()
+        output.parentFile?.mkdirs()
         output.outputStream().use { Codec.writeJsonl(input.asSequence(), it) }
         assertEquals(canonical, output.inputStream().use { Codec.readJsonl(it).toList() })
     }

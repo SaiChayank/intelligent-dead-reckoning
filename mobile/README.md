@@ -34,6 +34,42 @@ Not implemented: ZIP import, replay seek/speed controls, rotation-vector events,
 fusion, calibration or shared-core implementation. Host tests/build pass;
 connected-device acquisition acceptance still requires the procedure linked above.
 
+## Interface and design system
+
+The Compose surface was rebuilt on a single dark design system in
+`app/src/main/java/com/intelligentdeadreckoning/app/ui/design/`:
+
+- `Tokens.kt` — colour, spacing, radius, size, motion and typography scales. One accent
+  ("signal lime", `#C6F24E`) carries selection, primary actions and live metrics; semantic
+  success/warning/danger/info tones stay separate so "simulated" can never read as "selected".
+  Surfaces run `#070707`–`#181818`, primary text `#F5F5F5`.
+- `Components.kt` — reusable primitives: `IdrCard` (primary/secondary/utility/glass), `IdrButton`,
+  `IdrChip` (carries `Selected` semantics), `StatusPill`, `StatTile`, `IdrMeter`, `KeyValueRow`,
+  `StatePanel` (loading/empty/error), `PlaceholderBlock`, the `IdrIcon` line-glyph family and the
+  floating `IdrDock`. No icon or animation dependency was added.
+- `ui/Theme.kt` — `IdrTheme`, mapping that system onto Material 3 and exposing
+  `LocalIdrReducedMotion`, which is true when the platform animation scale is zero. Every animated
+  primitive collapses its duration to 0 in that case.
+
+Motion is deliberately bounded: presses scale 1 → 0.97, the dock's active indicator slides between
+item positions, chips animate their selection colour, and screens fade in. Nothing animates from a
+continuously changing sensor or clock value, and there is no unbounded repeating animation, so the
+Compose test clock always reaches idle. No font binaries are bundled: the platform family is used
+with explicit weights and tightened letter spacing, and numeric readouts use the monospaced family.
+
+The Map tab is map-first. The offline renderer fills a full-width hero with floating glass chrome
+(status chips, camera cluster and demo console), and the synthetic-demo options plus the coverage
+and limits disclosure sit in the scroll flow beneath it. The dock reserves its own inset space
+instead of covering page content, so scrolled controls stay reachable and clickable.
+
+This is a presentation change only. Acquisition, recording, export, replay, contracts, the map
+renderer and the frozen device procedures are unchanged, and no instrumented test tag, control
+label or user-visible status string was altered. Verified here: **135 JVM tests pass**, both APKs
+build, `assembleDebugAndroidTest` still compiles the device suite, and lint reports **0 errors**
+with no source warnings. Physical-device verification of the new surface (layout on the target
+phone, gesture ergonomics, sunlight contrast and the full instrumented suite) is **not** performed
+by this change and still requires the connected-phone procedure below.
+
 ## Open and run in Android Studio
 
 1. Choose **Open**, then select `Intelligent Dead Reckoning/mobile`.
@@ -131,6 +167,16 @@ The implemented shared contract is documented in `../contracts/v1/README.md`.
 same golden JSON used by Python, including exact nanoseconds, nulls and rotations.
 Gson 2.11.0 supports the strict runtime codec. Acquisition uses these typed records
 with source `real`; the old IO-VNBD export frames are not remapped by this app.
+
+The two replay readers are kept honest against each other: `PythonParityTest` encodes
+fixture sessions once with the canonical Kotlin codec — the exact byte form an export
+carries — and runs the same bytes through `ReplayReader`/`SessionFiles` and through
+`tools/parity_probe.py` (the Python reader that consumes exported recordings). Both must
+agree on acceptance, refusal code, record order, exact Int64 timestamps and replay
+source. The Python interpreter is located under the repository root (`.venv` first), so
+the check runs in ordinary `testDebugUnitTest` with no device attached. After a real
+recording is copied off the phone, `python tools/validate_phone_recording.py --local
+<session-dir>` accepts or refuses it with the same rules.
 
 `testDebugUnitTest` covers initial empty state, monotonic elapsed time, duplicate
 Start prevention, Stop cancellation, background stop, fresh restart, idempotent

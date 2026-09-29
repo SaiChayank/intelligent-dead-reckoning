@@ -1,46 +1,101 @@
 package com.intelligentdeadreckoning.app.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.intelligentdeadreckoning.app.simulation.*
-import com.intelligentdeadreckoning.app.acquisition.*
-import com.intelligentdeadreckoning.contracts.v1.Sensor
-import com.intelligentdeadreckoning.app.recording.RecorderState
+import com.intelligentdeadreckoning.app.acquisition.CaptureState
+import com.intelligentdeadreckoning.app.acquisition.InputSource
 import com.intelligentdeadreckoning.app.recording.RecorderPhase
+import com.intelligentdeadreckoning.app.recording.RecorderState
+import com.intelligentdeadreckoning.app.replay.ReplayState
+import com.intelligentdeadreckoning.app.sessions.ExportPhase
+import com.intelligentdeadreckoning.app.sessions.ExportState
+import com.intelligentdeadreckoning.app.sessions.SavedSession
+import com.intelligentdeadreckoning.app.sessions.SessionPage
+import com.intelligentdeadreckoning.app.simulation.DemoSignal
+import com.intelligentdeadreckoning.app.simulation.SessionStatus
+import com.intelligentdeadreckoning.app.simulation.SimulationState
+import com.intelligentdeadreckoning.app.simulation.StopReason
+import com.intelligentdeadreckoning.app.simulation.Vector3
+import com.intelligentdeadreckoning.app.ui.design.DockItem
+import com.intelligentdeadreckoning.app.ui.design.IdrButton
+import com.intelligentdeadreckoning.app.ui.design.IdrButtonVariant
+import com.intelligentdeadreckoning.app.ui.design.IdrCard
+import com.intelligentdeadreckoning.app.ui.design.IdrChip
+import com.intelligentdeadreckoning.app.ui.design.IdrDivider
+import com.intelligentdeadreckoning.app.ui.design.IdrDock
+import com.intelligentdeadreckoning.app.ui.design.IdrEmphasis
+import com.intelligentdeadreckoning.app.ui.design.IdrGlyph
+import com.intelligentdeadreckoning.app.ui.design.IdrIcon
+import com.intelligentdeadreckoning.app.ui.design.IdrMeter
+import com.intelligentdeadreckoning.app.ui.design.IdrMotion
+import com.intelligentdeadreckoning.app.ui.design.IdrPalette
+import com.intelligentdeadreckoning.app.ui.design.IdrSectionLabel
+import com.intelligentdeadreckoning.app.ui.design.IdrSize
+import com.intelligentdeadreckoning.app.ui.design.IdrSpace
+import com.intelligentdeadreckoning.app.ui.design.IdrStateTone
+import com.intelligentdeadreckoning.app.ui.design.IdrTone
+import com.intelligentdeadreckoning.app.ui.design.IdrType
+import com.intelligentdeadreckoning.app.ui.design.LocalIdrReducedMotion
+import com.intelligentdeadreckoning.app.ui.design.StatePanel
+import com.intelligentdeadreckoning.app.ui.design.StatTile
+import com.intelligentdeadreckoning.contracts.v1.Sensor
 import java.util.Locale
-import com.intelligentdeadreckoning.app.sessions.*
-import com.intelligentdeadreckoning.app.replay.*
+import kotlin.math.abs
 import kotlin.math.cos
+import kotlin.math.max
 import kotlin.math.sin
 
-private enum class Screen(val title: String) { DASHBOARD("Dashboard"), DIAGNOSTICS("Diagnostics"), MAP("Map"), ABOUT("About") }
+private enum class Screen(val id: String, val title: String, val glyph: IdrGlyph, val testTag: String) {
+    DASHBOARD("dashboard", "Home", IdrGlyph.HOME, "tab_DASHBOARD"),
+    MAP("map", "Map", IdrGlyph.NAVIGATE, "tab_MAP"),
+    DIAGNOSTICS("diagnostics", "Signals", IdrGlyph.PULSE, "tab_DIAGNOSTICS"),
+    ABOUT("about", "About", IdrGlyph.INFO, "tab_ABOUT"),
+}
+
+private val dockItems = Screen.entries.map { DockItem(it.id, it.title, it.glyph, it.testTag) }
 
 @Composable
 fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
@@ -59,118 +114,60 @@ fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
     var selected by rememberSaveable { mutableStateOf(Screen.DASHBOARD) }
     BackHandler(enabled = selected != Screen.DASHBOARD) { selected = Screen.DASHBOARD }
     Scaffold(
-        containerColor = Ink,
+        containerColor = IdrPalette.background,
+        // The dock owns its own inset space instead of floating over content: scrolled controls
+        // stay clickable and the navigation surface never occludes the last row of a page.
         bottomBar = {
-            NavigationBar(containerColor = Ink, tonalElevation = 0.dp) {
-                Screen.entries.forEach { screen ->
-                    NavigationBarItem(
-                        selected = selected == screen,
-                        onClick = { selected = screen },
-                        icon = { NavigationGlyph(screen, selected == screen) },
-                        label = { Text(screen.title) },
-                        modifier = Modifier.testTag("tab_${screen.name}"),
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = Lime, selectedTextColor = Lime,
-                            indicatorColor = Panel, unselectedIconColor = Muted, unselectedTextColor = Muted,
-                        ),
-                    )
-                }
-            }
+            IdrDock(
+                items = dockItems,
+                selectedId = selected.id,
+                onSelect = { id -> selected = Screen.entries.first { it.id == id } },
+                modifier = Modifier.padding(horizontal = IdrSpace.lg, vertical = IdrSpace.md),
+            )
         },
     ) { insets ->
-        Column(Modifier.padding(insets).fillMaxSize()) {
-            Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(36.dp).background(Lime, RoundedCornerShape(11.dp)), contentAlignment = Alignment.Center) {
-                        Text("i↗", color = Ink, fontWeight = FontWeight.Black, fontSize = 21.sp)
-                    }
-                    Spacer(Modifier.width(10.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text("DEAD RECKONING", fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp)
-                        Text("MOTION LAB / 01", color = Muted, fontSize = 10.sp, letterSpacing = 1.3.sp)
-                    }
-                }
-                Spacer(Modifier.height(16.dp))
-                Row(
-                    Modifier.fillMaxWidth().background(Amber.copy(alpha = 0.10f), RoundedCornerShape(12.dp))
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(Modifier.size(6.dp).background(Amber, CircleShape))
-                    Spacer(Modifier.width(8.dp))
-                    Text(if (replayVisible) replay.source?.wire ?: "REPLAY" else if (source == InputSource.SIMULATION) "SIMULATION" else "REAL PHONE", color = Amber, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                    Spacer(Modifier.width(8.dp))
-                    Text(if (replayVisible) "Recorded playback · not live" else if (source == InputSource.SIMULATION) "Demo data · not live sensors" else "Measured · foreground only", color = Amber, fontSize = 11.sp, modifier = Modifier.weight(1f))
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    FilterChip(selected = source == InputSource.SIMULATION, onClick = { onSource(InputSource.SIMULATION) },
-                        label = { Text("Simulation") }, modifier = Modifier.testTag("source_simulation"))
-                    FilterChip(selected = source == InputSource.REAL, onClick = { onSource(InputSource.REAL) },
-                        label = { Text("Phone sensors") }, modifier = Modifier.testTag("source_real"))
-                }
-            }
+        Column(Modifier.fillMaxSize().padding(insets)) {
+            AppHeader(source, onSource, replayVisible, replay)
             // Each page scrolls independently, including on small displays / larger font settings.
             key(selected) {
-                Column(
-                    Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp)
-                        .padding(top = 8.dp, bottom = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(20.dp),
-                ) {
-                    if (selected != Screen.ABOUT && selected != Screen.MAP) {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("Local recording · ${recording.phase.name.lowercase()}", modifier = Modifier.testTag("recording_status"))
-                            Text(recording.message, style = MaterialTheme.typography.bodySmall)
-                            Text("Written ${recording.written} · dropped ${recording.dropped} · write errors ${recording.writeErrors} · ID gaps ${recording.eventIdGaps}",
-                                style = MaterialTheme.typography.bodySmall)
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Button(onClick = onStartRecording,
-                                    enabled = !replayVisible && !replay.busy && source == InputSource.REAL && capture.running && capture.sensors.isNotEmpty() && !recording.busy && !export.busy,
-                                    modifier = Modifier.testTag("recording_start")) { Text("Start recording") }
-                                OutlinedButton(onClick = onStopRecording,
-                                    enabled = recording.phase in listOf(RecorderPhase.STARTING, RecorderPhase.RECORDING) && recording.recordingId != null,
-                                    modifier = Modifier.testTag("recording_stop")) { Text("Stop recording") }
-                            }
-                            if (source == InputSource.SIMULATION) Text("Recording requires the Phone sensors acquisition stream.", style = MaterialTheme.typography.bodySmall)
-                            Row {
-                                TextButton(onClick = { detailsOpen = !detailsOpen }) { Text("Recording details") }
-                                TextButton(onClick = { sessionsOpen = true; onRefreshSessions(null) }, modifier = Modifier.testTag("saved_sessions")) { Text("Saved sessions") }
-                            }
-                            if (detailsOpen) Text("Session: ${recording.recordingId ?: "none"}\nSource: ${currentSession?.metadata?.source ?: "unknown"}\nElapsed: ${elapsedNs?.let { "${it / 1_000_000_000L} s" } ?: "unknown"}\nPrivate files: ${currentSession?.bytes?.let { "$it bytes (snapshot)" } ?: "unknown"}", style = MaterialTheme.typography.bodySmall)
-                            if (export.phase != ExportPhase.IDLE) Text("Export copy · ${export.message}", style = MaterialTheme.typography.bodySmall)
+                // The measured page area is what a full-bleed hero may occupy: the window height
+                // also counts the header and the dock, which no page ever gets to draw on.
+                BoxWithConstraints(Modifier.fillMaxSize()) {
+                    val pageArea = maxHeight - IdrSpace.sm - IdrSpace.xxl
+                    Column(
+                        Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+                            .padding(horizontal = IdrSpace.xl)
+                            .padding(top = IdrSpace.sm, bottom = IdrSpace.xxl),
+                        verticalArrangement = Arrangement.spacedBy(IdrSpace.xl),
+                    ) {
+                        if (selected != Screen.ABOUT && selected != Screen.MAP) {
+                            RecordingPanel(recording, capture, source, replayVisible, replay.busy,
+                                onStartRecording, onStopRecording, detailsOpen, { detailsOpen = !detailsOpen },
+                                currentSession, elapsedNs, export,
+                                { sessionsOpen = true; onRefreshSessions(null) })
                         }
-                    }
-                    if (replayVisible && selected != Screen.ABOUT && selected != Screen.MAP) ReplayPanel(replay, onPauseReplay, onResumeReplay, onStopReplay)
-                    else when (selected) {
-                        Screen.DASHBOARD -> {
-                            if (source == InputSource.REAL) {
-                                RealDashboard(
-                                    state = capture,
-                                    start = onStart,
-                                    stop = onStop,
-                                    permission = onPermission,
-                                    settings = onSettings,
-                                )
-                            } else {
-                                Dashboard(state, onStart, onStop)
+                        if (replayVisible && selected != Screen.ABOUT && selected != Screen.MAP) {
+                            EntranceFade { ReplayPanel(replay, onPauseReplay, onResumeReplay, onStopReplay) }
+                        } else {
+                            when (selected) {
+                                Screen.DASHBOARD -> EntranceFade {
+                                    if (source == InputSource.REAL) {
+                                        RealDashboard(capture, onStart, onStop, onPermission, onSettings)
+                                    } else {
+                                        Dashboard(state, onStart, onStop)
+                                    }
+                                }
+                                Screen.DIAGNOSTICS -> EntranceFade {
+                                    if (source == InputSource.REAL) {
+                                        RealDiagnostics(capture, onStart, onStop, onPermission, onSettings)
+                                    } else {
+                                        Diagnostics(state, onStart, onStop)
+                                    }
+                                }
+                                Screen.MAP -> EntranceFade { OfflineMapScreen(pageArea) }
+                                Screen.ABOUT -> EntranceFade { About() }
                             }
                         }
-
-                        Screen.DIAGNOSTICS -> {
-                            if (source == InputSource.REAL) {
-                                RealDiagnostics(
-                                    state = capture,
-                                    start = onStart,
-                                    stop = onStop,
-                                    permission = onPermission,
-                                    settings = onSettings,
-                                )
-                            } else {
-                                Diagnostics(state, onStart, onStop)
-                            }
-                        }
-
-                        Screen.MAP -> OfflineMapScreen()
-                        Screen.ABOUT -> About()
                     }
                 }
             }
@@ -178,51 +175,279 @@ fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
     }
 }
 
+/**
+ * Screen entrance. Alpha-only, so semantics and hit targets are stable for the whole
+ * transition and an automated test clock always reaches idle.
+ */
 @Composable
-private fun ColumnScope.Dashboard(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit) {
-    Column {
-        Text("Ready to explore.", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold, letterSpacing = (-1).sp)
-        Spacer(Modifier.height(5.dp))
-        Text("A first look at motion, before the real drive.", color = Muted, style = MaterialTheme.typography.bodyMedium)
+private fun EntranceFade(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    val reduced = LocalIdrReducedMotion.current
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+    val alpha by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = IdrMotion.tweenSpec(IdrMotion.pageMs, reduced),
+        label = "entrance",
+    )
+    Box(modifier.fillMaxWidth().graphicsLayer { this.alpha = alpha }) { content() }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Header: brand, source-truth banner and the single source selector.
+// ---------------------------------------------------------------------------------------------
+
+private data class SourceBanner(val label: String, val detail: String, val tone: IdrTone, val glyph: IdrGlyph)
+
+@Composable
+private fun AppHeader(
+    source: InputSource,
+    onSource: (InputSource) -> Unit,
+    replayVisible: Boolean,
+    replay: ReplayState,
+) {
+    val banner = when {
+        replayVisible -> SourceBanner(
+            // Exact wire value: the replay identity must stay verbatim and machine-checkable.
+            replay.source?.wire ?: "REPLAY",
+            "Recorded playback · not live", IdrTone.INFO, IdrGlyph.RESET,
+        )
+        source == InputSource.SIMULATION -> SourceBanner(
+            "SIMULATION", "Demo data · not live sensors", IdrTone.WARNING, IdrGlyph.PLAY,
+        )
+        else -> SourceBanner(
+            "REAL PHONE", "Measured · foreground only", IdrTone.ACCENT, IdrGlyph.RECORD,
+        )
     }
-    Surface(shape = RoundedCornerShape(28.dp), color = Panel, modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(22.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("MOTION PREVIEW", color = Muted, fontSize = 11.sp, letterSpacing = 1.5.sp, modifier = Modifier.weight(1f))
-                Text(statusLabel(state), color = if (state.isRunning) Lime else Muted, fontSize = 12.sp,
-                    modifier = Modifier.testTag("session_status"))
+    Column(Modifier.fillMaxWidth().padding(horizontal = IdrSpace.xl).padding(top = IdrSpace.lg, bottom = IdrSpace.md)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(38.dp).background(IdrPalette.accent, RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                IdrIcon(IdrGlyph.NAVIGATE, tint = IdrPalette.background, size = 21.dp, strokeWidth = 2.dp)
             }
-            SpeedGauge(state.measurement?.speedKmh)
-            HorizontalDivider(color = Line)
-            Row(Modifier.fillMaxWidth().padding(top = 18.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                Metric("SESSION TIME", duration(state.measurement?.elapsedMillis ?: 0), Modifier.weight(1f))
-                Metric("DEMO HEADING", state.measurement?.let { "${decimal(it.headingDegrees, 0)}°" } ?: "—", Modifier.weight(1f))
+            Spacer(Modifier.width(IdrSpace.md))
+            Column(Modifier.weight(1f)) {
+                Text("DEAD RECKONING", color = IdrPalette.textPrimary, style = IdrType.brand)
+                Text("GNSS-DENIED NAVIGATION · MOTION LAB 01", color = IdrPalette.textMuted, style = IdrType.labelSmall)
             }
         }
+        Spacer(Modifier.height(IdrSpace.lg))
+        Row(
+            Modifier.fillMaxWidth()
+                .background(banner.tone.color.copy(alpha = 0.10f), RoundedCornerShape(IdrSpace.md))
+                .padding(horizontal = IdrSpace.md, vertical = IdrSpace.md),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IdrIcon(banner.glyph, tint = banner.tone.color, size = 15.dp)
+            Spacer(Modifier.width(IdrSpace.sm))
+            Text(banner.label, color = banner.tone.color, style = IdrType.label)
+            Spacer(Modifier.width(IdrSpace.sm))
+            Text(
+                banner.detail,
+                color = IdrPalette.textSecondary,
+                style = IdrType.bodySmall,
+                modifier = Modifier.weight(1f),
+                maxLines = 1,
+            )
+        }
+        Spacer(Modifier.height(IdrSpace.md))
+        Row(horizontalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
+            IdrChip("Simulation", selected = source == InputSource.SIMULATION, emphasized = true,
+                glyph = IdrGlyph.PLAY, onClick = { onSource(InputSource.SIMULATION) },
+                testTag = "source_simulation")
+            IdrChip("Phone sensors", selected = source == InputSource.REAL, emphasized = true,
+                glyph = IdrGlyph.SATELLITE, onClick = { onSource(InputSource.REAL) },
+                testTag = "source_real")
+        }
     }
-    SessionControls(state, onStart, onStop)
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        SmallCard("DATA SOURCE", "Scripted demo", "No hardware accessed", Modifier.weight(1f))
-        SmallCard("NAVIGATION", "Not connected", "Core integration later", Modifier.weight(1f))
+}
+
+// ---------------------------------------------------------------------------------------------
+// Recording console (unchanged behaviour, restyled surface)
+// ---------------------------------------------------------------------------------------------
+
+@Composable
+private fun RecordingPanel(
+    recording: RecorderState,
+    capture: CaptureState,
+    source: InputSource,
+    replayVisible: Boolean,
+    replayBusy: Boolean,
+    onStartRecording: () -> Unit,
+    onStopRecording: () -> Unit,
+    detailsOpen: Boolean,
+    onToggleDetails: () -> Unit,
+    currentSession: SavedSession?,
+    elapsedNs: Long?,
+    export: ExportState,
+    onOpenSessions: () -> Unit,
+) {
+    IdrCard(emphasis = IdrEmphasis.UTILITY) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IdrSectionLabel("Local recording")
+            IdrIcon(
+                IdrGlyph.RECORD,
+                tint = when (recording.phase) {
+                    RecorderPhase.RECORDING -> IdrPalette.danger
+                    RecorderPhase.COMPLETED -> IdrPalette.success
+                    else -> IdrPalette.textMuted
+                },
+                size = IdrSize.iconSm,
+            )
+        }
+        Text(
+            "Local recording · ${recording.phase.name.lowercase()}",
+            color = IdrPalette.textPrimary,
+            style = IdrType.titleMedium,
+            modifier = Modifier.testTag("recording_status"),
+        )
+        Text(recording.message, color = IdrPalette.textSecondary, style = IdrType.bodySmall)
+        Text(
+            "Written ${recording.written} · dropped ${recording.dropped} · write errors ${recording.writeErrors} · ID gaps ${recording.eventIdGaps}",
+            color = IdrPalette.textMuted,
+            style = IdrType.monoSmall,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
+            IdrButton(
+                "Start recording",
+                onStartRecording,
+                enabled = !replayVisible && !replayBusy && source == InputSource.REAL && capture.running &&
+                    capture.sensors.isNotEmpty() && !recording.busy && !export.busy,
+                variant = IdrButtonVariant.PRIMARY,
+                glyph = IdrGlyph.RECORD,
+                testTag = "recording_start",
+                minHeight = IdrSize.touchTarget,
+                modifier = Modifier.weight(1f),
+            )
+            IdrButton(
+                "Stop recording",
+                onStopRecording,
+                enabled = recording.phase in listOf(RecorderPhase.STARTING, RecorderPhase.RECORDING) && recording.recordingId != null,
+                variant = IdrButtonVariant.SECONDARY,
+                glyph = IdrGlyph.STOP,
+                testTag = "recording_stop",
+                minHeight = IdrSize.touchTarget,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        if (source == InputSource.SIMULATION) {
+            Text("Recording requires the Phone sensors acquisition stream.", color = IdrPalette.textMuted, style = IdrType.bodySmall)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
+            IdrButton("Recording details", onToggleDetails, variant = IdrButtonVariant.GHOST, minHeight = 40.dp,
+                glyph = IdrGlyph.SLIDERS)
+            IdrButton("Saved sessions", onOpenSessions, variant = IdrButtonVariant.GHOST, minHeight = 40.dp,
+                glyph = IdrGlyph.LAYERS, testTag = "saved_sessions")
+        }
+        if (detailsOpen) {
+            Text(
+                "Session: ${recording.recordingId ?: "none"}\nSource: ${currentSession?.metadata?.source ?: "unknown"}\n" +
+                    "Elapsed: ${elapsedNs?.let { "${it / 1_000_000_000L} s" } ?: "unknown"}\n" +
+                    "Private files: ${currentSession?.bytes?.let { "$it bytes (snapshot)" } ?: "unknown"}",
+                color = IdrPalette.textMuted,
+                style = IdrType.monoSmall,
+            )
+        }
+        if (export.phase != ExportPhase.IDLE) {
+            Text("Export copy · ${export.message}", color = IdrPalette.textSecondary, style = IdrType.bodySmall)
+        }
     }
-    Text("Made for GNSS-challenged journeys. This build previews the interface only; it cannot locate or navigate your vehicle.",
-        color = Muted, style = MaterialTheme.typography.bodySmall, lineHeight = 19.sp)
+}
+
+// ---------------------------------------------------------------------------------------------
+// Dashboard
+// ---------------------------------------------------------------------------------------------
+
+@Composable
+private fun Dashboard(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(IdrSpace.lg)) {
+        Column(verticalArrangement = Arrangement.spacedBy(IdrSpace.xs)) {
+            Text("Ready to explore.", style = IdrType.headlineLarge, color = IdrPalette.textPrimary)
+            Text("A first look at motion, before the real drive.", color = IdrPalette.textSecondary, style = IdrType.bodyMedium)
+        }
+        IdrCard(emphasis = IdrEmphasis.PRIMARY) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IdrSectionLabel("Motion preview")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        Modifier.size(7.dp).background(
+                            if (state.isRunning) IdrPalette.accent else IdrPalette.textMuted,
+                            CircleShape,
+                        ),
+                    )
+                    Spacer(Modifier.width(IdrSpace.sm))
+                    Text(
+                        statusLabel(state),
+                        color = if (state.isRunning) IdrPalette.accent else IdrPalette.textSecondary,
+                        style = IdrType.label,
+                        modifier = Modifier.testTag("session_status"),
+                    )
+                }
+            }
+            SpeedGauge(state.measurement?.speedKmh)
+            IdrDivider()
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(IdrSpace.lg)) {
+                StatTile(
+                    "Session time",
+                    duration(state.measurement?.elapsedMillis ?: 0),
+                    modifier = Modifier.weight(1f),
+                    caption = "Elapsed demo clock",
+                )
+                StatTile(
+                    "Demo heading",
+                    state.measurement?.let { "${decimal(it.headingDegrees, 0)}°" } ?: "—",
+                    modifier = Modifier.weight(1f),
+                    caption = "Scripted, not measured",
+                )
+            }
+        }
+        SessionControls(state, onStart, onStop)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(IdrSpace.md)) {
+            UtilityCard("Data source", "Scripted demo", "No hardware accessed", Modifier.weight(1f), IdrGlyph.PLAY)
+            UtilityCard("Navigation", "Not connected", "Core integration later", Modifier.weight(1f), IdrGlyph.NAVIGATE)
+        }
+        Text(
+            "Made for GNSS-challenged journeys. This build previews the interface only; it cannot locate or navigate your vehicle.",
+            color = IdrPalette.textMuted, style = IdrType.bodySmall,
+        )
+    }
+}
+
+@Composable
+private fun UtilityCard(label: String, value: String, detail: String, modifier: Modifier, glyph: IdrGlyph) {
+    IdrCard(modifier, emphasis = IdrEmphasis.UTILITY) {
+        IdrIcon(glyph, tint = IdrPalette.textMuted, size = IdrSize.iconSm)
+        Text(label.uppercase(), color = IdrPalette.textMuted, style = IdrType.labelSmall)
+        Text(value, color = IdrPalette.textPrimary, style = IdrType.titleMedium)
+        Text(detail, color = IdrPalette.textMuted, style = IdrType.bodySmall)
+    }
 }
 
 @Composable
 private fun SessionControls(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-            Button(
-                onClick = onStart, enabled = !state.isRunning,
-                shape = RoundedCornerShape(16.dp), contentPadding = PaddingValues(16.dp),
-                modifier = Modifier.weight(1.45f).heightIn(min = 56.dp).testTag("start_button"),
-            ) { Text(if (state.status == SessionStatus.STOPPED) "Start new demo" else "Start simulation", fontWeight = FontWeight.Bold) }
-            OutlinedButton(
-                onClick = onStop, enabled = state.isRunning,
-                shape = RoundedCornerShape(16.dp), contentPadding = PaddingValues(16.dp),
-                modifier = Modifier.weight(1f).heightIn(min = 56.dp).testTag("stop_button"),
-            ) { Text("Stop", fontWeight = FontWeight.Bold) }
+    Column(verticalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(IdrSpace.md), modifier = Modifier.fillMaxWidth()) {
+            IdrButton(
+                label = if (state.status == SessionStatus.STOPPED) "Start new demo" else "Start simulation",
+                onClick = onStart,
+                enabled = !state.isRunning,
+                variant = IdrButtonVariant.PRIMARY,
+                glyph = IdrGlyph.PLAY,
+                testTag = "start_button",
+                minHeight = IdrSize.rowHeight,
+                modifier = Modifier.weight(1.45f),
+            )
+            IdrButton(
+                label = "Stop",
+                onClick = onStop,
+                enabled = state.isRunning,
+                variant = IdrButtonVariant.SECONDARY,
+                glyph = IdrGlyph.STOP,
+                testTag = "stop_button",
+                minHeight = IdrSize.rowHeight,
+                modifier = Modifier.weight(1f),
+            )
         }
         Text(
             when {
@@ -230,320 +455,288 @@ private fun SessionControls(state: SimulationState, onStart: () -> Unit, onStop:
                 state.stopReason == StopReason.BACKGROUND -> "Stopped in background. Start a new demo to continue."
                 state.status == SessionStatus.STOPPED -> "Stopped · last values retained. A new demo resets them."
                 else -> "No sensors, location access or recording."
-            }, color = Muted, style = MaterialTheme.typography.bodySmall,
+            },
+            color = IdrPalette.textMuted, style = IdrType.bodySmall,
             modifier = Modifier.testTag("session_message"),
         )
     }
 }
 
 @Composable
-private fun ColumnScope.RealDashboard(
+private fun SpeedGauge(speed: Double?) {
+    Box(Modifier.fillMaxWidth().height(196.dp), contentAlignment = Alignment.Center) {
+        Canvas(Modifier.size(196.dp)) {
+            val inset = 12.dp.toPx()
+            val arcSize = Size(size.width - inset * 2, size.height - inset * 2)
+            drawArc(
+                IdrPalette.surfaceHigh, 140f, 260f, false, Offset(inset, inset), arcSize,
+                style = Stroke(6.dp.toPx(), cap = StrokeCap.Round),
+            )
+            val progress = ((speed ?: 0.0) / 60.0).coerceIn(0.0, 1.0).toFloat()
+            if (progress > 0) {
+                drawArc(
+                    IdrPalette.accent, 140f, 260f * progress, false, Offset(inset, inset), arcSize,
+                    style = Stroke(6.dp.toPx(), cap = StrokeCap.Round),
+                )
+            }
+            for (tick in 0..30) {
+                val angle = Math.toRadians(140.0 + tick * 260.0 / 30)
+                val radius = size.width / 2 - 24.dp.toPx()
+                val length = if (tick % 5 == 0) 8.dp.toPx() else 3.5.dp.toPx()
+                val tickColor = if (tick % 5 == 0) IdrPalette.borderStrong else IdrPalette.borderSubtle
+                drawLine(
+                    tickColor,
+                    center + Offset((cos(angle) * radius).toFloat(), (sin(angle) * radius).toFloat()),
+                    center + Offset((cos(angle) * (radius - length)).toFloat(), (sin(angle) * (radius - length)).toFloat()),
+                    1.dp.toPx(),
+                )
+            }
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("DEMO SPEED", color = IdrPalette.textMuted, style = IdrType.label)
+            Text(
+                speed?.let { decimal(it, 1) } ?: "—",
+                color = IdrPalette.textPrimary,
+                fontSize = 52.sp,
+                fontWeight = FontWeight.Light,
+                letterSpacing = (-2).sp,
+                modifier = Modifier.testTag("demo_speed"),
+            )
+            Text("km/h", color = IdrPalette.accent, style = IdrType.titleMedium)
+        }
+        Text(
+            "SCRIPTED · NOT MEASURED", color = IdrPalette.textMuted, style = IdrType.labelSmall,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 6.dp),
+        )
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Diagnostics
+// ---------------------------------------------------------------------------------------------
+
+@Composable
+private fun Diagnostics(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(IdrSpace.lg)) {
+        Column(verticalArrangement = Arrangement.spacedBy(IdrSpace.xs)) {
+            Text("Under the hood.", style = IdrType.headlineLarge, color = IdrPalette.textPrimary)
+            Text(
+                "Scripted values, with explicit units.\nNot a physical sensor model or real IMU data.",
+                color = IdrPalette.textSecondary, style = IdrType.bodyMedium,
+            )
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(IdrSpace.md)) {
+            UtilityCard("UI demo cadence", "10 Hz", "Not a measured sensor rate", Modifier.weight(1f), IdrGlyph.PULSE)
+            UtilityCard("Demo samples", state.sampleCount.toString(), statusLabel(state), Modifier.weight(1f), IdrGlyph.LAYERS)
+        }
+        SensorCard("Accelerometer", "m/s²", state.measurement?.accelerometer, IdrPalette.accent, 20.0)
+        SensorCard("Gyroscope", "rad/s", state.measurement?.gyroscope, IdrPalette.info, 5.0)
+        SensorCard("Magnetometer", "µT", state.measurement?.magnetometer, IdrPalette.warning, 100.0)
+        StatePanel(
+            title = "GNSS & device sensors",
+            message = "Not connected in this build. No real position, accuracy, satellite count or sensor accuracy is available.",
+            tone = IdrStateTone.EMPTY,
+        )
+        SessionControls(state, onStart, onStop)
+    }
+}
+
+@Composable
+private fun SensorCard(title: String, unit: String, vector: Vector3?, accent: Color, scale: Double) {
+    val magnitude = vector?.let { max(abs(it.x), max(abs(it.y), abs(it.z))) } ?: 0.0
+    IdrCard(emphasis = IdrEmphasis.SECONDARY) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(8.dp).background(accent, CircleShape))
+            Spacer(Modifier.width(IdrSpace.sm))
+            Text(title, color = IdrPalette.textPrimary, style = IdrType.titleMedium, modifier = Modifier.weight(1f))
+            Text(unit, color = IdrPalette.textMuted, style = IdrType.monoSmall)
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(IdrSpace.md)) {
+            listOf("X" to vector?.x, "Y" to vector?.y, "Z" to vector?.z).forEach { (axis, value) ->
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(IdrSpace.xxs)) {
+                    Text(axis, color = IdrPalette.textMuted, style = IdrType.labelSmall)
+                    Text(
+                        value?.let { decimal(it, 3) } ?: "—",
+                        color = if (value == null) IdrPalette.textMuted else IdrPalette.textPrimary,
+                        style = IdrType.metricSmall,
+                        modifier = Modifier.semantics {
+                            contentDescription =
+                                "$title $axis: ${value?.let { decimal(it, 3) } ?: "no sample"} $unit, simulated"
+                        },
+                    )
+                }
+            }
+        }
+        IdrMeter(fraction = (magnitude / scale).toFloat(), tone = IdrTone.ACCENT)
+        Text(
+            if (vector == null) "No scripted sample yet." else "Peak axis amplitude · ${decimal(magnitude, 3)} $unit",
+            color = IdrPalette.textMuted, style = IdrType.bodySmall,
+        )
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Real (measured) dashboard
+// ---------------------------------------------------------------------------------------------
+
+@Composable
+private fun RealDashboard(
     state: CaptureState,
     start: () -> Unit,
     stop: () -> Unit,
     permission: () -> Unit,
     settings: () -> Unit,
 ) {
-    Column {
-        Text(
-            "Live measurements",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.SemiBold,
-            letterSpacing = (-1).sp,
-        )
-        Spacer(Modifier.height(6.dp))
-        Text(
-            "Foreground phone sensors and permitted location.",
-            color = Muted,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-    }
-
-    Surface(
-        shape = RoundedCornerShape(24.dp),
-        color = Panel,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(
-            Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Text(
-                if (state.running) "Running" else "Stopped",
-                modifier = Modifier.testTag("real_status"),
-                color = Lime,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
-
-            Text(state.message, color = Muted)
-
-            Text(
-                "Location: ${state.permission.name}",
-                modifier = Modifier.testTag("location_permission"),
-            )
-
-            Text(
-                "GNSS: ${state.quality.state.wire}",
-                color = Muted,
-            )
-
-            val availableSensors = Sensor.entries.count {
-                state.sensors[it]?.available == true
+    Column(verticalArrangement = Arrangement.spacedBy(IdrSpace.lg)) {
+        Column(verticalArrangement = Arrangement.spacedBy(IdrSpace.xs)) {
+            Text("Live measurements", style = IdrType.headlineLarge, color = IdrPalette.textPrimary)
+            Text("Foreground phone sensors and permitted location.", color = IdrPalette.textSecondary, style = IdrType.bodyMedium)
+        }
+        IdrCard(emphasis = IdrEmphasis.PRIMARY) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier.size(8.dp).background(
+                        if (state.running) IdrPalette.accent else IdrPalette.textMuted,
+                        CircleShape,
+                    ),
+                )
+                Spacer(Modifier.width(IdrSpace.sm))
+                Text(
+                    if (state.running) "Running" else "Stopped",
+                    color = if (state.running) IdrPalette.accent else IdrPalette.textSecondary,
+                    style = IdrType.titleMedium,
+                    modifier = Modifier.testTag("real_status"),
+                )
             }
-
+            Text(state.message, color = IdrPalette.textSecondary, style = IdrType.bodySmall)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(IdrSpace.lg)) {
+                StatTile(
+                    "Location",
+                    state.permission.name,
+                    modifier = Modifier.weight(1f),
+                    tone = if (state.permission.name == "PRECISE") IdrTone.SUCCESS else IdrTone.WARNING,
+                    valueStyle = IdrType.titleMedium,
+                    valueTag = "location_permission",
+                )
+                StatTile(
+                    "GNSS",
+                    state.quality.state.wire,
+                    modifier = Modifier.weight(1f),
+                    valueStyle = IdrType.titleMedium,
+                )
+            }
+            IdrDivider()
+            val availableSensors = Sensor.entries.count { state.sensors[it]?.available == true }
+            KeyValue("Sensors available", "$availableSensors / ${Sensor.entries.size}")
+            KeyValue("Accepted", "${state.accepted} · dropped ${state.dropped} · invalid ${state.invalid}")
+            KeyValue("Queue", "${state.queueDepth}/256 · peak ${state.queueHighWater}")
+            IdrMeter(fraction = state.queueHighWater / 256f, tone = IdrTone.INFO)
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(IdrSpace.md)) {
+            IdrButton("Start sensors", start, enabled = !state.running, variant = IdrButtonVariant.PRIMARY,
+                glyph = IdrGlyph.RECORD, testTag = "real_start", minHeight = IdrSize.rowHeight,
+                modifier = Modifier.weight(1.4f))
+            IdrButton("Stop", stop, enabled = state.running, variant = IdrButtonVariant.SECONDARY,
+                glyph = IdrGlyph.STOP, testTag = "real_stop", minHeight = IdrSize.rowHeight,
+                modifier = Modifier.weight(1f))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
+            IdrButton("Allow location", permission, variant = IdrButtonVariant.SECONDARY,
+                glyph = IdrGlyph.LOCATE, testTag = "grant_location")
+            IdrButton("App settings", settings, variant = IdrButtonVariant.GHOST, glyph = IdrGlyph.SLIDERS)
+        }
+        IdrCard(emphasis = IdrEmphasis.UTILITY) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IdrIcon(IdrGlyph.PULSE, tint = IdrPalette.textMuted, size = IdrSize.iconSm)
+                Spacer(Modifier.width(IdrSpace.sm))
+                Text("Detailed diagnostics", color = IdrPalette.textPrimary, style = IdrType.titleMedium)
+            }
             Text(
-                "Sensors available: $availableSensors / ${Sensor.entries.size}",
-                color = Muted,
-            )
-
-            Text(
-                "Accepted ${state.accepted} · dropped ${state.dropped} · invalid ${state.invalid}",
-                color = Muted,
-            )
-
-            Text(
-                "Queue ${state.queueDepth}/256 · peak ${state.queueHighWater}",
-                color = Muted,
+                "Open the Signals tab for per-sensor values, measured rates, timestamps, GNSS fields, queue statistics and diagnostic events.",
+                color = IdrPalette.textSecondary, style = IdrType.bodySmall,
             )
         }
+        Text(
+            "Foreground acquisition only · recording off · navigation not running",
+            color = IdrPalette.textMuted, style = IdrType.bodySmall,
+        )
     }
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Button(
-            onClick = start,
-            enabled = !state.running,
-            modifier = Modifier
-                .weight(1.4f)
-                .heightIn(min = 56.dp)
-                .testTag("real_start"),
-        ) {
-            Text("Start sensors", fontWeight = FontWeight.Bold)
-        }
-
-        OutlinedButton(
-            onClick = stop,
-            enabled = state.running,
-            modifier = Modifier
-                .weight(1f)
-                .heightIn(min = 56.dp)
-                .testTag("real_stop"),
-        ) {
-            Text("Stop", fontWeight = FontWeight.Bold)
-        }
-    }
-
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        OutlinedButton(
-            onClick = permission,
-            modifier = Modifier.testTag("grant_location"),
-        ) {
-            Text("Allow location")
-        }
-
-        TextButton(onClick = settings) {
-            Text("App settings")
-        }
-    }
-
-    Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = Panel,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(
-            Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Text(
-                "Detailed diagnostics",
-                fontWeight = FontWeight.SemiBold,
-            )
-
-            Text(
-                "Open the Diagnostics tab for per-sensor values, measured rates, timestamps, GNSS fields, queue statistics and diagnostic events.",
-                color = Muted,
-                style = MaterialTheme.typography.bodySmall,
-                lineHeight = 19.sp,
-            )
-        }
-    }
-
-    Text(
-        "Foreground acquisition only · recording off · navigation not running",
-        color = Muted,
-        style = MaterialTheme.typography.bodySmall,
-    )
 }
 
 @Composable
-private fun ColumnScope.Diagnostics(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit) {
-    Column {
-        Text("Under the hood.", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold, letterSpacing = (-1).sp)
-        Spacer(Modifier.height(6.dp))
-        Text("Scripted values, with explicit units.\nNot a physical sensor model or real IMU data.", color = Muted, style = MaterialTheme.typography.bodyMedium)
+private fun KeyValue(label: String, value: String) {
+    Row(Modifier.fillMaxWidth()) {
+        Text(label, color = IdrPalette.textMuted, style = IdrType.bodySmall, modifier = Modifier.weight(1f))
+        Text(value, color = IdrPalette.textSecondary, style = IdrType.monoSmall)
     }
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        SmallCard("UI DEMO CADENCE", "10 Hz target", "Not a measured sensor rate", Modifier.weight(1f))
-        SmallCard("DEMO SAMPLES", state.sampleCount.toString(), statusLabel(state), Modifier.weight(1f))
-    }
-    SensorCard("Accelerometer", "m/s²", state.measurement?.accelerometer, Lime)
-    SensorCard("Gyroscope", "rad/s", state.measurement?.gyroscope, Color(0xFF92C8F1))
-    SensorCard("Magnetometer", "µT", state.measurement?.magnetometer, Amber)
-    Surface(shape = RoundedCornerShape(20.dp), color = Panel) {
-        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("GNSS & device sensors", fontWeight = FontWeight.SemiBold)
-            Text("Not connected in this build. No real position, accuracy, satellite count or sensor accuracy is available.", color = Muted,
-                style = MaterialTheme.typography.bodyMedium)
-        }
-    }
-    SessionControls(state, onStart, onStop)
 }
 
+// ---------------------------------------------------------------------------------------------
+// About
+// ---------------------------------------------------------------------------------------------
+
 @Composable
-private fun ColumnScope.About() {
-    Column {
-        Text("Built for the\njourney ahead.", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold, letterSpacing = (-1).sp)
-        Spacer(Modifier.height(8.dp))
-        Text("Intelligent Dead Reckoning\nSIH problem statement #26168", color = Muted)
-    }
-    Surface(shape = RoundedCornerShape(24.dp), color = Panel) {
-        Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(22.dp)) {
-            Milestone("01", "App foundation", "Available now", "Kotlin + Jetpack Compose, screen navigation and an in-memory demo.", true)
-            HorizontalDivider(color = Line)
-            Milestone("02", "Real-world acquisition", "Available now", "Select Phone sensors for foreground IMU and location measurements. Recording remains planned.", true)
-            HorizontalDivider(color = Line)
-            Milestone("03", "Navigation integration", "Future work", "A validated shared navigation core, calibration and eventually map display.", false)
+private fun About() {
+    Column(verticalArrangement = Arrangement.spacedBy(IdrSpace.lg)) {
+        Column(verticalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
+            Text("Built for the\njourney ahead.", style = IdrType.headlineLarge, color = IdrPalette.textPrimary)
+            Text(
+                "Intelligent Dead Reckoning\nSIH problem statement #26168",
+                color = IdrPalette.textSecondary, style = IdrType.bodyMedium,
+            )
+        }
+        IdrCard(emphasis = IdrEmphasis.PRIMARY) {
+            Milestone("01", "App foundation", "Available now",
+                "Kotlin + Jetpack Compose, screen navigation and an in-memory demo.", true)
+            IdrDivider()
+            Milestone("02", "Real-world acquisition", "Available now",
+                "Select Phone sensors for foreground IMU and location measurements. Recording remains planned.", true)
+            IdrDivider()
+            Milestone("03", "Navigation integration", "Future work",
+                "A validated shared navigation core, calibration and eventually map display.", false)
+        }
+        IdrCard(emphasis = IdrEmphasis.SECONDARY) {
+            IdrSectionLabel("Private by design")
+            Text(
+                "Simulation uses scripted values. Phone sensors mode reads IMU and permitted location while this app is visible. Data stays in bounded memory and is never recorded or uploaded. Leaving the app stops acquisition; returning requires Start.",
+                color = IdrPalette.textSecondary, style = IdrType.bodyMedium,
+            )
+        }
+        IdrCard(emphasis = IdrEmphasis.SECONDARY) {
+            IdrSectionLabel("Scientific boundary")
+            Text(
+                "No INS, AI or fusion is running here. Dataset frame conventions are not automatically valid for this phone; real-device calibration and core validation remain separate work.",
+                color = IdrPalette.textSecondary, style = IdrType.bodyMedium,
+            )
+        }
+        IdrCard(emphasis = IdrEmphasis.UTILITY) {
+            Text(
+                "ANDROID IS THE MAIN PRODUCT\nPython supports offline research. Edge deployment is secondary.",
+                color = IdrPalette.textMuted, style = IdrType.monoSmall,
+            )
+            Text("FOREGROUND ACQUISITION · NAVIGATION PLANNED", color = IdrPalette.accent, style = IdrType.label)
         }
     }
-    Text("Private by design", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-    Text("Simulation uses scripted values. Phone sensors mode reads IMU and permitted location while this app is visible. Data stays in bounded memory and is never recorded or uploaded. Leaving the app stops acquisition; returning requires Start.", color = Muted, lineHeight = 23.sp)
-    Text("Scientific boundary", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-    Text("No INS, AI or fusion is running here. Dataset frame conventions are not automatically valid for this phone; real-device calibration and core validation remain separate work.", color = Muted, lineHeight = 23.sp)
-    Text("ANDROID IS THE MAIN PRODUCT\nPython supports offline research. Edge deployment is secondary.", color = Muted, fontSize = 11.sp, lineHeight = 19.sp, letterSpacing = 0.5.sp)
-    Text("FOREGROUND ACQUISITION · NAVIGATION PLANNED", color = Lime, fontSize = 11.sp, letterSpacing = 1.sp)
 }
 
 @Composable
 private fun Milestone(number: String, title: String, stage: String, description: String, active: Boolean) {
-    Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text(number, color = if (active) Lime else Muted, fontFamily = FontFamily.Monospace, fontSize = 13.sp)
-        Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            Text(stage.uppercase(Locale.ROOT), color = if (active) Lime else Muted, fontSize = 10.sp, letterSpacing = 1.sp)
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(description, color = Muted, style = MaterialTheme.typography.bodySmall, lineHeight = 19.sp)
+    Row(horizontalArrangement = Arrangement.spacedBy(IdrSpace.md)) {
+        Text(
+            number,
+            color = if (active) IdrPalette.accent else IdrPalette.textMuted,
+            style = IdrType.mono,
+            modifier = Modifier.padding(top = 2.dp),
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(IdrSpace.xs)) {
+            Text(stage.uppercase(Locale.ROOT), color = if (active) IdrPalette.accent else IdrPalette.textMuted, style = IdrType.labelSmall)
+            Text(title, style = IdrType.titleLarge, color = IdrPalette.textPrimary)
+            Text(description, color = IdrPalette.textMuted, style = IdrType.bodySmall)
         }
     }
 }
 
-@Composable
-private fun SensorCard(title: String, unit: String, vector: Vector3?, accent: Color) {
-    Surface(shape = RoundedCornerShape(20.dp), color = Panel) {
-        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(7.dp).background(accent, CircleShape))
-                Spacer(Modifier.width(8.dp))
-                Text(title, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                Text(unit, color = Muted, fontSize = 12.sp)
-            }
-            Row(Modifier.fillMaxWidth()) {
-                listOf("X" to vector?.x, "Y" to vector?.y, "Z" to vector?.z).forEach { (axis, value) ->
-                    Column(Modifier.weight(1f)) {
-                        Text(axis, color = Muted, fontSize = 10.sp)
-                        Text(value?.let { decimal(it, 3) } ?: "—", fontFamily = FontFamily.Monospace, fontSize = 17.sp,
-                            modifier = Modifier.semantics { contentDescription = "$title $axis: ${value?.let { decimal(it, 3) } ?: "no sample"} $unit, simulated" })
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun SmallCard(label: String, value: String, detail: String, modifier: Modifier = Modifier) {
-    Column(modifier.border(1.dp, Line, RoundedCornerShape(18.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(label, color = Muted, fontSize = 9.sp, letterSpacing = 1.sp)
-        Text(value, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-        Text(detail, color = Muted, fontSize = 11.sp, lineHeight = 16.sp)
-    }
-}
-
-@Composable
-private fun Metric(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(7.dp)) {
-        Text(label, color = Muted, fontSize = 10.sp, letterSpacing = 1.sp)
-        Text(value, fontFamily = FontFamily.Monospace, fontSize = 24.sp)
-    }
-}
-
-@Composable
-private fun SpeedGauge(speed: Double?) {
-    Box(Modifier.fillMaxWidth().height(225.dp), contentAlignment = Alignment.Center) {
-        Canvas(Modifier.size(218.dp)) {
-            val inset = 14.dp.toPx()
-            val arcSize = Size(size.width - inset * 2, size.height - inset * 2)
-            drawArc(Line, 140f, 260f, false, Offset(inset, inset), arcSize, style = Stroke(7.dp.toPx(), cap = StrokeCap.Round))
-            val progress = ((speed ?: 0.0) / 60.0).coerceIn(0.0, 1.0).toFloat()
-            if (progress > 0) drawArc(Lime, 140f, 260f * progress, false, Offset(inset, inset), arcSize, style = Stroke(7.dp.toPx(), cap = StrokeCap.Round))
-            for (tick in 0..30) {
-                val angle = Math.toRadians(140.0 + tick * 260.0 / 30)
-                val radius = size.width / 2 - 27.dp.toPx()
-                val length = if (tick % 5 == 0) 9.dp.toPx() else 4.dp.toPx()
-                drawLine(Muted.copy(alpha = 0.5f),
-                    center + Offset((cos(angle) * radius).toFloat(), (sin(angle) * radius).toFloat()),
-                    center + Offset((cos(angle) * (radius - length)).toFloat(), (sin(angle) * (radius - length)).toFloat()),
-                    1.dp.toPx())
-            }
-        }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("DEMO SPEED", color = Muted, fontSize = 10.sp, letterSpacing = 2.sp)
-            Text(speed?.let { decimal(it, 1) } ?: "—", fontSize = 54.sp, fontWeight = FontWeight.Light, letterSpacing = (-2).sp,
-                modifier = Modifier.testTag("demo_speed"))
-            Text("km/h", color = Lime, fontSize = 13.sp)
-        }
-        Text("SCRIPTED · NOT MEASURED", color = Muted, fontSize = 9.sp, letterSpacing = 1.sp,
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 11.dp))
-    }
-}
-
-@Composable
-private fun NavigationGlyph(screen: Screen, selected: Boolean) {
-    val color = if (selected) Lime else Muted
-    Canvas(Modifier.size(22.dp)) {
-        val w = size.width
-        when (screen) {
-            Screen.DASHBOARD -> {
-                val path = Path().apply {
-                    moveTo(w * .15f, w * .45f); lineTo(w * .5f, w * .15f); lineTo(w * .85f, w * .45f)
-                    lineTo(w * .85f, w * .85f); lineTo(w * .15f, w * .85f); close()
-                }
-                drawPath(path, color, style = Stroke(1.7.dp.toPx(), cap = StrokeCap.Round))
-            }
-            Screen.DIAGNOSTICS -> {
-                val path = Path().apply {
-                    moveTo(0f, w * .55f); lineTo(w * .2f, w * .55f); lineTo(w * .35f, w * .2f)
-                    lineTo(w * .55f, w * .85f); lineTo(w * .7f, w * .4f); lineTo(w, w * .4f)
-                }
-                drawPath(path, color, style = Stroke(1.7.dp.toPx(), cap = StrokeCap.Round))
-            }
-            Screen.MAP -> {
-                drawRect(color, Offset(w*.1f,w*.15f), Size(w*.8f,w*.7f), style = Stroke(1.7.dp.toPx()))
-                drawLine(color,Offset(w*.37f,w*.15f),Offset(w*.37f,w*.85f),1.7.dp.toPx())
-                drawLine(color,Offset(w*.64f,w*.15f),Offset(w*.64f,w*.85f),1.7.dp.toPx())
-            }
-            Screen.ABOUT -> {
-                drawCircle(color, w * .4f, style = Stroke(1.7.dp.toPx()))
-                drawCircle(color, 1.3.dp.toPx(), Offset(w / 2, w * .32f))
-                drawLine(color, Offset(w / 2, w * .48f), Offset(w / 2, w * .72f), 1.7.dp.toPx(), StrokeCap.Round)
-            }
-        }
-    }
-}
+// ---------------------------------------------------------------------------------------------
 
 private fun statusLabel(state: SimulationState) = when (state.status) {
     SessionStatus.READY -> "Ready"

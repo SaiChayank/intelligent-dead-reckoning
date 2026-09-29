@@ -28,8 +28,15 @@ object MapOverlay {
                     state.comparisonPoint?.let { add("comparison","Point",listOf(it.longitude,it.latitude)) }
                 }
             }
-            if(overlays.trail && state.trail.size >= 2) add("trail","LineString",state.trail.map { listOf(it.longitude,it.latitude) })
-            state.accuracy95Metres?.takeIf { overlays.uncertainty && it > 0 }?.let { radius ->
+            if(overlays.trail) {
+                // Recorded fixes arrive pre-split at every gap; the synthetic trail is one path.
+                val segments = if(state.trailSegments.isNotEmpty()) state.trailSegments else listOf(state.trail)
+                for(segment in segments) if(segment.size >= 2)
+                    add("trail","LineString",segment.map { listOf(it.longitude,it.latitude) })
+            }
+            // Only one of these is ever set: a calibrated 95% confidence, or the radius a real
+            // fix reported. They are drawn the same way but never averaged or conflated.
+            (state.accuracy95Metres ?: state.fixRadiusMetres)?.takeIf { overlays.uncertainty && it > 0 }?.let { radius ->
                 // Avoid painting near-global circles; large uncertainty stays available as text.
                 if(radius <= 10000) {
                     val ring = (0 until 64).map { offset(p,radius,it*360.0/64) }
