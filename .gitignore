@@ -25,6 +25,7 @@ coverage.xml
 
 .vscode/
 .idea/
+.freebuff/
 
 .gradle/
 .gradle-user-home/

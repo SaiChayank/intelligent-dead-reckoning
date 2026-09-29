@@ -9,61 +9,124 @@ correction and sensor fusion.
 
 ## Product and architecture
 
-The **Android application is the main product**. The planned app will provide
+The **Android application is the main product**. The app will eventually provide
 vehicle positioning, GNSS availability states, calibration guidance, confidence
 information, and map display, with inference on the device. The Kotlin + Jetpack
-Compose foundation now lives in `mobile/`: Dashboard, Diagnostics and About
-screens with Start/Stop controls and clearly labelled simulation or real phone
-measurements. Foreground IMU/GNSS acquisition is implemented; device acceptance
-is pending. Navigation is not yet connected.
+Compose application lives in `mobile/`: Home (Dashboard), Map, Signals
+(Diagnostics) and About screens with Start/Stop controls and clearly labelled
+simulation, recorded or real phone measurements. Foreground IMU/GNSS acquisition
+is implemented and device-verified; local recording with recovery, local export
+and read-only replay are implemented; the map draws the labelled synthetic
+fixture, saved recordings and live phone GNSS. Navigation estimation is not yet
+connected.
 
 - `training/`: the current Python offline research pipeline. It inspects data,
   verifies schemas and timing, and runs experimental navigation diagnostics.
   Future responsibilities include training, evaluation, and model export.
 - `core/`: the future shared navigation core for calibration, coordinate frames,
-  propagation, and fusion. Its implementation and mobile integration are planned.
+  propagation, and fusion. Reserved and empty — see [core/README.md](core/README.md).
   `training/common.py` is a data-analysis utility module, not this navigation core.
-- `mobile/`: the Android application foundation in Kotlin and Jetpack Compose.
-  It supports a scripted demo and foreground sensor/location acquisition.
-  Navigation and local model inference remain future work. See [Android setup](mobile/README.md).
+- `mobile/`: the Android application in Kotlin and Jetpack Compose:
+  acquisition, recording with recovery, export, replay, session library and the
+  offline map with its three presentation sources. Navigation estimation and
+  local model inference remain future work. See [Android setup](mobile/README.md).
 - `edge/`: a secondary deployment target for higher-frequency sensor hardware.
-  The planned edge engine will reuse navigation logic; it is not implemented.
-- `models/`: future trained/exported model artifacts.
+  The planned edge engine will reuse navigation logic; it is a reserved,
+  currently empty directory — see [edge/README.md](edge/README.md).
+- `models/`: future trained/exported model artifacts; reserved and empty —
+  see [models/README.md](models/README.md).
 - `reports/`: existing empirical evidence and experimental results.
 - `tests/`: small synthetic-fixture tests; no raw dataset is required for tests.
 - `docs/`: project proposals and architecture plans. These describe intended
   capabilities, not proof that they have been implemented.
 
-The design sources are [project documentation](docs/26168%20Documentation.pdf),
-[master blueprint](docs/26168%20Master%20Blueprint.pdf), and
-[implementation plan](docs/26168%20Planning%20and%20Implementation%20Plan.pdf).
+The design sources are the current-state exports in `docs/`:
+[project documentation](docs/SIH_PS26168_Project_Documentation_Current_State.pdf),
+[master blueprint](docs/SIH_PS26168_Master_Blueprint_Current_State.pdf), and
+[implementation plan](docs/SIH_PS26168_Planning_and_Implementation_Plan_Current_State.pdf).
+
+Repository layout, ownership boundaries and the generated-artifact policy are in
+[ARCHITECTURE.md](ARCHITECTURE.md); the pinned toolchain and verification
+commands in [DEVELOPER_SETUP.md](DEVELOPER_SETUP.md); the continuous-integration
+gates, what CI cannot verify, and the manual physical-device acceptance gates in
+[CI.md](CI.md).
 
 ## Current state
 
 **Phase 2 readiness: NO-GO.** The [foundation readiness review](reports/foundation_readiness.md)
-records the earlier state before contract/acquisition implementation. It includes
-measured evidence, training holds and [bounded continuation prompts](reports/foundation_next_steps.md).
-The [navigation contract](contracts/v1/README.md) now has strict Python/Kotlin codecs.
-See [acquisition behavior and device procedure](mobile/ACQUISITION.md) for the new
-foreground source. Recording/replay and corrected INS remain missing gates.
+records the measured evidence, training holds and [bounded continuation prompts](reports/foundation_next_steps.md).
+The [current-state audit](CURRENT_STATE_AUDIT.md) classifies every subsystem and
+lists the recommended build order. The [navigation contract](contracts/v1/README.md)
+has strict Python/Kotlin codecs. Recording/replay are implemented and verified;
+corrected INS remains a missing gate.
 
-Implemented: the Phase 0 inventory/schema/unit/sampling/synchronization audit,
-machine-readable schema registry, empirical reports, raw-file integrity checks,
-synthetic tests, and shared dataset configuration. The audit streams files or
-processes one recording/pair at a time rather than loading the full dataset.
-The Android app has lifecycle-owned simulation and real acquisition controls,
-permission handling, bounded queues and diagnostics. Simulation remains scripted;
-real mode displays phone measurements, never inferred INS outputs.
+### IMPLEMENTED — code exists in the tree
 
-Experimental: M (Driver B) synchronization searches, attitude and body-frame
-diagnostics, and a classical strapdown inertial navigation system (INS) baseline.
-These scripts can be run for research; their outputs are not validated app
-navigation or production calibration.
+- **Contracts** — versioned measurement (`contracts/v1`) and recording
+  (`contracts/recording/v1`) schemas with strict Python and Kotlin codecs,
+  golden/invalid fixtures, and cross-language parity tests. These are the only
+  data contracts; nothing else may define a parallel schema.
+- **Android acquisition** — foreground IMU (accelerometer, gyroscope,
+  magnetometer, gravity) plus GNSS/network fixes and satellite status, with
+  permission handling and bounded queues. See [mobile/ACQUISITION.md](mobile/ACQUISITION.md).
+- **Recording** — local session writing with atomic metadata finalization,
+  interrupted-session recovery and the frozen `measurements.jsonl` format.
+  See [mobile/RECORDING.md](mobile/RECORDING.md).
+- **Export** — explicit local ZIP export through the system document picker,
+  local destinations only, private original never modified.
+  See [mobile/EXPORT.md](mobile/EXPORT.md).
+- **Replay** — read-only session replay with explicit `replay_real` /
+  `replay_simulation` labels. See [mobile/REPLAY.md](mobile/REPLAY.md).
+- **Python session validation** — `tools/validate_phone_recording.py` validates
+  phone or local sessions against the same rules the on-device reader enforces;
+  `tools/parity_probe.py` keeps the two readers honest against each other.
+- **Map** — bundled offline Hyderabad vector tiles with three never-blended
+  sources (synthetic fixture, recorded session, live phone GNSS), coverage
+  refusal, gap-split trails and a GNSS loss timeline.
+  See [mobile/OFFLINE_MAP.md](mobile/OFFLINE_MAP.md).
+- **Offline research pipeline** — Phase 0 inventory/schema/unit/sampling/
+  synchronization audit, schema registry and streaming diagnostics in `training/`.
 
-Planned: body-frame/mechanization corrections, AI training, extended Kalman filter
-(EKF) fusion, map matching, the shared navigation core, Android recording/replay
-and inference, and the edge engine. The app foundation does not
-implement or validate any of these planned features.
+### VERIFIED — backed by measured evidence
+
+- **Device-verified** (OnePlus CPH2585 / Android 16): acquisition acceptance
+  (8/8 connected tests, 30-minute endurance, bounded memory —
+  [report](reports/android_acquisition_2026_09_19.md)); recording/export/replay
+  flows and the map screen, including pixel-measured trail, framing and
+  timeline behaviour ([MAP_DEVICE_VERIFICATION.md](mobile/MAP_DEVICE_VERIFICATION.md)).
+- **Real-data verified**: 44 of 44 real phone sessions (688,345 records)
+  accepted by the contract reader, including two recovered interruptions
+  ([corpus report](reports/recording_corpus_2026_09_29.md)).
+- **Host-verified**: 154 Kotlin unit tests, 140 Python tests (1 skip),
+  `lintDebug` clean. Host tests are not device evidence and are labelled
+  where they are all that exists (see audit section 2).
+
+### EXPERIMENTAL — research scripts; outputs are not product claims
+
+- M (Driver B) synchronization searches, attitude and body-frame diagnostics,
+  and a classical strapdown INS baseline (382.67% drift over 429.8 m; gated
+  behind `--offline-baseline` because it uses future GPS and VBOX velocity).
+  These run for research only; they are not validated app navigation or
+  production calibration, and the INS is not the "physically correct classical
+  baseline" that any future AI result must be compared against.
+
+### PLANNED — not implemented
+
+- `NavigationEngine` implementation (the interface exists in `contracts/v1`),
+  corrected INS, body-frame/mechanization corrections, calibration (every
+  session currently records `calibration: not_applied`).
+- AI error-correction training, EKF fusion, map matching, on-device inference,
+  the shared navigation core (`core/`), and the edge runtime (`edge/`).
+- A real GNSS-loss/recovery corpus (41 of 44 sessions have no GNSS at all) and
+  an in-coverage multi-point recording for device trail verification.
+
+### OPTIONAL — enabled at user discretion; no claim depends on them
+
+- The synthetic map demo package: scripted paths, blackout simulation and
+  comparison traces, labelled as a UI fixture throughout
+  ([mobile/MAP_DEMO_FEATURES.md](mobile/MAP_DEMO_FEATURES.md)).
+- Matplotlib plots and report generation in the research pipeline.
+- Local recording itself: acquisition and display work without it.
 
 ## Run the Android demo
 
