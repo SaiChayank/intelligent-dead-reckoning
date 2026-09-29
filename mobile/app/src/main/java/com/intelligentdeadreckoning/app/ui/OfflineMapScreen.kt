@@ -135,6 +135,12 @@ fun OfflineMapScreen(pageHeight: Dp) {
     }
     val shown = if (recorded) recordedView?.presentation ?: NO_RECORDED_VIEW else snapshot.presentation
     LaunchedEffect(shown, overlays, renderer) { renderer?.present(shown, overlays) }
+    // A recording the user cannot see has not been shown. The camera is the one thing this screen
+    // moves on its own, and it moves only onto fixes the recording really contains.
+    LaunchedEffect(recorded, recordedView, renderer) {
+        val points = recordedView?.presentation?.trail.orEmpty()
+        if (points.isNotEmpty()) renderer?.frame(points)
+    }
     LaunchedEffect(Unit) {
         try { pack = withContext(Dispatchers.IO) { OfflineMapPack(context.applicationContext).install() } }
         catch (e: kotlinx.coroutines.CancellationException) { throw e }
@@ -358,7 +364,7 @@ fun OfflineMapScreen(pageHeight: Dp) {
                                 glyph = IdrGlyph.ARROW_NORTH)
                         }
                     }
-                    if (recorded) RecordedPanel(recordedView, recordedBusy)
+                    if (recorded) RecordedPanel(recordedView, recordedBusy, renderer, ready)
                     Text(
                         "OpenFreeMap · © OpenMapTiles · © OpenStreetMap contributors · openstreetmap.org/copyright",
                         color = IdrPalette.textSecondary,
@@ -427,7 +433,7 @@ private fun loadRecordedView(context: Context, maxScan: Int = 200_000): Recorded
 
 /** Honest summary of the recorded session on the map. Nothing shown here is inferred. */
 @Composable
-private fun RecordedPanel(view: RecordedView?, busy: Boolean) {
+private fun RecordedPanel(view: RecordedView?, busy: Boolean, renderer: MapRenderer?, ready: Boolean) {
     IdrCard(emphasis = IdrEmphasis.GLASS) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IdrIcon(IdrGlyph.LAYERS, tint = IdrPalette.textMuted, size = IdrSize.iconSm)
@@ -447,9 +453,10 @@ private fun RecordedPanel(view: RecordedView?, busy: Boolean) {
         }
         if (view != null) {
             Text(
-                "${view.stats.fixes} fixes · ${view.stats.drawn} drawn · ${view.stats.gaps} gaps · " +
-                    "longest ${view.stats.longestGapNs / 1_000_000_000}s · span ${view.stats.spanNs / 1_000_000_000}s" +
+                "${view.stats.fixes} fixes · ${view.stats.lines} segments · ${view.stats.points} isolated · " +
+                    "${view.stats.gaps} gaps · longest ${view.stats.longestGapNs / 1_000_000_000}s · span ${view.stats.spanNs / 1_000_000_000}s" +
                     (view.stats.outsideCoverage.takeIf { it > 0 }?.let { " · $it outside coverage" } ?: "") +
+                    (view.stats.malformed.takeIf { it > 0 }?.let { " · $it malformed" } ?: "") +
                     (if (view.truncated) " · first ${view.scanned} records" else ""),
                 color = IdrPalette.textSecondary,
                 style = IdrType.monoSmall,
@@ -466,6 +473,22 @@ private fun RecordedPanel(view: RecordedView?, busy: Boolean) {
                 style = IdrType.bodySmall,
                 modifier = Modifier.testTag("recorded_disclaimer"),
             )
+            // The camera is not part of the recording, but it still has to be reachable: a
+            // recording drawn off-screen is a recording the user cannot check.
+            Row(horizontalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
+                IdrChip(
+                    label = "Fit recording",
+                    selected = false,
+                    onClick = { view.presentation.trail.takeIf { it.isNotEmpty() }?.let { renderer?.frame(it) } },
+                    enabled = ready && view.presentation.trail.isNotEmpty(),
+                    glyph = IdrGlyph.LOCATE,
+                    testTag = "recorded_fit",
+                )
+                IdrChip("Zoom +", selected = false, onClick = { renderer?.zoomBy(1.0) }, enabled = ready,
+                    glyph = IdrGlyph.PLUS)
+                IdrChip("Zoom −", selected = false, onClick = { renderer?.zoomBy(-1.0) }, enabled = ready,
+                    glyph = IdrGlyph.MINUS)
+            }
         }
     }
 }

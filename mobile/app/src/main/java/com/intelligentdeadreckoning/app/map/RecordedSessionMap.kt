@@ -29,7 +29,10 @@ class RecordedSessionMap(
     /** What the recording actually contained, so the UI can state it instead of implying more. */
     data class Stats(
         val fixes: Int,
-        val drawn: Int,
+        /** Multi-point segments actually plotted: movement observed between two fixes. */
+        val lines: Int,
+        /** Isolated fixes actually plotted. One fix is a position, not a path, so it is a dot. */
+        val points: Int,
         val outsideCoverage: Int,
         val malformed: Int,
         val gaps: Int,
@@ -50,7 +53,6 @@ class RecordedSessionMap(
     private var radius: Double? = null
     private var status = "No recorded fix yet"
     private var fixes = 0
-    private var drawn = 0
     private var outside = 0
     private var malformed = 0
     private var gaps = 0
@@ -105,7 +107,6 @@ class RecordedSessionMap(
         previousPoint = current
         if (open.lastOrNull() != current) open.add(current)
         while (open.size > maxTrail) open.removeAt(0)
-        drawn++
         status = "Recorded GNSS fix · ${fix.provider}"
         return snapshot()
     }
@@ -124,29 +125,37 @@ class RecordedSessionMap(
         status = status,
     )
 
-    fun stats(): Stats = Stats(
-        fixes = fixes,
-        drawn = drawn,
-        outsideCoverage = outside,
-        malformed = malformed,
-        gaps = gaps,
-        longestGapNs = longestGap,
-        spanNs = if (firstNs == null || lastNs == null) 0L else lastNs!! - firstNs!!,
-        providers = providers.toList(),
-        lastFixRadiusMetres = radius,
-    )
+    fun stats(): Stats {
+        // Counted from the retained geometry, not from the fixes accepted, so this states what the
+        // map is actually drawing rather than what the recording contained.
+        val segments = trailSegments()
+        return Stats(
+            fixes = fixes,
+            lines = segments.count { it.size >= 2 },
+            points = segments.count { it.size == 1 },
+            outsideCoverage = outside,
+            malformed = malformed,
+            gaps = gaps,
+            longestGapNs = longestGap,
+            spanNs = if (firstNs == null || lastNs == null) 0L else lastNs!! - firstNs!!,
+            providers = providers.toList(),
+            lastFixRadiusMetres = radius,
+        )
+    }
 
     private fun trail(): List<MapPoint> = trailSegments().flatten()
 
+    /** The trail split at every gap and at every fix outside coverage. A one-point segment is a
+     * position the recording really did observe, so it is kept and drawn as a dot; discarding it
+     * would lose an observation, and joining it to the next fix would invent movement. */
     private fun trailSegments(): List<List<MapPoint>> {
         val segments = closed.toMutableList()
-        // A single drawn fix is a position, not a path; it is shown as a point rather than a line.
-        if (open.size >= 2) segments.add(open.toList())
+        if (open.isNotEmpty()) segments.add(open.toList())
         return segments
     }
 
     private fun closeSegment() {
-        if (open.size >= 2) {
+        if (open.isNotEmpty()) {
             closed.add(open.toList())
             drawnInSegments += open.size
             while (drawnInSegments > maxTrail && closed.size > 1) {

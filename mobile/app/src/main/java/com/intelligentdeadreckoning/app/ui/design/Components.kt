@@ -17,13 +17,20 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.mandatorySystemGestures
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -628,6 +635,14 @@ fun IdrDock(
     val shape = IdrShapes.pill
     BoxWithConstraints(
         modifier
+            // Edge-to-edge windows run the dock under the system's gesture band (on the test phone
+            // `mandatorySystemGestures` reaches ~20 dp above the navigation bar), where a tap on a
+            // tab's own label is claimed by the system's home gesture instead of the dock. Insetting
+            // the dock by that band is what keeps every tab tappable by a human finger.
+            .windowInsetsPadding(
+                WindowInsets.navigationBars.union(WindowInsets.mandatorySystemGestures)
+                    .only(WindowInsetsSides.Bottom),
+            )
             .fillMaxWidth()
             .height(66.dp)
             .shadow(24.dp, shape, clip = false)

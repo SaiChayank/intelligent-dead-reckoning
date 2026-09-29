@@ -155,4 +155,95 @@ and the no-synthetic-layers assertion); 144 host tests total, 0 failures.
   recorded in `reports/recording_corpus_2026_09_29.md`.
 - Not verified: drawing a real multi-fix trail on the device, because no session
   in the current corpus has two fixes inside the covered area. The segment-drawing
-  path is covered by host tests only.
+  path is covered by host tests only. **Partly superseded the same day** — the
+  section below drew seven real in-coverage fixes on the device, but not a line:
+  every fix in that recording is at the same position, so it is seven isolated
+  points. A *multi-point* recorded trail is still host-tested only.
+
+## Recorded-session mode on real in-coverage data — 2026-09-29, later run
+
+The section above could not put a real fix on the map, because none of the
+recorded fixes were inside the bundled tiles. This run could, because the phone
+was somewhere else: a fresh 139 s recording made in the app
+(`f50068f4-f977-4090-9add-e109efa75a69`, 41,304 records, 14.6 MB, `source: real`,
+`calibration: not_applied`, 0 dropped, 0 write errors, 0 ID gaps) reported its
+GNSS fixes at 17.5206881° N, 78.365531° E — inside the pack
+(17.30–17.55° N, 78.35–78.60° E). The mismatch in
+`reports/recording_corpus_2026_09_29.md` is therefore a property of where the
+2026-09-22 recording was made, not an inability of this screen to draw real data.
+Building a westward pack was not needed and was not done.
+
+Three defects were found and fixed while verifying it.
+
+### 1. Isolated fixes were counted and then discarded
+
+`RecordedSessionMap` documents "a single drawn fix is a position, not a path; it
+is shown as a point rather than a line", but it dropped one-point segments and
+`MapOverlay` emitted a `LineString` only for segments of two or more points. A
+lone fix therefore reached the statistics and never reached the map. The
+recording above is exactly that case — 0.05 Hz network fixes about 20 s apart, so
+all seven are isolated — and the panel claimed "7 drawn" while emitting no trail
+geometry at all.
+
+Fix: one-point segments are kept and emitted as `Point` features (`kind:
+trail-fix`), painted by a new `display-trail-fix` circle layer with the trail's
+colour. Joining them into a line would invent movement nobody observed, so they
+stay points. `Stats` now reports `lines` (multi-point segments plotted) and
+`points` (isolated fixes plotted), computed from the geometry actually retained
+rather than from the fixes accepted, in place of the single misleading `drawn`
+count. The panel line now reads `7 fixes · 0 segments · 7 isolated · 6 gaps`.
+
+### 2. Recorded mode never framed the camera on the recording
+
+Presenting was correct, but nothing moved the camera, and recorded mode also hid
+the synthetic console that carried the only camera controls. A recording whose
+fixes are not already in the default view therefore drew nothing visible: the map
+looked empty while the panel reported seven loaded fixes. This fix sits near the
+pack's western edge, outside the viewport that the pack's camera bounds force at
+the default zoom, so it hit the case exactly.
+
+Verified with a temporary probe that logged the camera position and
+`queryRenderedFeatures`: after loading, the camera was still at Hyderabad centre
+while the fix projected to a screen point outside the visible area; the nine
+features (7 `trail-fix`, `accuracy`, `position`) were in the style and renderable,
+just off-screen.
+
+Fixes: `MapRenderer.frame(points)` fits the camera to the recorded fixes — a
+single position is centred at the focus zoom rather than asking for an unbounded
+zoom on a degenerate box — the screen calls it whenever a recording is loaded,
+and the recorded panel now carries `Fit recording`, `Zoom +` and `Zoom −` so the
+camera is reachable in recorded mode as it is in the synthetic demo.
+
+### 3. The bottom dock sat inside the system gesture band
+
+This device declares `InsetsSource type=mandatorySystemGestures
+frame=[0,2685][1264,2780]`, while the dock's tab labels sat at y 2665–2693 and its
+tap targets reached y 2732. Tapping a tab label was therefore unreliable: a plain
+tap was swallowed and a slightly longer touch was read as the home gesture, which
+backgrounded the app mid-verification. Real touches failed where the Compose test
+API — which injects clicks directly into the hierarchy — always succeeded, which
+is why the instrumented suite never caught it.
+
+Fix: `IdrDock` insets itself by the union of `navigationBars` and
+`mandatorySystemGestures` on the bottom side. The dock's tabs moved from
+y 2560–2732 to 2465–2637, clear of the band, and a tap on the bottom edge of the
+MAP tab now switches screens and leaves the app focused.
+
+### Session read latency, measured
+
+Recorded mode states `Reading saved session…` while it streams and validates a
+session. Measured on this device for the 14.6 MB / 41,304-record session: 5–12 s
+across runs, after which the fixes paint with no further interaction — polled at
+1 s intervals, the purple fix marker appears in the same sample that the panel
+flips to the loaded session. Nothing about the drawing is deferred: the wait is
+`ReplayReader` validating every record before anything is displayed. An honest
+progress state is the right treatment of that wait; making the read cheaper is
+future work.
+
+Evidence: **145 host tests, 0 failures** (9 in `RecordedSessionMapTest`,
+including a regression test for the discarded isolated fixes), **24 device
+tests, 0 failures**, `lintDebug` clean, and pixel checks of the device
+framebuffer showing that the synthetic fixture and the recorded session each draw
+their own overlay geometry and that the recorded marker sits at the framed fix.
+The fresh session, its validation report and the screen captures are kept locally
+under ignored `mobile/artifacts/`.

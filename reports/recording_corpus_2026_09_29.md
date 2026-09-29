@@ -73,6 +73,12 @@ The 100 ms reorder window (`LATE_NS`) and the 100 ms / 5 s gap thresholds
    tiles there and the map screen correctly refuses to draw them. This is a
    data-versus-asset mismatch, not a rendering defect: either recordings have to
    be made inside the covered box, or a pack covering 78.29° E has to be built.
+   **Answered the same day, by location rather than by rebuilding the pack.** A
+   fresh recording made in the app later on 2026-09-29 reported its fixes at
+   17.5206881° N, 78.365531° E — inside the bundled pack — and the recorded
+   session mode drew them on the offline map; see
+   `mobile/MAP_DEVICE_VERIFICATION.md`. This finding still stands for the
+   2026-09-22 captures in this corpus, which were made ~5.6 km further west.
 
 ## Limits
 

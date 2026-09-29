@@ -29,10 +29,16 @@ object MapOverlay {
                 }
             }
             if(overlays.trail) {
-                // Recorded fixes arrive pre-split at every gap; the synthetic trail is one path.
-                val segments = if(state.trailSegments.isNotEmpty()) state.trailSegments else listOf(state.trail)
-                for(segment in segments) if(segment.size >= 2)
-                    add("trail","LineString",segment.map { listOf(it.longitude,it.latitude) })
+                // Recorded fixes arrive pre-split at every gap. A segment of one is a position the
+                // recording observed, not a path, so it is emitted as a point: dropping it would
+                // hide a real fix and joining it to the next one would draw movement nobody saw.
+                if(state.trailSegments.isNotEmpty()) for(segment in state.trailSegments) when(segment.size) {
+                    0 -> Unit
+                    1 -> add("trail-fix","Point",listOf(segment[0].longitude,segment[0].latitude))
+                    else -> add("trail","LineString",segment.map { listOf(it.longitude,it.latitude) })
+                } else if(state.trail.size >= 2) {
+                    add("trail","LineString",state.trail.map { listOf(it.longitude,it.latitude) })
+                }
             }
             // Only one of these is ever set: a calibrated 95% confidence, or the radius a real
             // fix reported. They are drawn the same way but never averaged or conflated.

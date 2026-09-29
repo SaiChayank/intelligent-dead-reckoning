@@ -31,7 +31,9 @@ class RecordedSessionMapTest {
         assertEquals(8.0, view.fixRadiusMetres!!, 1e-12)
         assertEquals(12.5, view.speedMetresPerSecond!!, 1e-12)
         assertEquals(1, map.stats().fixes)
-        assertEquals(1, map.stats().drawn)
+        assertEquals(0, map.stats().lines)
+        assertEquals(1, map.stats().points)
+        assertEquals(1, view.trailSegments.single().size)
     }
 
     @Test fun aGapSplitsTheTrailInsteadOfBridgingIt() {
@@ -71,7 +73,9 @@ class RecordedSessionMapTest {
         val view = map.accept(fix("0", ns, latitude = 12.0, longitude = 77.0))
         assertNull(view.point)
         assertEquals(1, map.stats().outsideCoverage)
-        assertEquals(0, map.stats().drawn)
+        assertEquals(0, map.stats().lines)
+        assertEquals(0, map.stats().points)
+        assertTrue(view.trailSegments.isEmpty())
         assertTrue(view.status.contains("coverage"))
     }
 
@@ -80,7 +84,7 @@ class RecordedSessionMapTest {
         val view = map.accept(fix("0", ns, latitude = Double.NaN))
         assertNull(view.point)
         assertEquals(1, map.stats().malformed)
-        assertEquals(0, map.stats().drawn)
+        assertTrue(map.snapshot().trailSegments.isEmpty())
     }
 
     @Test fun recordedSourceCannotProduceTheSyntheticComparisonOrScenarioLayers() {
@@ -97,12 +101,33 @@ class RecordedSessionMapTest {
             assertFalse("recorded data must not draw $it", kinds.contains(it))
         }
         assertTrue(kinds.contains("position"))
+        assertEquals(0, kinds.count { it == "trail-fix" })
     }
 
     @Test fun trailHistoryStaysBounded() {
         val map = RecordedSessionMap(maxTrail = 8)
         for (i in 0 until 200) map.accept(fix("$i", ns + i * 1_000_000_000L, longitude = 78.45 + i * 1e-5))
         assertTrue(map.snapshot().trail.size <= 8)
-        assertEquals(200, map.stats().drawn)
+        // 200 fixes were accepted, but the trail is bounded: the report states what is plotted.
+        assertEquals(200, map.stats().fixes)
+        assertEquals(1, map.stats().lines)
+        assertEquals(0, map.stats().points)
+    }
+
+    @Test fun isolatedFixesAreDrawnAsPointsInsteadOfBeingCountedAndDropped() {
+        val map = RecordedSessionMap()
+        map.accept(fix("0", ns, longitude = 78.4500))
+        val view = map.accept(fix("1", ns + 40_000_000_000L, longitude = 78.4502))
+        // 40 s apart is two observations, not a path: no line is invented between them.
+        assertEquals(2, view.trailSegments.size)
+        assertTrue(view.trailSegments.all { it.size == 1 })
+        assertEquals(0, map.stats().lines)
+        assertEquals(2, map.stats().points)
+        val kinds = JsonParser.parseString(MapOverlay.json(view, DemoOverlays()))
+            .asJsonObject["features"].asJsonArray.map { it.asJsonObject["properties"].asJsonObject["kind"].asString }
+        // Regression: these fixes used to be counted as drawn and then never emitted at all.
+        assertEquals(2, kinds.count { it == "trail-fix" })
+        assertEquals(0, kinds.count { it == "trail" })
+        assertTrue(kinds.contains("position"))
     }
 }
