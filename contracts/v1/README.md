@@ -45,6 +45,10 @@ are allowed; duplicate event IDs are rejected. Acquisition arrival order must
 be preserved in recording; the future engine sorts a bounded 100 ms buffer by
 measurement time then event ID and emits `LATE_MEASUREMENT` instead of retroactively
 changing emitted states. This 100 ms policy is proposed and needs device validation.
+On 44 real recordings (688,345 records) the producer emitted `LATE_MEASUREMENT`
+for exactly the 2 rows whose receipt delay exceeded 100 ms and no others, so the
+reporting matches the policy; the window itself is still unvalidated for the
+engine.
 
 The future acquisition target is 100 Hz accelerometer/gyro and 1 Hz GNSS where
 supported, not a guarantee. Record requested and measured rates separately.

@@ -169,6 +169,30 @@ measurement codec retains its own independent limits.
 `foreground_only` is required to be `true` in recording contract 1.0.0. This stage
 does not authorize background recording or a foreground service.
 
+## Python session reader (read-only)
+
+`contracts.recording.v1.session` reads a session directory without ever mutating it. It is
+the Python counterpart of the device `ReplayReader` and mirrors its refusal codes, so one
+session cannot be accepted by one side and rejected by the other.
+
+```text
+inspect_session(directory) -> SessionSummary        # bounded, metadata only, never raises
+open_session(directory, require_replayable=True) -> SessionContent
+read_session(directory) -> Iterator[Record]
+open_stream(handle, metadata) -> SessionContent      # same checks without a directory
+```
+
+A session is replayable only when it is `completed`, or `incomplete` with
+`recovery_state = recovered`. A failed but finalized session stays exportable, and an
+unfinalized or `recovery_state = required` session is refused. Reading is strict and
+bounded: session IDs must be safe directory names, symlinked artifacts and metadata over
+262,144 bytes are refused, and duplicate event IDs, pre-origin timestamps,
+initialization-mode switches, oversized rows, more than 1,000,000 records, and
+count/channel/end-time mismatches are all rejected with a code on `SessionError`. Records
+are yielded in arrival order with `header.source` mapped to `replay_real` or
+`replay_simulation`. The reader reports a rejected stream and never repairs it: repair is
+the recorder's decision.
+
 ## Implemented APIs in this stage
 
 Python:
@@ -178,6 +202,7 @@ contracts.recording.v1.models
 contracts.recording.v1.codec.encode_metadata/decode_metadata
 contracts.recording.v1.codec.encode_record/decode_record
 contracts.recording.v1.models.replay_source
+contracts.recording.v1.session.inspect_session/open_session/read_session/open_stream
 ```
 
 Kotlin:
@@ -194,8 +219,8 @@ add recording-membership checks. They do not read/write files.
 ## Explicit non-goals for Prompt 3A
 
 Not implemented here: disk recording, writer queues, Android recording controls,
-Storage Access Framework export, replay pacing/UI, Python session-directory reader,
-INS, EKF/UKF, AI, map matching, project calibration, cloud upload, or background
+Storage Access Framework export, replay pacing/UI, INS, EKF/UKF, AI,
+map matching, project calibration, cloud upload, or background
 recording.
 
 Fresh phone recordings created in later stages do not validate or redefine the
