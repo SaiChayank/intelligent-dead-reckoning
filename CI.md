@@ -86,9 +86,10 @@ These are acceptance gates, run by a human on the target phone; they are
 
 ## Status badges
 
-Deliberately **not** added yet: badges must only claim what is proven, and the
-first hosted run of these workflows has not been observed. After one green run
-on GitHub, add:
+Badges must only claim what is proven, so this one landed only after a fully
+green hosted run (run `36627769041` on `d883f0a`, 2026-09-30 — all three jobs
+successful). It tracks [ci.yml](.github/workflows/ci.yml) on `main` and is
+displayed at the top of [README.md](README.md):
 
 ```markdown
 [![CI](https://github.com/SaiChayank/intelligent-dead-reckoning/actions/workflows/ci.yml/badge.svg)](https://github.com/SaiChayank/intelligent-dead-reckoning/actions/workflows/ci.yml)

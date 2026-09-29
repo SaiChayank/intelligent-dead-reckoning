@@ -1,5 +1,7 @@
 # Intelligent Dead Reckoning
 
+[![CI](https://github.com/SaiChayank/intelligent-dead-reckoning/actions/workflows/ci.yml/badge.svg)](https://github.com/SaiChayank/intelligent-dead-reckoning/actions/workflows/ci.yml)
+
 Intelligent Dead Reckoning targets SIH problem statement **#26168**: keeping
 vehicle navigation useful when satellite positioning becomes unavailable or
 unreliable, such as in tunnels, parking structures, and urban canyons. Dead
