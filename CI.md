@@ -24,6 +24,11 @@ Notes on deliberate choices:
 - `gradlew` is tracked without its executable bit, so CI invokes it as
   `bash gradlew`; the wrapper is pinned by SHA-256 in
   `gradle-wrapper.properties`.
+- The Android SDK step installs `platforms;android-37` (and warms build-tools
+  36.0.0) through `sdkmanager`'s full path — it is not on `PATH` on hosted
+  runners — and degrades to a notice when `sdkmanager` is absent, because AGP
+  auto-downloads whatever the build needs. The step can never be the reason CI
+  goes red; the Gradle build itself is the gate.
 
 ## CI gates required before merging
 

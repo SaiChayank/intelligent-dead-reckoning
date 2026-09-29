@@ -20,8 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Install dependencies
@@ -50,20 +50,47 @@ jobs:
       run:
         working-directory: mobile
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # 25 matches the verified local toolchain (Android Studio JBR 25.0.3);
       # bytecode still targets 17 as declared in build.gradle.kts.
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "25"
           cache: gradle
       - name: Ensure Android SDK platform and build tools
+        # sdkmanager is not on PATH on hosted runners (exit 127), so call it in
+        # place. The step warms the SDK; AGP can auto-download anything missing,
+        # so a runner without sdkmanager degrades to a notice instead of a failure.
         run: |
-          sdkmanager --list_installed | grep -q "platforms;android-37" || \
-            (yes | sdkmanager "platforms;android-37" "build-tools;36.0.0" > /dev/null)
+          set -e
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          SM=""
+          for c in "$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "$SDK_ROOT/tools/bin/sdkmanager"; do
+            if [ -x "$c" ]; then
+              SM="$c"
+              break
+            fi
+          done
+          if [ -z "$SM" ] && [ -n "$SDK_ROOT" ] && [ -d "$SDK_ROOT/cmdline-tools" ]; then
+            SM="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager | sort | tail -n 1)"
+          fi
+          if [ -z "$SM" ]; then
+            echo "::notice::sdkmanager unavailable on this runner; AGP will download any SDK components the build needs"
+            exit 0
+          fi
+          if ! "$SM" --list_installed | grep -q "platforms;android-37"; then
+            # Hosted runners ship accepted licences; `yes` covers any new prompt.
+            yes | "$SM" --licenses > /dev/null 2>&1 || true
+            yes | "$SM" "platforms;android-37" > /dev/null
+            # Build tools are a cache warm-up only: AGP picks its own version and
+            # auto-downloads it, so an unavailable version must not fail the job.
+            yes | "$SM" "build-tools;36.0.0" > /dev/null || true
+          fi
+          "$SM" --list_installed | grep -E "platforms;android-37|build-tools;" || true
+          "$SM" --list_installed | grep -q "platforms;android-37"
       # PythonParityTest drives tools/parity_probe.py during the JVM suite.
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       # gradlew is tracked without its executable bit; bash runs it regardless.
@@ -81,10 +108,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Whitespace check (git diff --check over the pushed range)
