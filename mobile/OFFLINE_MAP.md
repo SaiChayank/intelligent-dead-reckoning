@@ -7,10 +7,14 @@ The original Stage 2 implementation notes below describe its initial behavior;
 the linked guide defines the extended controls.
 
 This is an enhancement, not a change to SIH requirements or the navigation
-architecture. The Map tab is a renderer-only preview with an explicitly started
-synthetic position demo. It does not subscribe to acquisition, replay or a running
-NavigationEngine. The global source banner describes acquisition, not the map;
-the map has a separate SYNTHETIC UI FIXTURE label. No navigation is running.
+architecture. The Map tab draws one of exactly three sources, chosen by its own
+chips and never blended: the scripted SYNTHETIC UI FIXTURE, a saved RECORDED
+SESSION, or LIVE PHONE GNSS. Only the last reads acquisition, and it does so
+read-only: it draws the fixes the platform actually reported and nothing else.
+No NavigationEngine is running, nothing is propagated or fused, and the map never
+estimates a position — when live GNSS is unavailable the marker simply stops. The
+global source banner still describes acquisition, and the map keeps its own
+MAP SOURCE label so the two can never be confused.
 
 ## Stage 2: typed presentation adapter and synthetic demo
 
@@ -85,6 +89,16 @@ acceptance; NOT READY to claim visually verified navigation integration.**
   validate; this is not a whole-directory transaction. Storage errors are visible.
 - Internet, network-state and Wi-Fi-state permissions inherited from the renderer
   are removed. No API key, cloud service, analytics or network fallback.
+- GNSS loss timeline for the real sources: the same breaks that split the trail are
+  retained as intervals and drawn over the observed window — lime where a fix
+exists, amber where none does. The window is the observer's own (first to last fix
+  for a recording or the live stream, the elapsed clock for the fixture), and the
+  bar is drawn from the window rather than from the losses, so no bar appears until
+  there is a window to draw over and an unbroken one means a fix was present
+  throughout. A loss still in progress is reported as a number instead of drawn,
+  because a window that ends at a fix cannot be extended to the present. The
+  intervals are derived from the same stream the trail is drawn from; the frozen
+  recording format is unchanged and nothing new is written.
 
 Frozen acquisition, recording, export and replay implementations are unchanged
 by this stage. Raw datasets and historical reports are outside this change set.

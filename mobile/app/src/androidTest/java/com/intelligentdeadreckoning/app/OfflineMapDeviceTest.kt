@@ -111,6 +111,46 @@ class OfflineMapDeviceTest {
         compose.waitUntil(30_000) { compose.onAllNodesWithText("Offline map loaded · 247 tiles").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("map_demo_stop").assertIsNotEnabled()
     }
+    @Test fun liveModeNamesItsRealSourceAndCannotClaimNavigation() {
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("tab_MAP").fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
+        compose.onNodeWithTag("tab_MAP").performClick()
+        compose.waitUntil(30_000) { compose.onAllNodesWithText("Offline map loaded · 247 tiles").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("map_source").assertTextContains("SYNTHETIC UI FIXTURE", substring = true)
+        compose.onNodeWithTag("map_source_live").performScrollTo().performClick()
+        // The label is the point: live phone fixes must never be shown as the fixture, and the screen
+        // must not claim an engine it does not have.
+        compose.onNodeWithTag("map_source").assertTextContains("LIVE PHONE GNSS", substring = true)
+        compose.onNodeWithTag("map_mode").assertTextContains("no dead reckoning", substring = true)
+        compose.onNodeWithTag("live_status").assertExists()
+        compose.onNodeWithTag("live_disclaimer").assertExists()
+        // The scripted console belongs to the fixture, so it is not on screen for live data.
+        compose.onNodeWithTag("map_demo_start").assertDoesNotExist()
+        compose.onNodeWithTag("map_source_synthetic").performScrollTo().performClick()
+        compose.onNodeWithTag("map_source").assertTextContains("SYNTHETIC UI FIXTURE", substring = true)
+        compose.onNodeWithTag("map_mode").assertTextContains("no live position", substring = true)
+        compose.onNodeWithTag("map_demo_start").assertExists()
+    }
+
+    @Test fun scriptedLossTimelineNeedsAWindowAndShowsTheLossItCovers() {
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("tab_MAP").fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
+        compose.onNodeWithTag("tab_MAP").performClick()
+        compose.waitUntil(30_000) { compose.onAllNodesWithText("Offline map loaded · 247 tiles").fetchSemanticsNodes().isNotEmpty() }
+        // The scripted fixture is the only GNSS loss a device test can produce on demand, so the
+        // timeline is driven here. It is drawn from the window and not from the losses, so a window
+        // that does not exist yet draws nothing at all rather than an empty bar.
+        compose.onNodeWithTag("demo_timeline").assertDoesNotExist()
+        compose.onNodeWithTag("map_demo_start").performScrollTo().performClick()
+        compose.onNodeWithTag("demo_options").performScrollTo().performClick()
+        compose.onNodeWithTag("signal_BLACKOUT").performScrollTo().performClick()
+        compose.waitUntil(20_000) { compose.onAllNodesWithTag("demo_timeline").fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
+        compose.onNodeWithTag("demo_timeline_label").assertExists()
+        // Reset clears the window as well as the losses, so the bar goes with it.
+        compose.onNodeWithTag("demo_reset").performScrollTo().performClick()
+        compose.onNodeWithTag("demo_timeline").assertDoesNotExist()
+        compose.onNodeWithTag("demo_clock").assertTextContains("0s / 30s",substring=true)
+        compose.onNodeWithTag("map_demo_stop").assertIsNotEnabled()
+    }
+
     @Test fun bundledDatabaseInstallIsReadableAndIdempotentWithoutNetworkPermission() {
         val app = compose.activity.applicationContext
         assertEquals(PackageManager.PERMISSION_DENIED,app.checkSelfPermission(Manifest.permission.INTERNET))

@@ -4,11 +4,13 @@ import android.content.Context
 import android.content.ComponentCallbacks2
 import android.content.res.Configuration
 import android.os.SystemClock
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -29,6 +31,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -40,16 +44,24 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.intelligentdeadreckoning.app.acquisition.CaptureState
+import com.intelligentdeadreckoning.app.acquisition.InputSource
 import com.intelligentdeadreckoning.app.map.DemoOverlays
 import com.intelligentdeadreckoning.app.map.DemoPlayback
 import com.intelligentdeadreckoning.app.map.HyderabadMap
 import com.intelligentdeadreckoning.app.map.InstalledMap
+import com.intelligentdeadreckoning.app.map.LiveGnssView
 import com.intelligentdeadreckoning.app.map.MapDemoController
 import com.intelligentdeadreckoning.app.map.MapLibreRenderer
 import com.intelligentdeadreckoning.app.map.MapRenderer
 import com.intelligentdeadreckoning.app.map.MapPresentation
+import com.intelligentdeadreckoning.app.map.NO_LIVE_GNSS
 import com.intelligentdeadreckoning.app.map.OfflineMapPack
+import com.intelligentdeadreckoning.app.map.OutageMark
 import com.intelligentdeadreckoning.app.map.RecordedSessionMap
+import com.intelligentdeadreckoning.app.map.currentOutageSeconds
+import com.intelligentdeadreckoning.app.map.forConsoleHidden
+import com.intelligentdeadreckoning.app.map.outageMarks
 import com.intelligentdeadreckoning.app.replay.ReplayReader
 import com.intelligentdeadreckoning.app.sessions.SavedSession
 import com.intelligentdeadreckoning.app.sessions.SessionFiles
@@ -87,8 +99,21 @@ import java.util.Locale
  * Every control here drives the real local demo controller or the real camera, never a
  * stand-in for a navigation engine that does not exist yet.
  */
+
+/** What the map is drawing. The synthetic fixture is a UI fixture, a recording is real data from
+ * the past, and live is real data now. The three are never blended, and the fixture is never shown
+ * as though it were the phone's own position. */
+private enum class MapMode { SYNTHETIC, RECORDED, LIVE }
+
 @Composable
-fun OfflineMapScreen(pageHeight: Dp) {
+fun OfflineMapScreen(
+    pageHeight: Dp,
+    source: InputSource = InputSource.SIMULATION,
+    capture: CaptureState = CaptureState(),
+    liveGnss: LiveGnssView = NO_LIVE_GNSS,
+    onStart: () -> Unit = {},
+    onPermission: () -> Unit = {},
+) {
     val context = LocalContext.current
     var pack by remember { mutableStateOf<InstalledMap?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -98,10 +123,21 @@ fun OfflineMapScreen(pageHeight: Dp) {
     var snapshot by remember { mutableStateOf(demo.state) }
     var overlays by remember { mutableStateOf(DemoOverlays()) }
     var showControls by remember { mutableStateOf(false) }
-    var recorded by remember { mutableStateOf(false) }
+    var mode by remember { mutableStateOf(MapMode.SYNTHETIC) }
     var recordedView by remember { mutableStateOf<RecordedView?>(null) }
     var recordedBusy by remember { mutableStateOf(false) }
+    // Armed by every mode change: the live camera takes the first fix it sees and is then left
+    // alone. Following a track is the job of an engine this screen does not have.
+    var liveFocusArmed by remember(mode) { mutableStateOf(true) }
     fun update(action: () -> Unit) { action(); snapshot = demo.state }
+    // The overlay switches live in the synthetic console, which is on screen only for the fixture.
+    // A switch the user can no longer see or reach must not decide what real data draws.
+    fun drawnOverlays() = if (mode == MapMode.SYNTHETIC) overlays else overlays.forConsoleHidden()
+    fun shownPresentation() = when (mode) {
+        MapMode.RECORDED -> recordedView?.presentation ?: NO_RECORDED_VIEW
+        MapMode.LIVE -> liveGnss.presentation
+        MapMode.SYNTHETIC -> snapshot.presentation
+    }
 
     val owner = LocalLifecycleOwner.current
     DisposableEffect(owner) {
@@ -110,10 +146,7 @@ fun OfflineMapScreen(pageHeight: Dp) {
                 update { demo.stop() }
                 // This observer is registered once per lifecycle owner, so the state it reads
                 // here is the current one, not the one captured when it was created.
-                renderer?.present(
-                    if (recorded) recordedView?.presentation ?: NO_RECORDED_VIEW else snapshot.presentation,
-                    overlays,
-                )
+                renderer?.present(shownPresentation(), drawnOverlays())
             }
         }
         owner.lifecycle.addObserver(observer)
@@ -127,19 +160,29 @@ fun OfflineMapScreen(pageHeight: Dp) {
     }
     // Recorded mode streams one saved session on the I/O dispatcher and draws exactly what it
     // contains: no propagation, dead reckoning, fusion, road matching or routing is applied.
-    LaunchedEffect(recorded) {
-        if (!recorded) { recordedView = null; return@LaunchedEffect }
+    LaunchedEffect(mode) {
+        if (mode != MapMode.RECORDED) { recordedView = null; return@LaunchedEffect }
         recordedBusy = true
         recordedView = withContext(Dispatchers.IO) { loadRecordedView(context) }
         recordedBusy = false
     }
-    val shown = if (recorded) recordedView?.presentation ?: NO_RECORDED_VIEW else snapshot.presentation
-    LaunchedEffect(shown, overlays, renderer) { renderer?.present(shown, overlays) }
+    val shown = shownPresentation()
+    val drawn = drawnOverlays()
+    LaunchedEffect(shown, drawn, renderer) { renderer?.present(shown, drawn) }
     // A recording the user cannot see has not been shown. The camera is the one thing this screen
     // moves on its own, and it moves only onto fixes the recording really contains.
-    LaunchedEffect(recorded, recordedView, renderer) {
+    LaunchedEffect(mode, recordedView, renderer) {
         val points = recordedView?.presentation?.trail.orEmpty()
         if (points.isNotEmpty()) renderer?.frame(points)
+    }
+    // Live GNSS gets the camera once, on the first fix, and only onto a position the phone actually
+    // reported. No propagation is involved, and no fix is invented to keep the view moving.
+    LaunchedEffect(mode, liveGnss.presentation.point, renderer) {
+        val point = liveGnss.presentation.point
+        if (mode == MapMode.LIVE && liveFocusArmed && point != null) {
+            renderer?.focus(point)
+            liveFocusArmed = false
+        }
     }
     LaunchedEffect(Unit) {
         try { pack = withContext(Dispatchers.IO) { OfflineMapPack(context.applicationContext).install() } }
@@ -205,35 +248,51 @@ fun OfflineMapScreen(pageHeight: Dp) {
                 verticalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(IdrSpace.sm),
+                        verticalArrangement = Arrangement.spacedBy(IdrSpace.sm),
+                    ) {
                         IdrChip(
                             label = "Synthetic demo",
-                            selected = !recorded,
-                            onClick = { if (recorded) { update { demo.stop() }; recorded = false } },
+                            selected = mode == MapMode.SYNTHETIC,
+                            onClick = { mode = MapMode.SYNTHETIC },
                             enabled = !recordedBusy,
                             glyph = IdrGlyph.SATELLITE,
                             testTag = "map_source_synthetic",
                         )
                         IdrChip(
                             label = "Recorded session",
-                            selected = recorded,
-                            onClick = { update { demo.stop() }; recorded = true },
+                            selected = mode == MapMode.RECORDED,
+                            onClick = { update { demo.stop() }; mode = MapMode.RECORDED },
                             enabled = !recordedBusy,
                             glyph = IdrGlyph.LAYERS,
                             testTag = "map_source_recorded",
                         )
+                        IdrChip(
+                            label = "Live GNSS",
+                            selected = mode == MapMode.LIVE,
+                            onClick = { update { demo.stop() }; mode = MapMode.LIVE },
+                            enabled = !recordedBusy,
+                            glyph = IdrGlyph.LOCATE,
+                            testTag = "map_source_live",
+                        )
                     }
                     MapChip(
-                        text = "Preview only · no live position, DR, routing or navigation",
-                        tone = IdrTone.NEUTRAL,
-                        glyph = IdrGlyph.NAVIGATE,
+                        text = if (mode == MapMode.LIVE)
+                            "Live GNSS only · no dead reckoning, fusion or routing yet"
+                        else "Preview only · no live position, DR, routing or navigation",
+                        tone = if (mode == MapMode.LIVE) IdrTone.INFO else IdrTone.NEUTRAL,
+                        glyph = if (mode == MapMode.LIVE) IdrGlyph.SATELLITE else IdrGlyph.NAVIGATE,
                         testTag = "map_mode",
                     )
                     MapChip(
-                        text = if (recorded) "MAP SOURCE: RECORDED SESSION — real GNSS fixes, no fusion or DR"
-                        else "MAP SOURCE: SYNTHETIC UI FIXTURE — independent of acquisition",
-                        tone = if (recorded) IdrTone.INFO else IdrTone.WARNING,
-                        glyph = if (recorded) IdrGlyph.LAYERS else IdrGlyph.WARNING,
+                        text = when (mode) {
+                            MapMode.RECORDED -> "MAP SOURCE: RECORDED SESSION — real GNSS fixes, no fusion or DR"
+                            MapMode.LIVE -> "MAP SOURCE: LIVE PHONE GNSS — your position, no fusion or DR"
+                            MapMode.SYNTHETIC -> "MAP SOURCE: SYNTHETIC UI FIXTURE — independent of acquisition"
+                        },
+                        tone = if (mode == MapMode.SYNTHETIC) IdrTone.WARNING else IdrTone.INFO,
+                        glyph = if (mode == MapMode.SYNTHETIC) IdrGlyph.WARNING else IdrGlyph.LAYERS,
                         testTag = "map_source",
                     )
                     if (error == null) {
@@ -247,7 +306,7 @@ fun OfflineMapScreen(pageHeight: Dp) {
                     }
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
-                    if (!recorded) IdrCard(emphasis = IdrEmphasis.GLASS) {
+                    if (mode == MapMode.SYNTHETIC) IdrCard(emphasis = IdrEmphasis.GLASS) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 Modifier
@@ -293,6 +352,22 @@ fun OfflineMapScreen(pageHeight: Dp) {
                                 color = IdrPalette.textMuted,
                                 style = IdrType.monoSmall,
                                 modifier = Modifier.testTag("demo_stats"),
+                            )
+                        }
+                        // The demo's own scripted losses, over its own clock. Same bar, same rule;
+                        // only the window it is drawn over is different.
+                        if (snapshot.elapsedMs > 0) {
+                            OutageTimeline(
+                                snapshot.elapsedMs * 1_000_000L,
+                                snapshot.outageMarks(),
+                                Modifier.testTag("demo_timeline"),
+                            )
+                            Text(
+                                "Scripted GNSS availability over the demo clock so far: lime is a " +
+                                    "scripted fix and amber a scripted loss. Phone GNSS is untouched.",
+                                color = IdrPalette.textMuted,
+                                style = IdrType.bodySmall,
+                                modifier = Modifier.testTag("demo_timeline_label"),
                             )
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
@@ -364,7 +439,8 @@ fun OfflineMapScreen(pageHeight: Dp) {
                                 glyph = IdrGlyph.ARROW_NORTH)
                         }
                     }
-                    if (recorded) RecordedPanel(recordedView, recordedBusy, renderer, ready)
+                    if (mode == MapMode.RECORDED) RecordedPanel(recordedView, recordedBusy, renderer, ready)
+                    if (mode == MapMode.LIVE) LivePanel(capture, source, liveGnss, renderer, ready, onStart, onPermission)
                     Text(
                         "OpenFreeMap · © OpenMapTiles · © OpenStreetMap contributors · openstreetmap.org/copyright",
                         color = IdrPalette.textSecondary,
@@ -381,7 +457,7 @@ fun OfflineMapScreen(pageHeight: Dp) {
             }
         }
 
-        if (showControls && !recorded) {
+        if (showControls && mode == MapMode.SYNTHETIC) {
             MapDemoControls(
                 snapshot, overlays,
                 onScenario = { update { demo.select(it) } },
@@ -431,6 +507,111 @@ private fun loadRecordedView(context: Context, maxScan: Int = 200_000): Recorded
     return RecordedView(chosen.id, map.snapshot(), map.stats(), scanned, scanned >= maxScan)
 }
 
+/** What the live phone stream is actually reporting, and what this screen is not doing with it. */
+@Composable
+private fun LivePanel(
+    capture: CaptureState,
+    source: InputSource,
+    live: LiveGnssView,
+    renderer: MapRenderer?,
+    ready: Boolean,
+    onStart: () -> Unit,
+    onPermission: () -> Unit,
+) {
+    val quality = capture.quality
+    val running = source == InputSource.REAL && capture.running
+    val point = live.presentation.point
+    IdrCard(emphasis = IdrEmphasis.GLASS) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IdrIcon(IdrGlyph.LOCATE, tint = IdrPalette.textMuted, size = IdrSize.iconSm)
+            Spacer(Modifier.width(IdrSpace.sm))
+            Text(
+                when {
+                    !running -> "Live position is off"
+                    point == null -> "Waiting for the first fix"
+                    else -> "Live GNSS · ${quality.state.wire}"
+                },
+                color = IdrPalette.textPrimary,
+                style = IdrType.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f).testTag("live_status"),
+            )
+        }
+        if (running) {
+            Text(
+                "GNSS quality ${quality.state.wire}" +
+                    (quality.fix_age_s?.let { " · fix age ${String.format(Locale.ROOT, "%.1f", it)} s" }
+                        ?: " · no fix yet") +
+                    (quality.satellites_used?.let { " · $it satellites" } ?: "") +
+                    (quality.reasons.takeIf { it.isNotEmpty() }?.let { " · ${it.joinToString()}" } ?: ""),
+                color = IdrPalette.textSecondary,
+                style = IdrType.monoSmall,
+                modifier = Modifier.testTag("live_quality"),
+            )
+            Text(
+                "${live.stats.fixes} fixes · ${live.stats.lines} segments · ${live.stats.points} isolated · " +
+                    "${live.stats.gaps} gaps · span ${live.stats.spanNs / 1_000_000_000}s" +
+                    (live.stats.outsideCoverage.takeIf { it > 0 }?.let { " · $it outside coverage" } ?: "") +
+                    (live.stats.malformed.takeIf { it > 0 }?.let { " · $it malformed" } ?: ""),
+                color = IdrPalette.textSecondary,
+                style = IdrType.monoSmall,
+                modifier = Modifier.testTag("live_stats"),
+            )
+            val currentLoss = currentOutageSeconds(quality.fix_age_s)
+            Text(
+                "GNSS loss · longest " +
+                    String.format(Locale.ROOT, "%.0f", live.stats.longestGapNs / 1_000_000_000.0) + " s" +
+                    (currentLoss?.let { " · no current fix for ${String.format(Locale.ROOT, "%.1f", it)} s" }
+                        ?: " · fix is current"),
+                color = if (currentLoss == null) IdrPalette.textSecondary else IdrPalette.warning,
+                style = IdrType.monoSmall,
+                modifier = Modifier.testTag("live_outages"),
+            )
+            // Drawn from the window rather than from the losses: a window the fixes did cover
+            // reads as an unbroken bar even when nothing was lost.
+            OutageTimeline(live.stats.spanNs, live.stats.outageMarks(), Modifier.testTag("live_timeline"))
+        }
+        Text(
+            if (running)
+                "The phone's own GNSS fixes, drawn exactly as the platform reported them. No dead " +
+                    "reckoning, fusion, correction, road matching or routing runs yet, so when GNSS is " +
+                    "unavailable this marker stops: nothing is drawn in its place and no position is " +
+                    "estimated. Providers: ${live.stats.providers.joinToString().ifEmpty { "none" }}" +
+                    (live.stats.lastFixRadiusMetres?.let {
+                        " · last reported fix radius ${String.format(Locale.ROOT, "%.0f", it)} m (68%)"
+                    } ?: "")
+            else
+                "Start phone sensors to see your own position here. Nothing is drawn until the phone " +
+                    "reports a fix, and location permission is required for any position at all.",
+            color = IdrPalette.textMuted,
+            style = IdrType.bodySmall,
+            modifier = Modifier.testTag("live_disclaimer"),
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
+            if (running) {
+                IdrChip(
+                    label = "My position",
+                    selected = false,
+                    onClick = { point?.let { renderer?.focus(it) } },
+                    enabled = ready && point != null,
+                    glyph = IdrGlyph.LOCATE,
+                    testTag = "live_focus",
+                )
+                IdrChip("Zoom +", selected = false, onClick = { renderer?.zoomBy(1.0) }, enabled = ready,
+                    glyph = IdrGlyph.PLUS)
+                IdrChip("Zoom −", selected = false, onClick = { renderer?.zoomBy(-1.0) }, enabled = ready,
+                    glyph = IdrGlyph.MINUS)
+            } else {
+                IdrChip("Allow location", selected = false, onClick = onPermission, glyph = IdrGlyph.LOCATE,
+                    testTag = "live_permission")
+                IdrChip("Start sensors", selected = false, onClick = onStart, glyph = IdrGlyph.SATELLITE,
+                    testTag = "live_start")
+            }
+        }
+    }
+}
+
 /** Honest summary of the recorded session on the map. Nothing shown here is inferred. */
 @Composable
 private fun RecordedPanel(view: RecordedView?, busy: Boolean, renderer: MapRenderer?, ready: Boolean) {
@@ -462,6 +643,8 @@ private fun RecordedPanel(view: RecordedView?, busy: Boolean, renderer: MapRende
                 style = IdrType.monoSmall,
                 modifier = Modifier.testTag("recorded_stats"),
             )
+            // The same intervals that split the trail, drawn over the session's own observed window.
+            OutageTimeline(view.stats.spanNs, view.stats.outageMarks(), Modifier.testTag("recorded_timeline"))
             Text(
                 "Real recorded GNSS fixes only. No dead reckoning, fusion, road matching, routing or " +
                     "live position exists yet, so no DR or comparison line is drawn, and the trail breaks " +
@@ -489,6 +672,32 @@ private fun RecordedPanel(view: RecordedView?, busy: Boolean, renderer: MapRende
                 IdrChip("Zoom −", selected = false, onClick = { renderer?.zoomBy(-1.0) }, enabled = ready,
                     glyph = IdrGlyph.MINUS)
             }
+        }
+    }
+}
+
+/** The GNSS loss history over an observed window. Lime is a fix and amber an interval with none.
+ *
+ * Drawn from the window rather than from the losses, so an unbroken lime bar means a fix was there
+ * for the whole window, and no bar at all means there is no window to draw over yet — never a window
+ * whose history is unknown. A window that is only now beginning therefore stays blank instead of
+ * pretending to be continuous. Time only: a loss has no distance to report and none is drawn. */
+@Composable
+private fun OutageTimeline(spanNs: Long, marks: List<OutageMark>, modifier: Modifier = Modifier) {
+    if (spanNs <= 0L) return
+    Canvas(modifier.fillMaxWidth().height(10.dp).clip(IdrShapes.pill)) {
+        drawRect(color = IdrPalette.accent)
+        marks.forEach { mark ->
+            drawRect(
+                color = IdrPalette.warning,
+                topLeft = Offset(mark.startFraction * size.width, 0f),
+                // A loss far shorter than the window is drawn thin rather than rounded up into a
+                // wide block: it has to stay visible, and it has to stay honest about its length.
+                size = Size(
+                    ((mark.endFraction - mark.startFraction) * size.width).coerceAtLeast(2f),
+                    size.height,
+                ),
+            )
         }
     }
 }

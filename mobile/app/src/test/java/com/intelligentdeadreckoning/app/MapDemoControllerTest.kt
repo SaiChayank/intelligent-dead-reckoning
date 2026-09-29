@@ -41,6 +41,37 @@ class MapDemoControllerTest {
         assertEquals(2000,d.state.outageMs); assertEquals(20.0,d.state.outageDistanceM,0.0)
         assertEquals(0,d.state.currentOutageMs); assertTrue(d.state.label.contains("recovery"))
     }
+    @Test fun scriptedLossesAreRetainedAsIntervalsOverTheDemoClock() {
+        // The automatic blackout is 10-20s of the 30s fixture, and it is closed once recovered.
+        val d = started(); d.tick(origin+25_000_000_000)
+        val loss = d.state.denials.single()
+        assertEquals(10_000_000_000L,loss.startNs); assertEquals(20_000_000_000L,loss.endNs)
+        assertEquals(10_000_000_000L,loss.durationNs)
+        val mark = d.state.outageMarks().single()
+        assertEquals(0.4,mark.startFraction.toDouble(),1e-6)
+        assertEquals(0.8,mark.endFraction.toDouble(),1e-6)
+        // Before the fixture reaches the blackout there is a window but no loss on it.
+        val early = started(); early.tick(origin+5_000_000_000)
+        assertTrue(early.state.denials.isEmpty()); assertTrue(early.state.outageMarks().isEmpty())
+        assertEquals(5_000_000_000L,early.state.elapsedMs*1_000_000L)
+        // A loss still running is drawn up to the present tick, which is time that has really run.
+        val open = started(); open.signal(DemoSignal.BLACKOUT,origin+1_000_000_000)
+        open.tick(origin+4_000_000_000)
+        val ongoing = open.state.outageMarks().single()
+        assertEquals(0.25,ongoing.startFraction.toDouble(),1e-6)
+        assertEquals(1.0,ongoing.endFraction.toDouble(),1e-6)
+        assertEquals(3_000_000_000L,ongoing.durationNs)
+        // Recovering closes it at the instant the signal returned, not at the last fix.
+        open.signal(DemoSignal.AVAILABLE,origin+5_000_000_000)
+        open.tick(origin+6_000_000_000)
+        val closed = open.state.denials.single()
+        assertEquals(1_000_000_000L,closed.startNs); assertEquals(5_000_000_000L,closed.endNs)
+        assertEquals(4_000_000_000L,closed.durationNs)
+        // Reset clears the window as well as the losses, so a fresh run starts with no bar.
+        open.reset()
+        assertTrue(open.state.denials.isEmpty()); assertEquals(0L,open.state.elapsedMs)
+    }
+
     @Test fun pausedOverrideChangesDisplayNotTimeOrCounters() {
         val d = started(); d.pause(origin+1_000_000_000)
         d.signal(DemoSignal.BLACKOUT,origin+10_000_000_000)

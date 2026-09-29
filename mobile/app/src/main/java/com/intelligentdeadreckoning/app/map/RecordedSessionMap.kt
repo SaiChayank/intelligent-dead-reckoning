@@ -7,12 +7,31 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.hypot
 
-/** Real recorded GNSS fixes folded into map display state.
+/** One observed interval with no current fix. It begins when the previous fix went stale and ends
+ * when a fresh one arrived — time only. With no fix there is no distance to report, and nothing
+ * anywhere estimates one.
+ *
+ * Named for what it is rather than for where it came from, because the scripted demo's blackout is
+ * the same thing: a stretch of an observed clock with no fix on it. */
+data class Outage(val startNs: Long, val endNs: Long) {
+    val durationNs get() = (endNs - startNs).coerceAtLeast(0)
+}
+
+/** Real GNSS fixes folded into map display state, from a replay or from the live phone stream.
+ *
+ * The fold is identical for both: every rule below is about what a fix is, not where it came from.
+ * What differs is the claim the map makes, so the presented `source` is explicit rather than
+ * implied — replayed fixes are `REPLAY_REAL`, live phone fixes are `REAL`, and neither can be
+ * labelled as the other.
  *
  * Display conversion only: no propagation, dead reckoning, sensor fusion, road snapping,
  * interpolation across a gap, or inference of a GNSS/DR/fused mode. A fix that is missing
  * is left missing — the drawn trail is split at every gap instead of bridging it, because a
  * straight line between two fixes twenty seconds apart is movement nobody observed.
+ *
+ * Those same breaks are retained as `Outage` intervals as well as counted, so a caller can draw
+ * the loss history and not only its total. One derivation feeds both the drawn trail and any
+ * timeline, so the two can never disagree about when the fixes stopped.
  *
  * Records are expected to have been validated by `ReplayReader`, which enforces session,
  * source and contract membership before they reach here.
@@ -20,10 +39,14 @@ import kotlin.math.hypot
 class RecordedSessionMap(
     private val maxTrail: Int = DEFAULT_MAX_TRAIL,
     private val gapThresholdNs: Long = DEFAULT_GAP_NS,
+    /** The claim the presentation makes about where these fixes came from. */
+    private val source: Source = Source.REPLAY_REAL,
+    private val maxOutages: Int = DEFAULT_MAX_OUTAGES,
 ) {
     init {
         require(maxTrail in 2..4096)
         require(gapThresholdNs > 0)
+        require(maxOutages >= 1)
     }
 
     /** What the recording actually contained, so the UI can state it instead of implying more. */
@@ -37,6 +60,12 @@ class RecordedSessionMap(
         val malformed: Int,
         val gaps: Int,
         val longestGapNs: Long,
+        /** The retained outages, oldest first, bounded to the newest `maxOutages`. `gaps` above is
+         * still the total over the whole stream, so a long run loses detail rather than the count. */
+        val outages: List<Outage>,
+        /** The observed window: first and last fix, which any timeline is drawn over. */
+        val observedStartNs: Long?,
+        val observedEndNs: Long?,
         val spanNs: Long,
         val providers: List<String>,
         val lastFixRadiusMetres: Double?,
@@ -57,6 +86,7 @@ class RecordedSessionMap(
     private var malformed = 0
     private var gaps = 0
     private var longestGap = 0L
+    private val outages = ArrayList<Outage>()
     private var firstNs: Long? = null
     private var lastNs: Long? = null
     private val providers = LinkedHashSet<String>()
@@ -84,6 +114,10 @@ class RecordedSessionMap(
         if (previous != null && time > previous && time - previous > gapThresholdNs) {
             gaps++
             longestGap = maxOf(longestGap, time - previous)
+            // The loss began when the previous fix went stale — the same threshold the acquisition
+            // processor uses to call a fix stale — and ended with this one.
+            outages.add(Outage(previous + gapThresholdNs, time))
+            while (outages.size > maxOutages) outages.removeAt(0)
             closeSegment()
         }
         if (!HyderabadMap.contains(latitude, longitude)) {
@@ -112,7 +146,7 @@ class RecordedSessionMap(
     }
 
     fun snapshot(): MapPresentation = MapPresentation(
-        source = Source.REPLAY_REAL,
+        source = source,
         point = point,
         headingDegrees = heading,
         speedMetresPerSecond = speed,
@@ -137,6 +171,10 @@ class RecordedSessionMap(
             malformed = malformed,
             gaps = gaps,
             longestGapNs = longestGap,
+            outages = outages.toList(),
+            observedStartNs = firstNs,
+            observedEndNs = lastNs,
+            // Derived from the same fields it reports, so the window and the span cannot disagree.
             spanNs = if (firstNs == null || lastNs == null) 0L else lastNs!! - firstNs!!,
             providers = providers.toList(),
             lastFixRadiusMetres = radius,
@@ -176,6 +214,8 @@ class RecordedSessionMap(
 
     companion object {
         const val DEFAULT_MAX_TRAIL = 512
+        /** Outages retained for a timeline. Far more than a plausible drive, and bounded memory. */
+        const val DEFAULT_MAX_OUTAGES = 256
         /** The same 5 s the acquisition contract uses before a location gap is reported. */
         const val DEFAULT_GAP_NS = 5_000_000_000L
         private const val METRES_PER_DEGREE = 111_320.0

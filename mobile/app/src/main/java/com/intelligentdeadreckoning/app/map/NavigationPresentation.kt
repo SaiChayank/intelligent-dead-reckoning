@@ -16,6 +16,13 @@ data class MapPresentation(
     val fixRadiusMetres: Double? = null,
 )
 
+/** One live GNSS view: what the map draws from the phone's own stream, plus the counts it may state.
+ * Nothing here is propagated, fused, corrected or road matched — it is the platform's last fix. */
+data class LiveGnssView(val presentation: MapPresentation, val stats: RecordedSessionMap.Stats)
+
+/** Before the live stream has produced a fix: a real source with nothing drawn. */
+val NO_LIVE_GNSS = LiveGnssView(MapPresentation(Source.REAL), RecordedSessionMap(source = Source.REAL).stats())
+
 /** Display conversion only: exact WGS84 origin + ENU -> ECEF -> geographic position.
  * No propagation, correction, road snapping or inference of a GNSS/DR/fused mode.
  */

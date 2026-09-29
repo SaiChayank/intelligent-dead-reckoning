@@ -16,12 +16,19 @@ import java.io.File
 import com.intelligentdeadreckoning.app.sessions.*
 import android.net.Uri
 import com.intelligentdeadreckoning.app.replay.*
+import com.intelligentdeadreckoning.app.map.LiveGnssView
+import com.intelligentdeadreckoning.app.map.NO_LIVE_GNSS
+import com.intelligentdeadreckoning.app.map.RecordedSessionMap
+import com.intelligentdeadreckoning.contracts.v1.GnssMeasurement
+import com.intelligentdeadreckoning.contracts.v1.Source
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.flow.stateIn
 
@@ -103,6 +110,16 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
     val capture = real.state
     val measurements = real.events
     val source = coordinator.source
+    /** Live phone GNSS folded for display only: the same fold a replayed session gets, claimed as
+     * live rather than replayed. Rebuilt per subscriber, so leaving the map and returning starts a
+     * fresh live trail instead of resuming a stale one. Nothing is propagated or fused. */
+    val liveGnss = flow {
+        val map = RecordedSessionMap(source = Source.REAL)
+        emit(LiveGnssView(map.snapshot(), map.stats()))
+        measurements.filter { it.event.data is GnssMeasurement }.collect { record ->
+            emit(LiveGnssView(map.accept(record), map.stats()))
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NO_LIVE_GNSS)
     fun select(source: InputSource) {
         player.stop(); replayVisible.value = false
         if (source != coordinator.source.value) recorder.stop("Source switched.")

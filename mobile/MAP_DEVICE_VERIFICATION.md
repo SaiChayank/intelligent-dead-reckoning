@@ -247,3 +247,200 @@ framebuffer showing that the synthetic fixture and the recorded session each dra
 their own overlay geometry and that the recorded marker sits at the framed fix.
 The fresh session, its validation report and the screen captures are kept locally
 under ignored `mobile/artifacts/`.
+
+## Recorded-mode overlay dead end — 2026-09-29, after the commit
+
+The phone detached mid-run (`adb devices` empty, `adb usb` reporting no devices)
+and was reattached before the work finished, so this change is both host-tested
+and checked on the device itself; the device evidence is the last subsection here.
+
+### A switch the recorded screen cannot reach could blank a recording
+
+The overlay switches (`overlay_trail`, `overlay_roads`, `overlay_uncertainty` and
+the two synthetic-only ones) are rendered by the synthetic console, which recorded
+mode hides (`if (showControls && !recorded)`). They were nevertheless the only
+writes to the `overlays` state that `present()` receives, and that state survives a
+source switch — it is one `remember { mutableStateOf(DemoOverlays()) }` shared by
+both modes. Switching off `trail` in the synthetic demo and then opening
+`Recorded session` therefore drew no trail at all while the panel still reported
+the fixes it had loaded; switching off `roads` hid the basemap the same way.
+Nothing on the recorded screen could switch either back on, so the screen was a
+dead end. This is the same "panel reports fixes, map draws nothing" symptom as
+defects 1 and 2 above, caused by stale state instead of by geometry.
+
+Fix: `DemoOverlays.forRecordedSession()` resolves the switches for recorded mode,
+keeping the three layers a recording depends on (`trail`, `uncertainty` for the
+radius its last fix reported, and `roads`) on, and leaving the synthetic-only
+layers alone because `MapOverlay` already refuses to emit them for replayed data.
+Both call sites that present a recording — the `LaunchedEffect` and the `ON_STOP`
+lifecycle observer — now go through that resolution.
+
+Host evidence: two tests added to `RecordedSessionMapTest`, one on the
+resolution itself and one end-to-end showing that the abandoned switches render no
+`trail` or `accuracy` geometry while the resolved switches render both.
+**145 → 147 host tests, 0 failures**; `lintDebug` 0 errors, 5 warnings, all five
+pre-existing dependency/target-version notices.
+
+Device verification. The old APK was still installed, so the bug was reproduced on
+the screen first and then re-run against the fixed build — same device, same
+session, same sequence: expand `Options` in synthetic mode, switch overlays off,
+switch to `Recorded session`, wait for the load, capture the framebuffer.
+
+| build | switches left off in the console | road-colour px | purple px |
+| --- | --- | --- | --- |
+| old | Trail | 11372 | 935 |
+| old | Trail + Road overlay | **4** | 935 |
+| fixed | Trail + Uncertainty + Road overlay | **11372** | 935 |
+
+Road pixels are exact matches of the style's `roads` colour `#fffdf4` within the map
+area. The old build lost the basemap roads entirely while the console switch was
+off (11372 → 4 px); the fixed build draws them regardless (11372 px), and its
+recorded map matches the old build's switch-on map exactly on every mask measured —
+road colour, purple overlay, the blue-ish tint, and the accuracy-fill blend. The
+accuracy polygon for the recording's reported 100 m radius is likewise present with
+`Uncertainty` switched off: 119 accuracy-fill px, identical to the switch-on
+capture. Instrumented suite on the fixed build: `OfflineMapDeviceTest`
+**OK (5 tests), 41.213 s** — no regression.
+
+## Live phone GNSS on the map — 2026-09-29, later still
+
+The map had two sources and neither was the phone's own position: a scripted
+fixture and a saved recording. A third mode, `map_source_live`, now draws the live
+acquisition stream. It is the same fold a recording gets — `RecordedSessionMap`,
+which validates finiteness, refuses fixes outside the bundled pack, splits the trail
+at every gap and drops repeats — with the presented source made explicit rather than
+hardcoded, so live fixes are labelled `REAL` and replayed ones stay `REPLAY_REAL`.
+`SessionViewModel.liveGnss` folds `real.events`, the same record stream the recorder
+subscribes to, so the trail is built from the real stream and not sampled from a UI
+snapshot.
+
+The synthetic console belongs to the fixture, so live mode hides it exactly as
+recorded mode does, and both resolve the overlay switches through
+`forConsoleHidden()`: a switch the user can no longer reach must not blank real data.
+The camera takes the first live fix it sees and is then left alone — following a
+track is an engine's job, not this screen's.
+
+One honesty change: `map_mode` now reads "Live GNSS only · no dead reckoning, fusion
+or routing yet" in live mode, because live mode makes the old "no live position"
+string false. The other two modes keep that string, so the existing device assertion
+on it stays true and unchanged.
+
+Evidence:
+
+- Host: **149 tests, 0 failures** (147 + 2), including that a live stream is
+  presented as `REAL` and can never be presented as a replay, and that live fixes
+  cannot draw the synthetic comparison or scenario layers. `lintDebug`: 0 errors,
+  5 warnings, all pre-existing dependency notices.
+- Device: new `liveModeNamesItsRealSourceAndCannotClaimNavigation`, asserting the
+  `LIVE PHONE GNSS` and "no dead reckoning" labels, that the scripted console is
+  absent in live mode, and that returning to the fixture restores both.
+  `OfflineMapDeviceTest` **OK (6 tests)**.
+- Device, real data: live mode with sensors running produced real fixes with real
+  satellites and fix age — `GNSS quality degraded · fix age 0.1 s · 20 satellites`,
+  then `stale · fix age 12.9 s` as the provider slowed, over 7 fixes in 120 s. Every
+  fix came from the network provider near 78.30° E, outside the pack's 78.35° E
+  edge, so the panel reported `7 outside coverage` and the map drew nothing (0 purple
+  pixels). The coverage refusal works on live data as it does on a recording.
+- **Not verified on device: an in-coverage live fix drawing its marker and moving
+  the camera.** Indoors the phone delivered only network fixes ~4 km west of the
+  covered area, and no GPS fix arrived in 90 s of polling. The GPS provider's own
+  last-known location (78.37° E, 3.8 m accuracy, 40 satellites) is inside the pack,
+  so this is fix availability, not coverage. The drawing path is the same one
+  recorded mode already put 935 purple pixels through on this device; only the
+  stream feeding it is new. Re-check outdoors or near a window.
+
+Honest limit: the **`trail` half of this fix is still host-verified only**. Every
+GNSS fix in the one recording on the phone is at the same coordinate (17.5206881 N,
+78.365531 E), so its seven `trail-fix` dots cannot be told apart from the
+`display-position` marker, which is emitted unconditionally and painted on top of
+them — the purple pixel count is 935 in all three captures whatever the switch
+says. Seeing that half on screen needs a recording with two distinct in-coverage
+fixes, and no session in the corpus has one.
+
+### Camera framing on a degenerate box: investigated and cleared
+
+`frame()` centres a recording whose fixes all sit at one position rather than
+building a box from it. That raised the question of whether a recording that is a
+straight north-south line — zero east-west extent — hands
+`CameraUpdateFactory.newLatLngBounds` an unbounded zoom request. It does not, and
+no change was made. The fit takes the *smaller* of the two axis zooms, so a
+zero-span axis only asks for more zoom than the other axis needs and therefore
+loses that comparison; only a box degenerate on **both** axes is unbounded, which
+is the case the guard already covers.
+
+The zoom arithmetic itself is native — `MapLibreMap.getCameraForLatLngBounds`
+delegates into MapLibre's C++ fit — so it is not reachable from a host test. The
+Java side was read out of the 13.6.1 AAR: `LatLngBounds.Builder.include` appends
+and `build` sweeps min/max, so the box handed to the camera is the intended one.
+
+## GNSS loss timeline — 2026-09-29, last run
+
+The fold already splits the trail at every gap and counts the gaps, but it never
+said *when*. `RecordedSessionMap` now retains those same breaks as `Outage`
+intervals as well as counting them, and `outageMarks()` places them over the
+observed window. The bar is lime where a fix exists and amber where none does,
+with the current loss reported as a number (`currentOutageSeconds`) rather than
+drawn as an interval that has not closed.
+
+One derivation feeds both the drawn trail and the timeline, so the two cannot
+disagree about when the fixes stopped. The interval begins when the previous fix
+went **stale** — the same 5 s threshold the acquisition contract uses — and not
+when the next one happened to arrive, which would have shortened every loss by
+that threshold.
+
+### The window is the observer's, and that is what makes it testable
+
+A bar is drawn from the window rather than from the losses. An unbroken lime bar
+therefore means a fix was present for the whole window, and **no bar at all** means
+there is no window to draw over yet — never a window whose history is unknown.
+Three sources share the one placement rule, and each supplies its own window:
+
+| source | window | end of window |
+| --- | --- | --- |
+| recorded session | first to last real fix | a fix |
+| live phone GNSS | first to last real fix | a fix |
+| scripted demo | its own elapsed clock | the present tick |
+
+That last row is why the demo now draws the timeline too. A device test cannot
+produce a real GNSS gap on demand, and recorded mode chooses the session with the
+most records, so no fixture could be seeded deterministically past the phone's own
+14.6 MB session. The fixture's blackout, by contrast, is scripted and repeatable,
+so the feature is now covered by a device **test** rather than only by measured
+pixels. The demo's bar is labelled as scripted in the panel, and it draws its
+own scripted loss, never phone data.
+
+### Measured on the device (1264×2780, the bar is x 144–1119 = 976 px)
+
+- **Live, real**: `2 fixes · 1 gaps · span 20s`. One loss, `[first+5 s, second]`
+  over 20 s, so the boundary belongs at 144 + 0.25×976 = **388**. Measured lime to
+  x 385 with amber from 387 (the pill rounding and antialiasing move a boundary by
+  a pixel or two; verified at the same row on every capture).
+- **Recorded, real**: `7 fixes · 6 gaps · longest 20s · span 120s`. Six amber blocks
+  of **121 px** each (0.125 × 976 = 15 s of 120 s), the first starting **41 px** in
+  (5 s / 120 s, the stale threshold), repeating every **162 px** (20 s / 120 s).
+- **Scripted, frozen**: at `COMPLETED` the demo clock stops at 30 s, so the
+  automatic 10–20 s blackout must land on 1/3 and 2/3 — **469.3 and 794.7**. Measured
+  boundaries at **469.5 and 794**, with the HUD independently reporting
+  `outage total 10.0s`. This is the same rule and the same composable as the two rows
+  above; only the window differs.
+- **Absence**: no bar at demo `IDLE` (window zero), and none in live mode before the
+  first fix. Both checked by pixel and not only by the semantics tree.
+
+### Evidence
+
+- Host: **154 tests, 0 failures** (152 + 2): the placement rule over a window with no
+  fixes behind it, clamping a loss that reaches past the window, dropping one that
+  would occupy no width, and the scripted losses being retained, closed at the
+  instant the signal returned and cleared by reset. `lintDebug`: 0 errors, 5
+  warnings, all pre-existing dependency notices.
+- Device: `OfflineMapDeviceTest` **OK (7 tests)**; the suite is 26 tests, 0 failures.
+  The new `scriptedLossTimelineNeedsAWindowAndShowsTheLossItCovers` drives the
+  fixture and asserts the bar appears once it has a window and is gone after reset.
+- The refactor that removed the "draw only if there are losses" guard was checked
+  against the pre-refactor capture for recorded mode: the six amber blocks are at
+  the identical pixel positions.
+
+Honest limit: `recorded_timeline` and `live_timeline` are pixel-verified on real data
+but still have no device **test**, for the two reasons above. The placement they rely
+on is the same function the scripted test exercises on the device and the host suite
+exercises directly.

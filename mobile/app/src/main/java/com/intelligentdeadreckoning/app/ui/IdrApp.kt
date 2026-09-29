@@ -75,6 +75,8 @@ import com.intelligentdeadreckoning.app.ui.design.IdrPalette
 import com.intelligentdeadreckoning.app.ui.design.IdrSectionLabel
 import com.intelligentdeadreckoning.app.ui.design.IdrSize
 import com.intelligentdeadreckoning.app.ui.design.IdrSpace
+import com.intelligentdeadreckoning.app.map.LiveGnssView
+import com.intelligentdeadreckoning.app.map.NO_LIVE_GNSS
 import com.intelligentdeadreckoning.app.ui.design.IdrStateTone
 import com.intelligentdeadreckoning.app.ui.design.IdrTone
 import com.intelligentdeadreckoning.app.ui.design.IdrType
@@ -100,6 +102,7 @@ private val dockItems = Screen.entries.map { DockItem(it.id, it.title, it.glyph,
 @Composable
 fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
            source: InputSource = InputSource.SIMULATION, capture: CaptureState = CaptureState(),
+           liveGnss: LiveGnssView = NO_LIVE_GNSS,
            onSource: (InputSource) -> Unit = {}, onPermission: () -> Unit = {}, onSettings: () -> Unit = {},
            recording: RecorderState = RecorderState(), onStartRecording: () -> Unit = {},
            onStopRecording: () -> Unit = {}, library: SessionPage = SessionPage(), libraryError: String? = null,
@@ -164,7 +167,22 @@ fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
                                         Diagnostics(state, onStart, onStop)
                                     }
                                 }
-                                Screen.MAP -> EntranceFade { OfflineMapScreen(pageArea) }
+                                Screen.MAP -> EntranceFade {
+                                    OfflineMapScreen(
+                                        pageHeight = pageArea,
+                                        source = source,
+                                        capture = capture,
+                                        liveGnss = liveGnss,
+                                        // A live position cannot come from the synthetic source, so
+                                        // this selects phone sensors first rather than silently
+                                        // starting the scripted demo the user asked to leave.
+                                        onStart = {
+                                            if (source != InputSource.REAL) onSource(InputSource.REAL)
+                                            onStart()
+                                        },
+                                        onPermission = onPermission,
+                                    )
+                                }
                                 Screen.ABOUT -> EntranceFade { About() }
                             }
                         }

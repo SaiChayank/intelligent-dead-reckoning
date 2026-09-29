@@ -7,11 +7,25 @@ enum class DemoPlayback { IDLE, RUNNING, PAUSED, STOPPED, COMPLETED }
 enum class DemoSignal { AUTOMATIC, BLACKOUT, AVAILABLE }
 data class DemoOverlays(val trail: Boolean = true, val comparison: Boolean = true,
     val uncertainty: Boolean = true, val scenario: Boolean = true, val roads: Boolean = true)
+
+/** Overlay switches for a map that is drawing something other than the synthetic fixture.
+ *
+ * The synthetic console owns these switches and is on screen only while the fixture runs, so a map
+ * of recorded or live phone GNSS hides it. A switch the user can neither see nor change must never
+ * blank real data: the three layers such a map depends on — its trail, the radius the last fix
+ * reported, and the basemap roads — stay on. The synthetic-only layers keep whatever the console
+ * left them as, because `MapOverlay` already refuses to draw them for anything but the fixture.
+ */
+fun DemoOverlays.forConsoleHidden() = copy(trail = true, uncertainty = true, roads = true)
 data class DemoSnapshot(
     val playback: DemoPlayback = DemoPlayback.IDLE, val scenario: DemoScenario = DemoScenario.CURVE,
     val signal: DemoSignal = DemoSignal.AUTOMATIC, val rate: Double = 1.0,
     val elapsedMs: Long = 0, val distanceM: Double = 0.0, val outageMs: Long = 0,
     val outageDistanceM: Double = 0.0, val currentOutageMs: Long = 0,
+    /** Scripted losses over the demo clock, oldest first. Time only: the fixture has no distance to
+     * report while it denies itself a fix. The last entry is still open when the scripted signal has
+     * not returned yet, which is why its end is the present tick and not a fix. */
+    val denials: List<Outage> = emptyList(),
     val label: String = "Synthetic demo stopped — not your location",
     val presentation: MapPresentation = MapPresentation(Source.SIMULATION),
 )
@@ -26,6 +40,8 @@ class MapDemoController {
     private var virtualNs = 0L
     private var outageNs = 0L
     private var currentOutageNs = 0L
+    private val denials = ArrayList<Outage>()
+    private var denialStartNs: Long? = null
     private var redOffset = 0.0
     private var renderedMs = -1L
     private var adapter = NavigationPresentation(SyntheticMapDemo.header,InitializationMode.DEPLOYABLE)
@@ -40,6 +56,7 @@ class MapDemoController {
         val scenario = state.scenario; val rate = state.rate
         state = DemoSnapshot(scenario = scenario, rate = rate)
         virtualNs = 0; outageNs = 0; currentOutageNs = 0; redOffset = 0.0; renderedMs = -1
+        denials.clear(); denialStartNs = null
         adapter = NavigationPresentation(SyntheticMapDemo.header,InitializationMode.DEPLOYABLE)
         comparison.clear(); path = emptyList(); deniedPath = emptyList()
     }
@@ -93,8 +110,15 @@ class MapDemoController {
         val boundaries = (listOf(virtualNs,end,10_000_000_000L,20_000_000_000L).filter { it in virtualNs..end }).distinct().sorted()
         for((a,b) in boundaries.zipWithNext()) {
             val dt = b-a
-            if(denied(a)) { outageNs += dt; currentOutageNs += dt; redOffset += dt/1e9*3.0 }
-            else { currentOutageNs = 0; redOffset = (redOffset-dt/1e9*6.0).coerceAtLeast(0.0) }
+            if(denied(a)) {
+                outageNs += dt; currentOutageNs += dt; redOffset += dt/1e9*3.0
+                // Opened on the boundary the loss really began on, so a delayed tick cannot
+                // report a loss longer than the scripted signal was down.
+                if(denialStartNs == null) denialStartNs = a
+            } else {
+                currentOutageNs = 0; redOffset = (redOffset-dt/1e9*6.0).coerceAtLeast(0.0)
+                denialStartNs?.let { denials.add(Outage(it,a)); denialStartNs = null }
+            }
         }
         virtualNs = end
         if(!denied(end)) currentOutageNs = 0
@@ -118,6 +142,8 @@ class MapDemoController {
             comparisonPoint = red,comparisonTrail = comparison.toList(),scenarioPath = path,outagePath = deniedPath)
         state = state.copy(elapsedMs = ms,distanceM = ms/100.0,outageMs = outageNs/1_000_000,
             outageDistanceM = outageNs/1e9*10,currentOutageMs = currentOutageNs/1_000_000,
+            // Closed losses plus the one still in progress, which can only be drawn up to now.
+            denials = denials.toList() + (denialStartNs?.let{ listOf(Outage(it,virtualNs)) } ?: emptyList()),
             label = phase(),presentation = view)
     }
 }
