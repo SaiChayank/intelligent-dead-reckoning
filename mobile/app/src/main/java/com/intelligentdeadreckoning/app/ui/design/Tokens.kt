@@ -50,11 +50,18 @@ object IdrPalette {
     val danger = Color(0xFFF2555A)
     val info = Color(0xFF7CC7F2)
 
-    /** Map presentation, separate from UI chrome. */
-    val mapRoute = Color(0xFFC6F24E)
-    val mapRouteCasing = Color(0xFF1B2408)
-    val mapReference = Color(0xFF9B7BF5)
-    val mapOutage = Color(0xFFF5B94A)
+    /**
+     * Map presentation, separate from UI chrome. These are the renderer's shipped layer
+     * colours, kept here so the map and the design system cannot drift apart. The values
+     * are the ones recorded in `mobile/MAP_DEVICE_VERIFICATION.md` screenshots; changing
+     * them changes device-verified evidence and needs a re-verification pass.
+     */
+    val mapTrail = Color(0xFF7856D8) // drawn positions and trail segments
+    val mapHeading = Color(0xFF40228B) // heading wedge
+    val mapOutage = Color(0xFFD99100) // automatic outage segment
+    val mapAccuracy = Color(0xFF3E8CD9) // reported fix radius / accuracy ring
+    val mapComparison = Color(0xFFD74545) // scripted comparison line — an illustration
+    val mapScenario = Color(0xFF637888) // scripted scenario path
 }
 
 /** 4dp base spacing scale. */
@@ -85,6 +92,8 @@ object IdrSize {
     val iconLg = 24.dp
     val touchTarget = 44.dp
     val rowHeight = 56.dp
+    val dot = 8.dp
+    val dotSm = 6.dp
 }
 
 /**
@@ -132,6 +141,8 @@ object IdrType {
     val labelSmall = TextStyle(fontFamily = fontDefault, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.2.sp, lineHeight = 13.sp)
     val metric = TextStyle(fontFamily = fontMono, fontSize = 28.sp, fontWeight = FontWeight.Medium, letterSpacing = (-0.8).sp, lineHeight = 32.sp)
     val metricSmall = TextStyle(fontFamily = fontMono, fontSize = 19.sp, fontWeight = FontWeight.Medium, letterSpacing = (-0.4).sp, lineHeight = 23.sp)
+    /** The single oversized instrument readout (demo gauge). */
+    val gauge = TextStyle(fontFamily = fontDefault, fontSize = 52.sp, fontWeight = FontWeight.Light, letterSpacing = (-2).sp, lineHeight = 56.sp)
     val mono = TextStyle(fontFamily = fontMono, fontSize = 13.sp, fontWeight = FontWeight.Normal, lineHeight = 18.sp)
     val monoSmall = TextStyle(fontFamily = fontMono, fontSize = 11.5.sp, fontWeight = FontWeight.Normal, lineHeight = 16.sp)
     /** Tracked product wordmark. */

@@ -2,8 +2,9 @@
 
 Three checks, all read-only, all stdlib-only:
 
-1. Tracked-file policy: no generated, cached, raw-dataset or secret-bearing file
-   is committed. The patterns mirror .gitignore, which is the policy source.
+1. Tracked-file policy: no generated, cached, raw-dataset, experiment or
+   secret-bearing file is committed. The patterns mirror .gitignore, which is the
+   policy source.
 2. Secret scan: conservative patterns for well-known credential formats over
    tracked text files. Deliberately high-precision: a false positive that fails
    CI is worse than a missed exotic format, and no scanner replaces review.
@@ -34,6 +35,10 @@ FORBIDDEN_DIR_PARTS = [
 ]
 # data/raw and data/processed are ignored whole; model weights are caught by
 # suffix below so that models/README.md and future model code stay legal.
+# Collected experiments are local evidence, not source: they hold real recordings,
+# device identifiers and timestamps. Only the directory README is tracked.
+FORBIDDEN_EXPERIMENT_PREFIX = "experiments/"
+FORBIDDEN_EXPERIMENT_ALLOWLIST = {"experiments/README.md"}
 FORBIDDEN_PREFIXES = ["data/raw/", "data/processed/"]
 FORBIDDEN_NAMES = {"local.properties", "thumbs.db", ".ds_store", "desktop.ini"}
 FORBIDDEN_SUFFIXES = (".pyc", ".pyo", ".pyd", ".log", ".tmp", ".temp",
@@ -67,6 +72,9 @@ def check_tracked_policy(files: list[str]) -> list[str]:
     findings = []
     for rel in files:
         if rel in TRACKED_GENERATED_ALLOWLIST:
+            continue
+        if rel.startswith(FORBIDDEN_EXPERIMENT_PREFIX) and rel not in FORBIDDEN_EXPERIMENT_ALLOWLIST:
+            findings.append(f"experiment content must not be committed: {rel}")
             continue
         lower = rel.lower()
         parts = lower.split("/")
@@ -127,12 +135,16 @@ def check_artifacts() -> list[str]:
             findings.append(f"map manifest size mismatch: {rel_path}")
 
     for name in ("contracts/v1/golden.json", "contracts/v1/invalid_records.json",
-                 "contracts/recording/v1/golden_metadata.json"):
+                 "contracts/recording/v1/golden_metadata.json",
+                 "contracts/experiment/v1/golden_experiment.json",
+                 "contracts/experiment/v1/golden_mask.json",
+                 "contracts/experiment/v1/invalid_manifests.json"):
         try:
             json.loads((ROOT / name).read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:
             findings.append(f"contract fixture not valid JSON: {name} ({exc})")
-    for name in ("contracts/v1/golden_records.jsonl", "contracts/v1/edge_records.jsonl"):
+    for name in ("contracts/v1/golden_records.jsonl", "contracts/v1/edge_records.jsonl",
+                 "contracts/experiment/v1/golden_annotations.jsonl"):
         try:
             with (ROOT / name).open(encoding="utf-8") as handle:
                 for number, line in enumerate(handle, 1):

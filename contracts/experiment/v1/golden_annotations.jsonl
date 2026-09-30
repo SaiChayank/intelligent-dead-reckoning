@@ -1,0 +1,11 @@
+{"kind":"scenario","session_id":"rec-primary","start_ns":"9007199254740993","end_ns":"9007229254740993","note":null,"calibration_id":null,"motion":null,"scenario":"open_sky","gnss_state":null}
+{"kind":"scenario","session_id":"rec-primary","start_ns":"9007229254740993","end_ns":"9007259254740993","note":null,"calibration_id":null,"motion":null,"scenario":"urban_canyon","gnss_state":null}
+{"kind":"motion","session_id":"rec-primary","start_ns":"9007199254740993","end_ns":"9007209254740993","note":null,"calibration_id":null,"motion":"stationary","scenario":null,"gnss_state":null}
+{"kind":"motion","session_id":"rec-primary","start_ns":"9007209254740993","end_ns":"9007244254740993","note":null,"calibration_id":null,"motion":"straight","scenario":null,"gnss_state":null}
+{"kind":"motion","session_id":"rec-primary","start_ns":"9007244254740993","end_ns":"9007259254740993","note":null,"calibration_id":null,"motion":"turning_right","scenario":null,"gnss_state":null}
+{"kind":"gnss_state","session_id":"rec-primary","start_ns":"9007199254740993","end_ns":"9007209254740993","note":null,"calibration_id":null,"motion":null,"scenario":null,"gnss_state":"good"}
+{"kind":"gnss_state","session_id":"rec-primary","start_ns":"9007209254740993","end_ns":"9007219254740993","note":null,"calibration_id":null,"motion":null,"scenario":null,"gnss_state":"degraded"}
+{"kind":"gnss_state","session_id":"rec-primary","start_ns":"9007219254740993","end_ns":"9007229254740993","note":null,"calibration_id":null,"motion":null,"scenario":null,"gnss_state":"lost"}
+{"kind":"gnss_state","session_id":"rec-primary","start_ns":"9007229254740993","end_ns":"9007234254740993","note":null,"calibration_id":null,"motion":null,"scenario":null,"gnss_state":"recovered"}
+{"kind":"gnss_state","session_id":"rec-primary","start_ns":"9007234254740993","end_ns":"9007259254740993","note":null,"calibration_id":null,"motion":null,"scenario":null,"gnss_state":"good"}
+{"kind":"calibration","session_id":"rec-primary","start_ns":"9007254254740993","end_ns":"9007257254740993","note":null,"calibration_id":"cal-1","motion":null,"scenario":null,"gnss_state":null}

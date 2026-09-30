@@ -30,13 +30,16 @@ explicit Start/Stop, bounded writing and interrupted-session recovery. See
 [recording architecture and device acceptance](RECORDING.md). Its new physical
 device gate is separate from the frozen acquisition verification.
 
-Not implemented: ZIP import, replay seek/speed controls, rotation-vector events, fusion/routing, INS, AI,
-fusion, calibration or shared-core implementation. Host tests/build pass;
+Not implemented: ZIP import, replay seek/speed controls, rotation-vector events, propagation/routing, INS, AI,
+fusion or shared-core implementation. Phone-to-vehicle calibration is implemented and reached only
+through the navigation runtime — see [CALIBRATION.md](CALIBRATION.md). Host tests/build pass;
 connected-device acquisition acceptance still requires the procedure linked above.
 
 ## Interface and design system
 
-The Compose surface was rebuilt on a single dark design system in
+The Compose surface runs on a single dark design system — the written contract is
+[UI_DESIGN.md](UI_DESIGN.md) (tokens, state vocabulary, honesty rules, map-overlay
+colours, dialog and accessibility rules). The implementation lives in
 `app/src/main/java/com/intelligentdeadreckoning/app/ui/design/`:
 
 - `Tokens.kt` — colour, spacing, radius, size, motion and typography scales. One accent
@@ -44,9 +47,10 @@ The Compose surface was rebuilt on a single dark design system in
   success/warning/danger/info tones stay separate so "simulated" can never read as "selected".
   Surfaces run `#070707`–`#181818`, primary text `#F5F5F5`.
 - `Components.kt` — reusable primitives: `IdrCard` (primary/secondary/utility/glass), `IdrButton`,
-  `IdrChip` (carries `Selected` semantics), `StatusPill`, `StatTile`, `IdrMeter`, `KeyValueRow`,
-  `StatePanel` (loading/empty/error), `PlaceholderBlock`, the `IdrIcon` line-glyph family and the
-  floating `IdrDock`. No icon or animation dependency was added.
+  `IdrChip` (carries `Selected` semantics, 44 dp touch target), `StatusPill`, `StatusDot`,
+  `IdrOverlayChip` (map chrome), `StatTile`, `IdrMeter`, `KeyValueRow`, `StatePanel`
+  (loading/empty/degraded/error/success), `PlaceholderBlock`, the `IdrIcon` line-glyph family and
+  the floating `IdrDock`. No icon or animation dependency was added.
 - `ui/Theme.kt` — `IdrTheme`, mapping that system onto Material 3 and exposing
   `LocalIdrReducedMotion`, which is true when the platform animation scale is zero. Every animated
   primitive collapses its duration to 0 in that case.
@@ -64,7 +68,7 @@ instead of covering page content, so scrolled controls stay reachable and clicka
 
 This is a presentation change only. Acquisition, recording, export, replay, contracts, the map
 renderer and the frozen device procedures are unchanged, and no instrumented test tag, control
-label or user-visible status string was altered. Verified here: **135 JVM tests pass**, both APKs
+label or user-visible status string was altered. Verified here: **195 JVM tests pass**, both APKs
 build, `assembleDebugAndroidTest` still compiles the device suite, and lint reports **0 errors**
 with no source warnings. Physical-device verification of the new surface (layout on the target
 phone, gesture ergonomics, sunlight contrast and the full instrumented suite) is **not** performed

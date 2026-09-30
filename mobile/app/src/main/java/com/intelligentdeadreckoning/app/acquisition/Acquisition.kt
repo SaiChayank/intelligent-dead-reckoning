@@ -117,6 +117,7 @@ class AcquisitionProcessor(val header: Header, val originNs: Long, private val e
                              val seen: LinkedHashSet<Long> = linkedSetOf(), var floor: Long = -1)
     private val tracks = linkedMapOf<String, Track>()
     private val notices = ArrayDeque<Record>()
+    private val quality = GnssQualityManager()
     private var nextId = 0L
     var accepted = 0L; private set
     var delayed = 0L; private set
@@ -216,26 +217,36 @@ class AcquisitionProcessor(val header: Header, val originNs: Long, private val e
             }
             ChannelReading(t.latest, t.count, hz, stale)
         }
-        val fix = tracks.values.map { it.latest }.filter { it.event.data is GnssMeasurement }.maxByOrNull { it.event.t_ns }
-        val age = fix?.let { elapsedSeconds(maxOf(now, it.event.t_ns), it.event.t_ns) }
-        val quality = when {
-            access !in listOf(LocationAccess.PRECISE, LocationAccess.APPROXIMATE) -> {
-                val reason = when (access) {
-                    LocationAccess.NOT_REQUESTED -> "LOCATION_NOT_REQUESTED"
-                    LocationAccess.DENIED -> "PERMISSION_DENIED"
-                    LocationAccess.REVOKED -> "PERMISSION_REVOKED"
-                    else -> "LOCATION_UNAVAILABLE"
-                }
-                GnssQualityState(GnssState.DENIED, null, null, listOf(reason))
-            }
-            !providerEnabled -> GnssQualityState(GnssState.UNAVAILABLE, age, null, listOf("PROVIDER_DISABLED"))
-            age == null -> GnssQualityState(GnssState.ACQUIRING, null, satellites, listOf("NO_FIX"))
-            age > 5 -> GnssQualityState(GnssState.STALE, age, satellites, listOf("STALE_FIX"))
-            else -> GnssQualityState(GnssState.DEGRADED, age, satellites,
-                listOf(if (access == LocationAccess.APPROXIMATE) "APPROXIMATE_LOCATION" else "QUALITY_NOT_VALIDATED"))
-        }
+        // The newest fix on the newest channel decides, and the policy profiles that channel.
+        // This is the only place quality is evaluated, so it is the only place that can publish
+        // a transition; at most one diagnostic appears per real change of state.
+        val newest = tracks.entries.filter { it.key.startsWith("gnss_") }
+            .maxByOrNull { it.value.latest.event.t_ns }
+        val newestRecord = newest?.value?.latest
+        val fix = newestRecord?.event?.data as? GnssMeasurement
+        val decision = quality.update(
+            GnssQualityInput(
+                nowNs = now,
+                originNs = originNs,
+                permission = access,
+                providerEnabled = providerEnabled,
+                provider = newest?.key?.removePrefix("gnss_"),
+                lastFix = if (newestRecord == null || fix == null) null else GnssFixEvidence(
+                    tNs = newestRecord.event.t_ns,
+                    receivedNs = newestRecord.event.received_ns,
+                    horizontalAccuracyM = fix.horizontal_accuracy_m,
+                    verticalAccuracyM = fix.vertical_accuracy_m,
+                    // Live satellite status is attached only to GPS fixes and expires after 5 s,
+                    // so it is a fallback for the fix's own count, never a replacement for it.
+                    satellitesUsed = (fix.satellites_used?.toLong() ?: satellites)?.toInt(),
+                    hasSpeed = fix.speed_m_s != null,
+                    hasBearing = fix.bearing_deg != null,
+                ),
+            )
+        )
+        quality.lastTransition?.let { diagnostic(it.code.code, it.message, now) }
         return CaptureState(true, header.session_id, originNs, access, readings = readings,
             diagnostics = notices.toList(), accepted = accepted, delayed = delayed, duplicates = duplicates,
-            dropped = dropped, invalid = invalid, quality = quality)
+            dropped = dropped, invalid = invalid, quality = decision.toContract())
     }
 }

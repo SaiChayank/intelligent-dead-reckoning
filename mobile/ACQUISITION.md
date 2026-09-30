@@ -132,11 +132,15 @@ A receipt delay >100 ms emits LATE_MEASUREMENT but preserves an otherwise valid
 
 Negative/future timestamps and pre-session cached fixes are rejected with
 
-  INVALID_MEASUREMENT. No wall-clock or row-index fallback is used. Sensor gaps
+  INVALID_MEASUREMENT. No wall-clock or row-index fallback is used. Sensor gaps  >100 ms and GNSS gaps >5 s emit TIME_GAP; gap labelling is diagnostic policy and
 
-  >100 ms and GNSS gaps >5 s emit TIME_GAP; these thresholds are diagnostic policy,
+  provider-agnostic, not a validated navigation error model. It is a different number
 
-  not a validated navigation error model.
+  from the navigation-quality stale bound, which is per provider and validated against
+
+  recorded data in GNSS_QUALITY.md; one shared 5 s bound would have called the healthy
+
+  0.05 Hz network channel stale in 117 of its 118 recorded intervals.
 
 Ownership and bounds
 
@@ -174,9 +178,17 @@ sensor and at most two location channels. Hardware/queue sizes, accepted/delayed
 
 duplicate/invalid/drop counters, sensor accuracy and provider uncertainty are
 
-visible. GNSS remains acquiring/unavailable/denied/stale/degraded; no unvalidated
+visible. GNSS quality is the deterministic machine in GNSS_QUALITY.md: acquiring,
 
-fix is promoted to a navigation-ready "good" state.
+unavailable, denied, stale and degraded states are named, and "good" is reached only
+
+when the newest fix passes every named check (fresh against its provider's measured
+
+cadence, timestamp valid, precision granted, horizontal accuracy within the validated
+
+bound, enough satellites where the provider reports them). A fix that cannot be
+
+validated is never promoted, and the reason codes say which check failed.
 
 Stop immediately gates offers/publication, discards queued input with an explicit
 

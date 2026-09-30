@@ -64,13 +64,21 @@ corrected INS remains a missing gate.
 
 ### IMPLEMENTED — code exists in the tree
 
-- **Contracts** — versioned measurement (`contracts/v1`) and recording
-  (`contracts/recording/v1`) schemas with strict Python and Kotlin codecs,
-  golden/invalid fixtures, and cross-language parity tests. These are the only
-  data contracts; nothing else may define a parallel schema.
+- **Contracts** — versioned measurement (`contracts/v1`), recording
+  (`contracts/recording/v1`) and experiment (`contracts/experiment/v1`) schemas
+  with strict Python and Kotlin codecs, golden/invalid fixtures, and
+  cross-language parity tests. These are the only data contracts; nothing else may
+  define a parallel schema, and the experiment layer composes the other two by
+  reference rather than redefining them.
 - **Android acquisition** — foreground IMU (accelerometer, gyroscope,
   magnetometer, gravity) plus GNSS/network fixes and satellite status, with
   permission handling and bounded queues. See [mobile/ACQUISITION.md](mobile/ACQUISITION.md).
+- **GNSS quality and outage** — a deterministic state machine over the frozen
+  `GnssState` set (`unavailable`, `acquiring`, `good`, `degraded`, `stale`,
+  `denied`), with stable reason codes and at most one diagnostic per real change
+  of state. Its thresholds are per provider and measured against the real
+  recordings instead of assumed, and a later EKF innovation test may only lower
+  trust through a one-way input. See [mobile/GNSS_QUALITY.md](mobile/GNSS_QUALITY.md).
 - **Recording** — local session writing with atomic metadata finalization,
   interrupted-session recovery and the frozen `measurements.jsonl` format.
   See [mobile/RECORDING.md](mobile/RECORDING.md).
@@ -79,9 +87,47 @@ corrected INS remains a missing gate.
   See [mobile/EXPORT.md](mobile/EXPORT.md).
 - **Replay** — read-only session replay with explicit `replay_real` /
   `replay_simulation` labels. See [mobile/REPLAY.md](mobile/REPLAY.md).
+- **Phone-to-vehicle calibration** — the first real `NavigationEngine`
+  implementation, reached only through the navigation runtime: gravity/tilt
+  alignment from resting windows, yaw from straight-motion evidence with GNSS
+  validation, gyroscope bias from rest, an accelerometer bias only when the
+  resting attitudes justify one, and remount detection that expires a
+  calibration when the phone is moved. It estimates the mounting frame and
+  nothing else — no position, velocity or heading solution, and no learning.
+  See [mobile/CALIBRATION.md](mobile/CALIBRATION.md).
+- **GNSS+INS fusion** — the first production navigation solution: a classical
+  15-state error-state EKF (position, velocity, attitude error, gyro bias,
+  accelerometer bias, covariance) whose prediction is the validated strapdown
+  baseline, with joint chi-square-gated GNSS position/velocity updates,
+  rejected-update diagnostics, prediction-only outage coasting, and recovery
+  that converges toward fixes instead of snapping to the first one. It emits
+  only canonical `NavigationState` / `Confidence` / `DiagnosticEvent`, and a
+  persistent gate stalemate stops the run rather than publishing an unbounded
+  position. See [mobile/FUSION.md](mobile/FUSION.md).
+- **Vehicle-motion constraints** — gated zero-velocity updates and non-holonomic
+  lateral/vertical constraints inside the fusion pipeline: a rolling stationary
+  detector implementing the project's declared resting rule, speed/yaw-rate/
+  calibration/longitudinal-force gates that stand the constraints down in parking,
+  turns, acceleration, braking and grades, and constraint refusals booked separately
+  from GNSS rejections. On held-out synthetic outage drives they cut outage-end error
+  by 71%, outage RMSE by 68% and stop drift by 50% with no regressions
+  ([constraints report](reports/constraints_ab_2026_09_30.md)).
 - **Python session validation** — `tools/validate_phone_recording.py` validates
   phone or local sessions against the same rules the on-device reader enforces;
   `tools/parity_probe.py` keeps the two readers honest against each other.
+- **Experiment collection and evaluation foundation** — an experiment
+  (`contracts/experiment/v1`, [reference](contracts/experiment/v1/README.md))
+  binds recording sessions to the context an evaluation needs: known phone
+  mounting orientation and how it was established, one shared boot-identity clock,
+  calibration/motion/scenario intervals, observed GNSS good/degraded/lost/recovered
+  intervals, an optional independent RTK/VBOX-class reference, and software GNSS
+  outage masks for repeatable degraded-GNSS evaluation. `tools/seal_experiment.py`
+  computes the session digests and the `integrity.sha256` covering the whole
+  directory, `tools/validate_experiment.py` accepts or rejects one experiment or a
+  corpus, and `tools/experiment_report.py` prints the timeline and coverage. The
+  loader is strictly read-only: masking withholds GNSS records at read time and no
+  recording is ever altered. See the
+  [collection protocol](docs/PS26168_Experiment_Data_Collection_Protocol.md).
 - **Map** — bundled offline Hyderabad vector tiles with three never-blended
   sources (synthetic fixture, recorded session, live phone GNSS), coverage
   refusal, gap-split trails and a GNSS loss timeline.
@@ -99,24 +145,34 @@ corrected INS remains a missing gate.
 - **Real-data verified**: 44 of 44 real phone sessions (688,345 records)
   accepted by the contract reader, including two recovered interruptions
   ([corpus report](reports/recording_corpus_2026_09_29.md)).
-- **Host-verified**: 154 Kotlin unit tests, 140 Python tests (1 skip),
+- **Real-data baseline**: the classical strapdown INS baseline measured on the
+  longest real session (27 min 40 s, stationary reference): 271 m of horizontal
+  divergence after one minute, 600.8 km after 27.7 min, with the vertical
+  explained by the sensor's own 0.0119 m/s² magnitude residual. It consumes no
+  GNSS at runtime, and the report names every limitation
+  ([baseline report](reports/ins_baseline_2026_09_30.md)).
+- **Host-verified**: 282 Kotlin unit tests, 238 Python tests (1 skip),
   `lintDebug` clean. Host tests are not device evidence and are labelled
   where they are all that exists (see audit section 2).
 
 ### EXPERIMENTAL — research scripts; outputs are not product claims
 
 - M (Driver B) synchronization searches, attitude and body-frame diagnostics,
-  and a classical strapdown INS baseline (382.67% drift over 429.8 m; gated
-  behind `--offline-baseline` because it uses future GPS and VBOX velocity).
-  These run for research only; they are not validated app navigation or
-  production calibration, and the INS is not the "physically correct classical
-  baseline" that any future AI result must be compared against.
+  and the historical INS script `training/ins_mechanization.py` (382.67% drift
+  over 429.8 m; gated behind `--offline-baseline` because it uses future GPS and
+  VBOX velocity). These run for research only; they are not validated app
+  navigation or production calibration, and that script is **not** the
+  "physically correct classical baseline" any future AI result must be compared
+  against — its inputs and its initial-state assumptions are exactly what
+  [`training/strapdown_ins.py`](training/strapdown_ins.py) exists to replace,
+  with no GNSS or reference-instrument input at all.
 
 ### PLANNED — not implemented
 
-- `NavigationEngine` implementation (the interface exists in `contracts/v1`),
-  corrected INS, body-frame/mechanization corrections, calibration (every
-  session currently records `calibration: not_applied`).
+- `NavigationEngine` implementations beyond calibration: propagation, INS
+  mechanization, EKF fusion, map matching. The calibration engine is the only
+  engine in the tree, it reports no position, velocity or heading, and sessions
+  recorded before it existed still carry `calibration: not_applied`.
 - AI error-correction training, EKF fusion, map matching, on-device inference,
   the shared navigation core (`core/`), and the edge runtime (`edge/`).
 - A real GNSS-loss/recovery corpus (41 of 44 sessions have no GNSS at all) and
@@ -303,6 +359,15 @@ successful setup tests as new dataset verification or training approval.
 python -B -X utf8 -m unittest discover -s tests -v
 python -m pip check
 python -B -X utf8 -c "import ast; from pathlib import Path; files=[p for d in ('training','tests') for p in Path(d).rglob('*.py')]; [ast.parse(p.read_text(encoding='utf-8-sig'),filename=str(p)) for p in files]; print('Parsed',len(files),'Python files')"
+```
+
+Experiment tooling, once drives have been collected. Neither command needs a
+device, and neither writes to a recording:
+
+```powershell
+python tools/seal_experiment.py experiments/<experiment_id>
+python tools/validate_experiment.py --corpus experiments
+python tools/experiment_report.py --experiment experiments/<experiment_id> --mask <mask_id>
 ```
 
 Tests use synthetic fixtures outside `data/raw/`. Preserve raw files unchanged;

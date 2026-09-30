@@ -7,8 +7,8 @@ network. No Docker, no hosted services, no emulator.
 
 | Job | Gates (all verified locally before landing) |
 |---|---|
-| `python` | Python 3.12, `pip install -r requirements.txt` + `pip check`, contract tests (28), Python session-reader tests (34 + 8), full suite (140 tests, 1 environment-dependent skip), AST compile of 42 files across `training/ tests/ contracts/ tools/`, import checks |
-| `android` | JDK 25 (matches the verified Android Studio JBR), Android SDK platform 37 + build-tools 36.0.0, `bash gradlew testDebugUnitTest` (154 JVM tests incl. Kotlin/Python session-reader parity), `lintDebug`, `assembleDebug`, `assembleDebugAndroidTest` |
+| `python` | Python 3.12, `pip install -r requirements.txt` + `pip check`, contract tests (28), Python session-reader tests (34 + 8), experiment contract/loader/tooling tests (57), strapdown INS physics tests (31), GNSS threshold-tool tests (10), full suite (238 tests, 1 environment-dependent skip), AST compile of 58 files across `training/ tests/ contracts/ tools/`, import checks |
+| `android` | JDK 25 (matches the verified Android Studio JBR), Android SDK platform 37 + build-tools 36.0.0, `bash gradlew testDebugUnitTest` (282 JVM tests incl. Kotlin/Python session-reader parity, the analytic calibration suite, the GNSS quality state machine, the GNSS+INS fusion filter with its geodesy parity and the vehicle-motion constraint suite), `lintDebug`, `assembleDebug`, `assembleDebugAndroidTest` |
 | `quality` | `git diff --check` over the pushed range (with `cr-at-eol` for the repo's CRLF files), `tools/check_repo_hygiene.py` (forbidden tracked files, secret-pattern scan, map-manifest and contract-fixture validation) |
 
 Notes on deliberate choices:

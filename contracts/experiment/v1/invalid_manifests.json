@@ -1,0 +1,867 @@
+[
+  {
+    "name": "unknown_contract_version",
+    "manifest": {
+      "experiment_contract_version": "2.0.0",
+      "experiment_id": "exp-golden-urban-01",
+      "created_utc_ms": "1789000000000",
+      "description": "Golden schema fixture for the experiment contract.",
+      "operator": "fixture operator",
+      "vehicle": "fixture hatchback",
+      "mount": {
+        "position": "dash_centre",
+        "orientation_method": "measured",
+        "roll_deg": 0.5,
+        "pitch_deg": -3.5,
+        "yaw_deg": 12.0,
+        "uncertainty_deg": 1.5,
+        "note": null
+      },
+      "clock": {
+        "domain": "android_elapsed_realtime_ns",
+        "boot_id": "boot-golden-1",
+        "reference_alignment": {
+          "method": "cross_correlation",
+          "offset_ns": "-1500000",
+          "uncertainty_ns": "5000000",
+          "note": null
+        }
+      },
+      "sessions": [
+        {
+          "session_id": "rec-primary",
+          "role": "primary",
+          "measurements_sha256": "7d1df0bded7ee7305d119eaf6e3c20efa0e60d60589d15979e5de99077cc36fc"
+        },
+        {
+          "session_id": "rec-aux",
+          "role": "supplementary",
+          "measurements_sha256": "b2f185453d21d8553d32ffd8031b1814730888012d6e9ef3a49126699fa5edb8"
+        }
+      ],
+      "reference": {
+        "equipment_class": "rtk",
+        "equipment": "fixture RTK receiver",
+        "horizontal_accuracy_m": 0.02,
+        "rate_hz": 5.0,
+        "timebase": "experiment_clock",
+        "source": "real",
+        "note": null
+      },
+      "masks": [
+        "tunnel_observed"
+      ]
+    },
+    "code": "INVALID_VERSION"
+  },
+  {
+    "name": "missing_required_key",
+    "manifest": {
+      "experiment_contract_version": "1.0.0",
+      "experiment_id": "exp-golden-urban-01",
+      "created_utc_ms": "1789000000000",
+      "description": "Golden schema fixture for the experiment contract.",
+      "vehicle": "fixture hatchback",
+      "mount": {
+        "position": "dash_centre",
+        "orientation_method": "measured",
+        "roll_deg": 0.5,
+        "pitch_deg": -3.5,
+        "yaw_deg": 12.0,
+        "uncertainty_deg": 1.5,
+        "note": null
+      },
+      "clock": {
+        "domain": "android_elapsed_realtime_ns",
+        "boot_id": "boot-golden-1",
+        "reference_alignment": {
+          "method": "cross_correlation",
+          "offset_ns": "-1500000",
+          "uncertainty_ns": "5000000",
+          "note": null
+        }
+      },
+      "sessions": [
+        {
+          "session_id": "rec-primary",
+          "role": "primary",
+          "measurements_sha256": "7d1df0bded7ee7305d119eaf6e3c20efa0e60d60589d15979e5de99077cc36fc"
+        },
+        {
+          "session_id": "rec-aux",
+          "role": "supplementary",
+          "measurements_sha256": "b2f185453d21d8553d32ffd8031b1814730888012d6e9ef3a49126699fa5edb8"
+        }
+      ],
+      "reference": {
+        "equipment_class": "rtk",
+        "equipment": "fixture RTK receiver",
+        "horizontal_accuracy_m": 0.02,
+        "rate_hz": 5.0,
+        "timebase": "experiment_clock",
+        "source": "real",
+        "note": null
+      },
+      "masks": [
+        "tunnel_observed"
+      ]
+    },
+    "code": "INVALID_KEYS"
+  },
+  {
+    "name": "unknown_key",
+    "manifest": {
+      "experiment_contract_version": "1.0.0",
+      "experiment_id": "exp-golden-urban-01",
+      "created_utc_ms": "1789000000000",
+      "description": "Golden schema fixture for the experiment contract.",
+      "operator": "fixture operator",
+      "vehicle": "fixture hatchback",
+      "mount": {
+        "position": "dash_centre",
+        "orientation_method": "measured",
+        "roll_deg": 0.5,
+        "pitch_deg": -3.5,
+        "yaw_deg": 12.0,
+        "uncertainty_deg": 1.5,
+        "note": null
+      },
+      "clock": {
+        "domain": "android_elapsed_realtime_ns",
+        "boot_id": "boot-golden-1",
+        "reference_alignment": {
+          "method": "cross_correlation",
+          "offset_ns": "-1500000",
+          "uncertainty_ns": "5000000",
+          "note": null
+        }
+      },
+      "sessions": [
+        {
+          "session_id": "rec-primary",
+          "role": "primary",
+          "measurements_sha256": "7d1df0bded7ee7305d119eaf6e3c20efa0e60d60589d15979e5de99077cc36fc"
+        },
+        {
+          "session_id": "rec-aux",
+          "role": "supplementary",
+          "measurements_sha256": "b2f185453d21d8553d32ffd8031b1814730888012d6e9ef3a49126699fa5edb8"
+        }
+      ],
+      "reference": {
+        "equipment_class": "rtk",
+        "equipment": "fixture RTK receiver",
+        "horizontal_accuracy_m": 0.02,
+        "rate_hz": 5.0,
+        "timebase": "experiment_clock",
+        "source": "real",
+        "note": null
+      },
+      "masks": [
+        "tunnel_observed"
+      ],
+      "extra": true
+    },
+    "code": "INVALID_KEYS"
+  },
+  {
+    "name": "unknown_mount_position",
+    "manifest": {
+      "experiment_contract_version": "1.0.0",
+      "experiment_id": "exp-golden-urban-01",
+      "created_utc_ms": "1789000000000",
+      "description": "Golden schema fixture for the experiment contract.",
+      "operator": "fixture operator",
+      "vehicle": "fixture hatchback",
+      "mount": {
+        "position": "boot",
+        "orientation_method": "measured",
+        "roll_deg": 0.5,
+        "pitch_deg": -3.5,
+        "yaw_deg": 12.0,
+        "uncertainty_deg": 1.5,
+        "note": null
+      },
+      "clock": {
+        "domain": "android_elapsed_realtime_ns",
+        "boot_id": "boot-golden-1",
+        "reference_alignment": {
+          "method": "cross_correlation",
+          "offset_ns": "-1500000",
+          "uncertainty_ns": "5000000",
+          "note": null
+        }
+      },
+      "sessions": [
+        {
+          "session_id": "rec-primary",
+          "role": "primary",
+          "measurements_sha256": "7d1df0bded7ee7305d119eaf6e3c20efa0e60d60589d15979e5de99077cc36fc"
+        },
+        {
+          "session_id": "rec-aux",
+          "role": "supplementary",
+          "measurements_sha256": "b2f185453d21d8553d32ffd8031b1814730888012d6e9ef3a49126699fa5edb8"
+        }
+      ],
+      "reference": {
+        "equipment_class": "rtk",
+        "equipment": "fixture RTK receiver",
+        "horizontal_accuracy_m": 0.02,
+        "rate_hz": 5.0,
+        "timebase": "experiment_clock",
+        "source": "real",
+        "note": null
+      },
+      "masks": [
+        "tunnel_observed"
+      ]
+    },
+    "code": "INVALID_ENUM"
+  },
+  {
+    "name": "assumed_mounting_without_note",
+    "manifest": {
+      "experiment_contract_version": "1.0.0",
+      "experiment_id": "exp-golden-urban-01",
+      "created_utc_ms": "1789000000000",
+      "description": "Golden schema fixture for the experiment contract.",
+      "operator": "fixture operator",
+      "vehicle": "fixture hatchback",
+      "mount": {
+        "position": "dash_centre",
+        "orientation_method": "assumed",
+        "roll_deg": 0.5,
+        "pitch_deg": -3.5,
+        "yaw_deg": 12.0,
+        "uncertainty_deg": 1.5,
+        "note": null
+      },
+      "clock": {
+        "domain": "android_elapsed_realtime_ns",
+        "boot_id": "boot-golden-1",
+        "reference_alignment": {
+          "method": "cross_correlation",
+          "offset_ns": "-1500000",
+          "uncertainty_ns": "5000000",
+          "note": null
+        }
+      },
+      "sessions": [
+        {
+          "session_id": "rec-primary",
+          "role": "primary",
+          "measurements_sha256": "7d1df0bded7ee7305d119eaf6e3c20efa0e60d60589d15979e5de99077cc36fc"
+        },
+        {
+          "session_id": "rec-aux",
+          "role": "supplementary",
+          "measurements_sha256": "b2f185453d21d8553d32ffd8031b1814730888012d6e9ef3a49126699fa5edb8"
+        }
+      ],
+      "reference": {
+        "equipment_class": "rtk",
+        "equipment": "fixture RTK receiver",
+        "horizontal_accuracy_m": 0.02,
+        "rate_hz": 5.0,
+        "timebase": "experiment_clock",
+        "source": "real",
+        "note": null
+      },
+      "masks": [
+        "tunnel_observed"
+      ]
+    },
+    "code": "INVARIANT"
+  },
+  {
+    "name": "two_primary_sessions",
+    "manifest": {
+      "experiment_contract_version": "1.0.0",
+      "experiment_id": "exp-golden-urban-01",
+      "created_utc_ms": "1789000000000",
+      "description": "Golden schema fixture for the experiment contract.",
+      "operator": "fixture operator",
+      "vehicle": "fixture hatchback",
+      "mount": {
+        "position": "dash_centre",
+        "orientation_method": "measured",
+        "roll_deg": 0.5,
+        "pitch_deg": -3.5,
+        "yaw_deg": 12.0,
+        "uncertainty_deg": 1.5,
+        "note": null
+      },
+      "clock": {
+        "domain": "android_elapsed_realtime_ns",
+        "boot_id": "boot-golden-1",
+        "reference_alignment": {
+          "method": "cross_correlation",
+          "offset_ns": "-1500000",
+          "uncertainty_ns": "5000000",
+          "note": null
+        }
+      },
+      "sessions": [
+        {
+          "session_id": "rec-primary",
+          "role": "primary",
+          "measurements_sha256": "7d1df0bded7ee7305d119eaf6e3c20efa0e60d60589d15979e5de99077cc36fc"
+        },
+        {
+          "session_id": "rec-aux",
+          "role": "primary",
+          "measurements_sha256": "b2f185453d21d8553d32ffd8031b1814730888012d6e9ef3a49126699fa5edb8"
+        }
+      ],
+      "reference": {
+        "equipment_class": "rtk",
+        "equipment": "fixture RTK receiver",
+        "horizontal_accuracy_m": 0.02,
+        "rate_hz": 5.0,
+        "timebase": "experiment_clock",
+        "source": "real",
+        "note": null
+      },
+      "masks": [
+        "tunnel_observed"
+      ]
+    },
+    "code": "INVARIANT"
+  },
+  {
+    "name": "no_sessions",
+    "manifest": {
+      "experiment_contract_version": "1.0.0",
+      "experiment_id": "exp-golden-urban-01",
+      "created_utc_ms": "1789000000000",
+      "description": "Golden schema fixture for the experiment contract.",
+      "operator": "fixture operator",
+      "vehicle": "fixture hatchback",
+      "mount": {
+        "position": "dash_centre",
+        "orientation_method": "measured",
+        "roll_deg": 0.5,
+        "pitch_deg": -3.5,
+        "yaw_deg": 12.0,
+        "uncertainty_deg": 1.5,
+        "note": null
+      },
+      "clock": {
+        "domain": "android_elapsed_realtime_ns",
+        "boot_id": "boot-golden-1",
+        "reference_alignment": {
+          "method": "cross_correlation",
+          "offset_ns": "-1500000",
+          "uncertainty_ns": "5000000",
+          "note": null
+        }
+      },
+      "sessions": [],
+      "reference": {
+        "equipment_class": "rtk",
+        "equipment": "fixture RTK receiver",
+        "horizontal_accuracy_m": 0.02,
+        "rate_hz": 5.0,
+        "timebase": "experiment_clock",
+        "source": "real",
+        "note": null
+      },
+      "masks": [
+        "tunnel_observed"
+      ]
+    },
+    "code": "INVARIANT"
+  },
+  {
+    "name": "duplicate_session_id",
+    "manifest": {
+      "experiment_contract_version": "1.0.0",
+      "experiment_id": "exp-golden-urban-01",
+      "created_utc_ms": "1789000000000",
+      "description": "Golden schema fixture for the experiment contract.",
+      "operator": "fixture operator",
+      "vehicle": "fixture hatchback",
+      "mount": {
+        "position": "dash_centre",
+        "orientation_method": "measured",
+        "roll_deg": 0.5,
+        "pitch_deg": -3.5,
+        "yaw_deg": 12.0,
+        "uncertainty_deg": 1.5,
+        "note": null
+      },
+      "clock": {
+        "domain": "android_elapsed_realtime_ns",
+        "boot_id": "boot-golden-1",
+        "reference_alignment": {
+          "method": "cross_correlation",
+          "offset_ns": "-1500000",
+          "uncertainty_ns": "5000000",
+          "note": null
+        }
+      },
+      "sessions": [
+        {
+          "session_id": "rec-primary",
+          "role": "primary",
+          "measurements_sha256": "7d1df0bded7ee7305d119eaf6e3c20efa0e60d60589d15979e5de99077cc36fc"
+        },
+        {
+          "session_id": "rec-primary",
+          "role": "supplementary",
+          "measurements_sha256": "b2f185453d21d8553d32ffd8031b1814730888012d6e9ef3a49126699fa5edb8"
+        }
+      ],
+      "reference": {
+        "equipment_class": "rtk",
+        "equipment": "fixture RTK receiver",
+        "horizontal_accuracy_m": 0.02,
+        "rate_hz": 5.0,
+        "timebase": "experiment_clock",
+        "source": "real",
+        "note": null
+      },
+      "masks": [
+        "tunnel_observed"
+      ]
+    },
+    "code": "DUPLICATE_SESSION"
+  },
+  {
+    "name": "malformed_session_digest",
+    "manifest": {
+      "experiment_contract_version": "1.0.0",
+      "experiment_id": "exp-golden-urban-01",
+      "created_utc_ms": "1789000000000",
+      "description": "Golden schema fixture for the experiment contract.",
+      "operator": "fixture operator",
+      "vehicle": "fixture hatchback",
+      "mount": {
+        "position": "dash_centre",
+        "orientation_method": "measured",
+        "roll_deg": 0.5,
+        "pitch_deg": -3.5,
+        "yaw_deg": 12.0,
+        "uncertainty_deg": 1.5,
+        "note": null
+      },
+      "clock": {
+        "domain": "android_elapsed_realtime_ns",
+        "boot_id": "boot-golden-1",
+        "reference_alignment": {
+          "method": "cross_correlation",
+          "offset_ns": "-1500000",
+          "uncertainty_ns": "5000000",
+          "note": null
+        }
+      },
+      "sessions": [
+        {
+          "session_id": "rec-primary",
+          "role": "primary",
+          "measurements_sha256": "zz"
+        },
+        {
+          "session_id": "rec-aux",
+          "role": "supplementary",
+          "measurements_sha256": "b2f185453d21d8553d32ffd8031b1814730888012d6e9ef3a49126699fa5edb8"
+        }
+      ],
+      "reference": {
+        "equipment_class": "rtk",
+        "equipment": "fixture RTK receiver",
+        "horizontal_accuracy_m": 0.02,
+        "rate_hz": 5.0,
+        "timebase": "experiment_clock",
+        "source": "real",
+        "note": null
+      },
+      "masks": [
+        "tunnel_observed"
+      ]
+    },
+    "code": "INVALID_TYPE"
+  },
+  {
+    "name": "unknown_clock_domain",
+    "manifest": {
+      "experiment_contract_version": "1.0.0",
+      "experiment_id": "exp-golden-urban-01",
+      "created_utc_ms": "1789000000000",
+      "description": "Golden schema fixture for the experiment contract.",
+      "operator": "fixture operator",
+      "vehicle": "fixture hatchback",
+      "mount": {
+        "position": "dash_centre",
+        "orientation_method": "measured",
+        "roll_deg": 0.5,
+        "pitch_deg": -3.5,
+        "yaw_deg": 12.0,
+        "uncertainty_deg": 1.5,
+        "note": null
+      },
+      "clock": {
+        "domain": "monotonic_ns",
+        "boot_id": "boot-golden-1",
+        "reference_alignment": {
+          "method": "cross_correlation",
+          "offset_ns": "-1500000",
+          "uncertainty_ns": "5000000",
+          "note": null
+        }
+      },
+      "sessions": [
+        {
+          "session_id": "rec-primary",
+          "role": "primary",
+          "measurements_sha256": "7d1df0bded7ee7305d119eaf6e3c20efa0e60d60589d15979e5de99077cc36fc"
+        },
+        {
+          "session_id": "rec-aux",
+          "role": "supplementary",
+          "measurements_sha256": "b2f185453d21d8553d32ffd8031b1814730888012d6e9ef3a49126699fa5edb8"
+        }
+      ],
+      "reference": {
+        "equipment_class": "rtk",
+        "equipment": "fixture RTK receiver",
+        "horizontal_accuracy_m": 0.02,
+        "rate_hz": 5.0,
+        "timebase": "experiment_clock",
+        "source": "real",
+        "note": null
+      },
+      "masks": [
+        "tunnel_observed"
+      ]
+    },
+    "code": "INVALID_ENUM"
+  },
+  {
+    "name": "reference_in_experiment_clock_without_alignment",
+    "manifest": {
+      "experiment_contract_version": "1.0.0",
+      "experiment_id": "exp-golden-urban-01",
+      "created_utc_ms": "1789000000000",
+      "description": "Golden schema fixture for the experiment contract.",
+      "operator": "fixture operator",
+      "vehicle": "fixture hatchback",
+      "mount": {
+        "position": "dash_centre",
+        "orientation_method": "measured",
+        "roll_deg": 0.5,
+        "pitch_deg": -3.5,
+        "yaw_deg": 12.0,
+        "uncertainty_deg": 1.5,
+        "note": null
+      },
+      "clock": {
+        "domain": "android_elapsed_realtime_ns",
+        "boot_id": "boot-golden-1",
+        "reference_alignment": null
+      },
+      "sessions": [
+        {
+          "session_id": "rec-primary",
+          "role": "primary",
+          "measurements_sha256": "7d1df0bded7ee7305d119eaf6e3c20efa0e60d60589d15979e5de99077cc36fc"
+        },
+        {
+          "session_id": "rec-aux",
+          "role": "supplementary",
+          "measurements_sha256": "b2f185453d21d8553d32ffd8031b1814730888012d6e9ef3a49126699fa5edb8"
+        }
+      ],
+      "reference": {
+        "equipment_class": "rtk",
+        "equipment": "fixture RTK receiver",
+        "horizontal_accuracy_m": 0.02,
+        "rate_hz": 5.0,
+        "timebase": "experiment_clock",
+        "source": "real",
+        "note": null
+      },
+      "masks": [
+        "tunnel_observed"
+      ]
+    },
+    "code": "INVARIANT"
+  },
+  {
+    "name": "duplicate_mask_id",
+    "manifest": {
+      "experiment_contract_version": "1.0.0",
+      "experiment_id": "exp-golden-urban-01",
+      "created_utc_ms": "1789000000000",
+      "description": "Golden schema fixture for the experiment contract.",
+      "operator": "fixture operator",
+      "vehicle": "fixture hatchback",
+      "mount": {
+        "position": "dash_centre",
+        "orientation_method": "measured",
+        "roll_deg": 0.5,
+        "pitch_deg": -3.5,
+        "yaw_deg": 12.0,
+        "uncertainty_deg": 1.5,
+        "note": null
+      },
+      "clock": {
+        "domain": "android_elapsed_realtime_ns",
+        "boot_id": "boot-golden-1",
+        "reference_alignment": {
+          "method": "cross_correlation",
+          "offset_ns": "-1500000",
+          "uncertainty_ns": "5000000",
+          "note": null
+        }
+      },
+      "sessions": [
+        {
+          "session_id": "rec-primary",
+          "role": "primary",
+          "measurements_sha256": "7d1df0bded7ee7305d119eaf6e3c20efa0e60d60589d15979e5de99077cc36fc"
+        },
+        {
+          "session_id": "rec-aux",
+          "role": "supplementary",
+          "measurements_sha256": "b2f185453d21d8553d32ffd8031b1814730888012d6e9ef3a49126699fa5edb8"
+        }
+      ],
+      "reference": {
+        "equipment_class": "rtk",
+        "equipment": "fixture RTK receiver",
+        "horizontal_accuracy_m": 0.02,
+        "rate_hz": 5.0,
+        "timebase": "experiment_clock",
+        "source": "real",
+        "note": null
+      },
+      "masks": [
+        "tunnel_observed",
+        "tunnel_observed"
+      ]
+    },
+    "code": "DUPLICATE_MASK"
+  },
+  {
+    "name": "unsafe_experiment_id",
+    "manifest": {
+      "experiment_contract_version": "1.0.0",
+      "experiment_id": "../etc",
+      "created_utc_ms": "1789000000000",
+      "description": "Golden schema fixture for the experiment contract.",
+      "operator": "fixture operator",
+      "vehicle": "fixture hatchback",
+      "mount": {
+        "position": "dash_centre",
+        "orientation_method": "measured",
+        "roll_deg": 0.5,
+        "pitch_deg": -3.5,
+        "yaw_deg": 12.0,
+        "uncertainty_deg": 1.5,
+        "note": null
+      },
+      "clock": {
+        "domain": "android_elapsed_realtime_ns",
+        "boot_id": "boot-golden-1",
+        "reference_alignment": {
+          "method": "cross_correlation",
+          "offset_ns": "-1500000",
+          "uncertainty_ns": "5000000",
+          "note": null
+        }
+      },
+      "sessions": [
+        {
+          "session_id": "rec-primary",
+          "role": "primary",
+          "measurements_sha256": "7d1df0bded7ee7305d119eaf6e3c20efa0e60d60589d15979e5de99077cc36fc"
+        },
+        {
+          "session_id": "rec-aux",
+          "role": "supplementary",
+          "measurements_sha256": "b2f185453d21d8553d32ffd8031b1814730888012d6e9ef3a49126699fa5edb8"
+        }
+      ],
+      "reference": {
+        "equipment_class": "rtk",
+        "equipment": "fixture RTK receiver",
+        "horizontal_accuracy_m": 0.02,
+        "rate_hz": 5.0,
+        "timebase": "experiment_clock",
+        "source": "real",
+        "note": null
+      },
+      "masks": [
+        "tunnel_observed"
+      ]
+    },
+    "code": "INVALID_ID"
+  },
+  {
+    "name": "created_utc_not_a_string",
+    "manifest": {
+      "experiment_contract_version": "1.0.0",
+      "experiment_id": "exp-golden-urban-01",
+      "created_utc_ms": 1789000000000,
+      "description": "Golden schema fixture for the experiment contract.",
+      "operator": "fixture operator",
+      "vehicle": "fixture hatchback",
+      "mount": {
+        "position": "dash_centre",
+        "orientation_method": "measured",
+        "roll_deg": 0.5,
+        "pitch_deg": -3.5,
+        "yaw_deg": 12.0,
+        "uncertainty_deg": 1.5,
+        "note": null
+      },
+      "clock": {
+        "domain": "android_elapsed_realtime_ns",
+        "boot_id": "boot-golden-1",
+        "reference_alignment": {
+          "method": "cross_correlation",
+          "offset_ns": "-1500000",
+          "uncertainty_ns": "5000000",
+          "note": null
+        }
+      },
+      "sessions": [
+        {
+          "session_id": "rec-primary",
+          "role": "primary",
+          "measurements_sha256": "7d1df0bded7ee7305d119eaf6e3c20efa0e60d60589d15979e5de99077cc36fc"
+        },
+        {
+          "session_id": "rec-aux",
+          "role": "supplementary",
+          "measurements_sha256": "b2f185453d21d8553d32ffd8031b1814730888012d6e9ef3a49126699fa5edb8"
+        }
+      ],
+      "reference": {
+        "equipment_class": "rtk",
+        "equipment": "fixture RTK receiver",
+        "horizontal_accuracy_m": 0.02,
+        "rate_hz": 5.0,
+        "timebase": "experiment_clock",
+        "source": "real",
+        "note": null
+      },
+      "masks": [
+        "tunnel_observed"
+      ]
+    },
+    "code": "INVALID_TYPE"
+  },
+  {
+    "name": "yaw_out_of_range",
+    "manifest": {
+      "experiment_contract_version": "1.0.0",
+      "experiment_id": "exp-golden-urban-01",
+      "created_utc_ms": "1789000000000",
+      "description": "Golden schema fixture for the experiment contract.",
+      "operator": "fixture operator",
+      "vehicle": "fixture hatchback",
+      "mount": {
+        "position": "dash_centre",
+        "orientation_method": "measured",
+        "roll_deg": 0.5,
+        "pitch_deg": -3.5,
+        "yaw_deg": 190.0,
+        "uncertainty_deg": 1.5,
+        "note": null
+      },
+      "clock": {
+        "domain": "android_elapsed_realtime_ns",
+        "boot_id": "boot-golden-1",
+        "reference_alignment": {
+          "method": "cross_correlation",
+          "offset_ns": "-1500000",
+          "uncertainty_ns": "5000000",
+          "note": null
+        }
+      },
+      "sessions": [
+        {
+          "session_id": "rec-primary",
+          "role": "primary",
+          "measurements_sha256": "7d1df0bded7ee7305d119eaf6e3c20efa0e60d60589d15979e5de99077cc36fc"
+        },
+        {
+          "session_id": "rec-aux",
+          "role": "supplementary",
+          "measurements_sha256": "b2f185453d21d8553d32ffd8031b1814730888012d6e9ef3a49126699fa5edb8"
+        }
+      ],
+      "reference": {
+        "equipment_class": "rtk",
+        "equipment": "fixture RTK receiver",
+        "horizontal_accuracy_m": 0.02,
+        "rate_hz": 5.0,
+        "timebase": "experiment_clock",
+        "source": "real",
+        "note": null
+      },
+      "masks": [
+        "tunnel_observed"
+      ]
+    },
+    "code": "OUT_OF_RANGE"
+  },
+  {
+    "name": "reference_source_is_not_real",
+    "manifest": {
+      "experiment_contract_version": "1.0.0",
+      "experiment_id": "exp-golden-urban-01",
+      "created_utc_ms": "1789000000000",
+      "description": "Golden schema fixture for the experiment contract.",
+      "operator": "fixture operator",
+      "vehicle": "fixture hatchback",
+      "mount": {
+        "position": "dash_centre",
+        "orientation_method": "measured",
+        "roll_deg": 0.5,
+        "pitch_deg": -3.5,
+        "yaw_deg": 12.0,
+        "uncertainty_deg": 1.5,
+        "note": null
+      },
+      "clock": {
+        "domain": "android_elapsed_realtime_ns",
+        "boot_id": "boot-golden-1",
+        "reference_alignment": {
+          "method": "cross_correlation",
+          "offset_ns": "-1500000",
+          "uncertainty_ns": "5000000",
+          "note": null
+        }
+      },
+      "sessions": [
+        {
+          "session_id": "rec-primary",
+          "role": "primary",
+          "measurements_sha256": "7d1df0bded7ee7305d119eaf6e3c20efa0e60d60589d15979e5de99077cc36fc"
+        },
+        {
+          "session_id": "rec-aux",
+          "role": "supplementary",
+          "measurements_sha256": "b2f185453d21d8553d32ffd8031b1814730888012d6e9ef3a49126699fa5edb8"
+        }
+      ],
+      "reference": {
+        "equipment_class": "rtk",
+        "equipment": "fixture RTK receiver",
+        "horizontal_accuracy_m": 0.02,
+        "rate_hz": 5.0,
+        "timebase": "experiment_clock",
+        "source": "replay_real",
+        "note": null
+      },
+      "masks": [
+        "tunnel_observed"
+      ]
+    },
+    "code": "INVALID_ENUM"
+  }
+]

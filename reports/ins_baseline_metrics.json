@@ -1,0 +1,492 @@
+{
+  "tool": "tools/ins_baseline_report.py",
+  "module": "training/strapdown_ins.py",
+  "session": {
+    "directory": "mobile/artifacts/phone-recordings-20260929/recordings/f2608548-d1c8-4007-9e72-87045a094f47",
+    "recording_id": "f2608548-d1c8-4007-9e72-87045a094f47",
+    "source": "real",
+    "completion_state": "completed",
+    "recovery_state": "none",
+    "end_state": "stopped",
+    "recording_contract_version": "1.0.0",
+    "measurement_contract_version": "1.0.0",
+    "device": "OnePlus CPH2585 Android 16 (API 36)",
+    "declared_record_count": 494895,
+    "declared_channel_counts": {
+      "imu": 493067,
+      "gnss": 1744,
+      "diagnostic": 84
+    },
+    "calibration_state": "not_applied",
+    "calibration_id": null,
+    "duration_s": 1660.211,
+    "bytes": 174754103,
+    "data_tracked_in_git": false
+  },
+  "census": {
+    "payload_counts": {
+      "DiagnosticEvent": 84,
+      "GnssMeasurement": 1744,
+      "ImuMeasurement": 493067
+    },
+    "diagnostics": {
+      "warning:LATE_MEASUREMENT": 1,
+      "warning:TIME_GAP": 83
+    },
+    "sensor_timelines": {
+      "accelerometer": {
+        "samples": 164028,
+        "first_offset_s": -0.001216,
+        "last_offset_s": 1660.192939,
+        "interval_min_ms": 9.804896,
+        "interval_max_ms": 10.325313,
+        "interval_distinct_values": 4083
+      },
+      "gravity": {
+        "samples": 82007,
+        "first_offset_s": -0.006216,
+        "last_offset_s": 1660.167539,
+        "interval_min_ms": 19.62,
+        "interval_max_ms": 46.927239,
+        "interval_distinct_values": 3717
+      },
+      "gyroscope": {
+        "samples": 164019,
+        "first_offset_s": -0.001216,
+        "last_offset_s": 1660.182739,
+        "interval_min_ms": 9.804896,
+        "interval_max_ms": 26.772292,
+        "interval_distinct_values": 4087
+      },
+      "magnetometer": {
+        "samples": 83009,
+        "first_offset_s": 0.007047,
+        "last_offset_s": 1660.187046,
+        "interval_min_ms": 19.99875,
+        "interval_max_ms": 20.001383,
+        "interval_distinct_values": 42
+      }
+    }
+  },
+  "gnss_reference": {
+    "count": 1744,
+    "first_offset_s": 0.0,
+    "last_offset_s": 1658.996,
+    "horizontal_offset_from_anchor_m": {
+      "max": 32.174,
+      "p95": 2.157,
+      "mean": 2.856
+    },
+    "vertical_altitude_m": {
+      "min": 472.458,
+      "max": 480.6
+    },
+    "reported_speed_m_s": {
+      "count": 1660,
+      "min": 0.0,
+      "max": 0.0
+    },
+    "reported_bearing_count": 0,
+    "reported_horizontal_accuracy_m": {
+      "count": 1744,
+      "median": 9.935
+    }
+  },
+  "sample_stream": {
+    "paired_samples": 163863,
+    "elapsed_s": 1660.183955,
+    "resting_window": {
+      "duration_s": 60.0,
+      "samples": 5922,
+      "mean_accel_m_s2": [
+        0.031928,
+        0.140098,
+        9.770577
+      ],
+      "mean_gyro_rad_s": [
+        0.000693402,
+        -0.000333322,
+        0.000458205
+      ],
+      "accel_magnitude_m_s2": {
+        "min": 9.729972,
+        "max": 9.806266
+      },
+      "max_gyro_magnitude_rad_s": 0.004265214
+    },
+    "whole_run_accel_m_s2": {
+      "mean_vector": [
+        0.035164,
+        0.139587,
+        9.770948
+      ],
+      "rms": [
+        0.051837,
+        0.140455,
+        9.770964
+      ],
+      "magnitude_min": 7.871269,
+      "magnitude_max": 12.574905
+    },
+    "whole_run_mean_gyro_rad_s": [
+      -0.0,
+      -0.0,
+      -1e-09
+    ]
+  },
+  "initialisation": {
+    "time_basis": "first paired inertial sample; integration starts with the second",
+    "position": "anchor fix (initialization only; see anchor provenance)",
+    "anchor_fix_age_s": -0.554618,
+    "velocity_m_s": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "velocity_basis": "caller-supplied zero; the session's own fixes report 0.000 m/s",
+    "altitude_basis": "anchor fix",
+    "attitude": "measured up direction at rest, heading stated by convention",
+    "heading_deg": 0.0,
+    "measured_up_device": [
+      0.003267417,
+      0.014337214,
+      0.999891878
+    ],
+    "anchor": {
+      "source": "first_fix_after_first_sample",
+      "offset_from_first_sample_s": 0.554618,
+      "altitude_available": true,
+      "reported_speed_m_s": 0.0,
+      "latitude_deg_reported_rounded": 17.514
+    },
+    "measured_up_basis": "mean specific-force direction over the leading 60.0 s, normalized; the first sample defines t0 and integration begins with the second"
+  },
+  "config": {
+    "gravity_model": "wgs84",
+    "earth_rotation": true,
+    "transport_rate": true,
+    "max_step_s": 0.2,
+    "failure_gap_s": 5.0,
+    "renormalize": true
+  },
+  "max_seconds_applied": null,
+  "runs": {
+    "selected_calibration": {
+      "status": "propagating",
+      "reasons": [],
+      "steps": 163862,
+      "held_steps": 0,
+      "rejected_samples": 0,
+      "gap_count": 0,
+      "largest_gap_s": 0.0,
+      "calibration_source": "assumed-zero",
+      "duration_s": 1660.183955,
+      "attitude_drift_deg": 20.845073,
+      "attitude_norm_error_max": 2.220446049250313e-16,
+      "orthonormality_error_max": 1.3322676295501878e-15,
+      "divergence": {
+        "rows": [
+          {
+            "elapsed_s": 60.009,
+            "horizontal_deviation_m": 271.4959,
+            "vertical_deviation_m": -26.1238,
+            "horizontal_speed_m_s": 13.460449
+          },
+          {
+            "elapsed_s": 300.002,
+            "horizontal_deviation_m": 14492.4812,
+            "vertical_deviation_m": -567.8419,
+            "horizontal_speed_m_s": 100.707816
+          },
+          {
+            "elapsed_s": 600.009,
+            "horizontal_deviation_m": 54959.8451,
+            "vertical_deviation_m": -1458.0189,
+            "horizontal_speed_m_s": 171.709458
+          },
+          {
+            "elapsed_s": 1200.002,
+            "horizontal_deviation_m": 247072.1426,
+            "vertical_deviation_m": -14847.5866,
+            "horizontal_speed_m_s": 640.560283
+          },
+          {
+            "elapsed_s": 1660.184,
+            "horizontal_deviation_m": 600790.8323,
+            "vertical_deviation_m": -47277.7547,
+            "horizontal_speed_m_s": 1046.679764
+          }
+        ],
+        "final": {
+          "elapsed_s": 1660.184,
+          "horizontal_deviation_m": 600790.8323,
+          "vertical_deviation_m": -47277.7547,
+          "horizontal_speed_m_s": 1046.679764
+        }
+      },
+      "step_durations": {
+        "count": 163862,
+        "minimum_s": 0.009804896,
+        "median_s": 0.010121458,
+        "maximum_s": 0.030521719,
+        "distinct_values": 4170,
+        "assumed_fixed_step": false
+      },
+      "final_altitude_offset_m": -47277.7547
+    },
+    "session_resting_mean_gyro_removed": {
+      "status": "propagating",
+      "reasons": [],
+      "steps": 163862,
+      "held_steps": 0,
+      "rejected_samples": 0,
+      "gap_count": 0,
+      "largest_gap_s": 0.0,
+      "calibration_source": "sensitivity:session-resting-mean-gyro",
+      "duration_s": 1660.183955,
+      "attitude_drift_deg": 57.259292,
+      "attitude_norm_error_max": 2.220446049250313e-16,
+      "orthonormality_error_max": 1.1102230246251565e-15,
+      "divergence": {
+        "rows": [
+          {
+            "elapsed_s": 60.009,
+            "horizontal_deviation_m": 32.4024,
+            "vertical_deviation_m": -23.5062,
+            "horizontal_speed_m_s": 1.217294
+          },
+          {
+            "elapsed_s": 300.002,
+            "horizontal_deviation_m": 16373.142,
+            "vertical_deviation_m": -1322.4314,
+            "horizontal_speed_m_s": 206.249433
+          },
+          {
+            "elapsed_s": 600.009,
+            "horizontal_deviation_m": 186136.9367,
+            "vertical_deviation_m": -22431.7167,
+            "horizontal_speed_m_s": 1024.85108
+          },
+          {
+            "elapsed_s": 1200.002,
+            "horizontal_deviation_m": 1656003.1014,
+            "vertical_deviation_m": -302634.567,
+            "horizontal_speed_m_s": 4093.321293
+          },
+          {
+            "elapsed_s": 1660.184,
+            "horizontal_deviation_m": 4168512.9308,
+            "vertical_deviation_m": -576701.5313,
+            "horizontal_speed_m_s": 6736.244372
+          }
+        ],
+        "final": {
+          "elapsed_s": 1660.184,
+          "horizontal_deviation_m": 4168512.9308,
+          "vertical_deviation_m": -576701.5313,
+          "horizontal_speed_m_s": 6736.244372
+        }
+      },
+      "step_durations": {
+        "count": 163862,
+        "minimum_s": 0.009804896,
+        "median_s": 0.010121458,
+        "maximum_s": 0.030521719,
+        "distinct_values": 4170,
+        "assumed_fixed_step": false
+      },
+      "final_altitude_offset_m": -576701.5313
+    },
+    "heading_120_deg": {
+      "status": "propagating",
+      "reasons": [],
+      "steps": 163862,
+      "held_steps": 0,
+      "rejected_samples": 0,
+      "gap_count": 0,
+      "largest_gap_s": 0.0,
+      "calibration_source": "assumed-zero",
+      "duration_s": 1660.183955,
+      "attitude_drift_deg": 19.017703,
+      "attitude_norm_error_max": 2.220446049250313e-16,
+      "orthonormality_error_max": 6.661338147750939e-16,
+      "divergence": {
+        "rows": [
+          {
+            "elapsed_s": 60.009,
+            "horizontal_deviation_m": 313.6816,
+            "vertical_deviation_m": -28.2347,
+            "horizontal_speed_m_s": 15.570978
+          },
+          {
+            "elapsed_s": 300.002,
+            "horizontal_deviation_m": 19722.8917,
+            "vertical_deviation_m": -1182.5078,
+            "horizontal_speed_m_s": 152.666389
+          },
+          {
+            "elapsed_s": 600.009,
+            "horizontal_deviation_m": 95988.2366,
+            "vertical_deviation_m": -6844.0729,
+            "horizontal_speed_m_s": 366.802634
+          },
+          {
+            "elapsed_s": 1200.002,
+            "horizontal_deviation_m": 476584.102,
+            "vertical_deviation_m": -54755.2549,
+            "horizontal_speed_m_s": 952.234093
+          },
+          {
+            "elapsed_s": 1660.184,
+            "horizontal_deviation_m": 984464.2714,
+            "vertical_deviation_m": -144146.9096,
+            "horizontal_speed_m_s": 1294.458168
+          }
+        ],
+        "final": {
+          "elapsed_s": 1660.184,
+          "horizontal_deviation_m": 984464.2714,
+          "vertical_deviation_m": -144146.9096,
+          "horizontal_speed_m_s": 1294.458168
+        }
+      },
+      "step_durations": {
+        "count": 163862,
+        "minimum_s": 0.009804896,
+        "median_s": 0.010121458,
+        "maximum_s": 0.030521719,
+        "distinct_values": 4170,
+        "assumed_fixed_step": false
+      },
+      "final_altitude_offset_m": -144146.9096
+    },
+    "heading_240_deg": {
+      "status": "propagating",
+      "reasons": [],
+      "steps": 163862,
+      "held_steps": 0,
+      "rejected_samples": 0,
+      "gap_count": 0,
+      "largest_gap_s": 0.0,
+      "calibration_source": "assumed-zero",
+      "duration_s": 1660.183955,
+      "attitude_drift_deg": 21.243725,
+      "attitude_norm_error_max": 1.1102230246251565e-16,
+      "orthonormality_error_max": 1.7763568394002505e-15,
+      "divergence": {
+        "rows": [
+          {
+            "elapsed_s": 60.009,
+            "horizontal_deviation_m": 293.1223,
+            "vertical_deviation_m": -27.1674,
+            "horizontal_speed_m_s": 14.611361
+          },
+          {
+            "elapsed_s": 300.002,
+            "horizontal_deviation_m": 17904.3357,
+            "vertical_deviation_m": -946.3049,
+            "horizontal_speed_m_s": 137.721716
+          },
+          {
+            "elapsed_s": 600.009,
+            "horizontal_deviation_m": 82879.7544,
+            "vertical_deviation_m": -4798.3853,
+            "horizontal_speed_m_s": 284.777793
+          },
+          {
+            "elapsed_s": 1200.002,
+            "horizontal_deviation_m": 278810.5851,
+            "vertical_deviation_m": -23599.7891,
+            "horizontal_speed_m_s": 357.778662
+          },
+          {
+            "elapsed_s": 1660.184,
+            "horizontal_deviation_m": 418904.5051,
+            "vertical_deviation_m": -53452.9743,
+            "horizontal_speed_m_s": 256.703165
+          }
+        ],
+        "final": {
+          "elapsed_s": 1660.184,
+          "horizontal_deviation_m": 418904.5051,
+          "vertical_deviation_m": -53452.9743,
+          "horizontal_speed_m_s": 256.703165
+        }
+      },
+      "step_durations": {
+        "count": 163862,
+        "minimum_s": 0.009804896,
+        "median_s": 0.010121458,
+        "maximum_s": 0.030521719,
+        "distinct_values": 4170,
+        "assumed_fixed_step": false
+      },
+      "final_altitude_offset_m": -53452.9743
+    }
+  },
+  "calibration_selection": {
+    "source": "assumed_zero",
+    "calibration_id": null,
+    "status": null,
+    "records_in_session": 0,
+    "note": "no validated calibration record at or before the first sample, so the run removes no sensor error and reports that as its provenance"
+  },
+  "unremoved_residuals": {
+    "modelled_normal_gravity_m_s2": 9.783536,
+    "measured_accel_magnitude_rms_m_s2": 9.772111,
+    "unremoved_accel_magnitude_residual_m_s2": -0.011425,
+    "resting_mean_accel_magnitude_m_s2": 9.771634,
+    "resting_accel_magnitude_residual_m_s2": -0.011903,
+    "residual_implied_vertical_error_at_end_m": -16403.0,
+    "resting_mean_gyro_rad_s": [
+      0.000693402,
+      -0.000333322,
+      0.000458205
+    ],
+    "modelled_earth_rate_in_device_axes_rad_s": [
+      6.9612e-05,
+      3.11e-07,
+      2.1716e-05
+    ],
+    "implied_gyro_bias_rad_s": [
+      0.00062379,
+      -0.000333633,
+      0.000436489
+    ],
+    "implied_gyro_bias_deg_per_hour": [
+      128.6659,
+      -68.8168,
+      90.0324
+    ],
+    "note": "Both residuals are what the run did *not* remove, given the calibration selected above (see `calibration_selection`). They are measurements of this recording, not sensor specifications, and not a calibration. The magnitude residual is quoted from the resting window as well as from the whole run, because the whole-run mean includes whatever motion the handset saw; the closing expression is the vertical error that constant residual alone would integrate to over the full duration, for comparison with the measured deviation."
+  },
+  "isolation_audit": {
+    "prefix_s": 120.0,
+    "samples_compared": 11847,
+    "timestamps_identical": true,
+    "accel_identical": true,
+    "gyro_identical": true,
+    "forbidden_identifiers_in_module": []
+  },
+  "gap_definition_cross_check": {
+    "acquisition_time_gap_notices": 83,
+    "propagation_gaps_over_max_step": 0,
+    "note": "The two layers count different things: acquisition notices any interval well above the nominal sensor period, while the mechanization holds only intervals longer than max_step_s and fails beyond failure_gap_s. Neither number is wrong, and reporting both stops either one being read as the other."
+  },
+  "excluded_inputs": [
+    "data/raw/iovnbd: the repository's own audit (reports/frame_resolution_followup.md) leaves the dataset's axes unresolved, so it is not used as input and not guessed at. It is also a reference dataset, and this baseline is about the product's own recordings.",
+    "VBOX or any other reference instrument: never a runtime input, in this tool or in the app.",
+    "Future GNSS: no fix later than the anchor is an input to the propagation. Fixes are used for initialization and for scoring only.",
+    "Any map, road network, or learned model: not inputs at this stage."
+  ],
+  "limitations": [
+    "The reference for a stationary session is 'no motion', confirmed by the session's own fixes to within their reported horizontal accuracy. It is a reference for horizontal position and speed only: altitude, attitude and the initial heading are not observed by anything in this session.",
+    "No session in this corpus is a drive. Behaviour under sustained motion, turns and vibration is untested by this report and by the host test suite.",
+    "Every threshold in the module (max_step_s, failure_gap_s) is an engineering choice for phone-grade MEMS, not a measured constant.",
+    "The position update is flat-earth on the anchor's radii of curvature: exact to sub-metre over a few kilometres, and disclosed rather than corrected.",
+    "An unaided INS diverges: with no aiding, the deviation from the reference the report tabulates grows without bound, and nothing in this tool smooths it.",
+    "The heading convention is stated, not measured. Three headings are reported so the reader can see which part of the result depends on it; they do not agree on the magnitude of the divergence, so the heading is a first-order limitation rather than a detail.",
+    "A stationary vehicle is not a still handset: this session's accelerometer magnitude ranges far enough either side of local gravity, and its attitude moves far enough, to show that the phone itself was handled. That motion is real inertial input which the navigation solution has no way to distinguish from vehicle motion, and it is part of what the tabulated divergence contains.",
+    "One unscreened resting window is not a bias estimate. Removing this session's own resting mean rate (`session_resting_mean_gyro_removed`) makes every metric worse, because the window it is measured over contains real motion. Bias estimation needs the stability screening and the validity gates that the calibration engine in `mobile/app/.../calibration/` already has, and this baseline does not reimplement them."
+  ]
+}

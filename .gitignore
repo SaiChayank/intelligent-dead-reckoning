@@ -45,6 +45,9 @@ data/raw/**
 data/processed/
 data/processed/**
 
+experiments/*
+!experiments/README.md
+
 models/**/*.h5
 models/**/*.keras
 models/**/*.tflite

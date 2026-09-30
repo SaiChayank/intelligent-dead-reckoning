@@ -35,12 +35,15 @@ jobs:
         run: |
           python -B -X utf8 -W error::ResourceWarning -m unittest discover -s tests -p "test_recording_session.py" -v
           python -B -X utf8 -W error::ResourceWarning -m unittest discover -s tests -p "test_validate_phone_recording.py" -v
+      - name: Experiment contract, loader and tooling tests
+        # Synthetic experiments only; no collected drive and no device is involved.
+        run: python -B -X utf8 -W error::ResourceWarning -m unittest discover -s tests -p "test_experiment*.py" -v
       - name: Unit tests (full suite)
         run: python -B -X utf8 -W error::ResourceWarning -m unittest discover -s tests
       - name: Compile and import checks
         run: |
           python -B -X utf8 -c "import ast; from pathlib import Path; files=[p for d in ('training','tests','contracts','tools') for p in Path(d).rglob('*.py')]; [ast.parse(p.read_text(encoding='utf-8-sig'),filename=str(p)) for p in files]; print('Parsed',len(files),'Python files')"
-          python -B -X utf8 -c "import contracts.v1.models, contracts.v1.codec, contracts.recording.v1.session, tools.validate_phone_recording, tools.parity_probe, training.common; print('imports ok')"
+          python -B -X utf8 -c "import contracts.v1.models, contracts.v1.codec, contracts.recording.v1.session, contracts.experiment.v1.codec, contracts.experiment.v1.integrity, contracts.experiment.v1.masking, contracts.experiment.v1.experiment, tools.validate_phone_recording, tools.validate_experiment, tools.experiment_report, tools.seal_experiment, tools.parity_probe, training.common; print('imports ok')"
 
   android:
     name: Android — JVM tests, lint, debug builds

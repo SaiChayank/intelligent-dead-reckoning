@@ -20,11 +20,13 @@ import com.intelligentdeadreckoning.app.ui.design.IdrEmphasis
 import com.intelligentdeadreckoning.app.ui.design.IdrGlyph
 import com.intelligentdeadreckoning.app.ui.design.IdrPalette
 import com.intelligentdeadreckoning.app.ui.design.IdrSectionLabel
+import com.intelligentdeadreckoning.app.ui.design.IdrSize
 import com.intelligentdeadreckoning.app.ui.design.IdrSpace
 import com.intelligentdeadreckoning.app.ui.design.IdrTone
 import com.intelligentdeadreckoning.app.ui.design.IdrType
 import com.intelligentdeadreckoning.app.ui.design.KeyValueRow
 import com.intelligentdeadreckoning.app.ui.design.StatTile
+import com.intelligentdeadreckoning.app.ui.design.StatusPill
 
 /**
  * Read-only local replay. This surface never presents itself as live acquisition and never
@@ -34,6 +36,8 @@ import com.intelligentdeadreckoning.app.ui.design.StatTile
 fun ReplayPanel(state: ReplayState, pause: () -> Unit, resume: () -> Unit, stop: () -> Unit) {
     IdrCard(emphasis = IdrEmphasis.GLASS) {
         IdrSectionLabel("Recorded playback")
+        // Provenance first: this panel must never read as live acquisition.
+        StatusPill("RECORDED", tone = IdrTone.INFO, detail = "stored rows · not live", testTag = "replay_provenance")
         Text(
             "Replay · ${state.phase.name.lowercase()}",
             color = IdrPalette.textPrimary,
@@ -67,13 +71,13 @@ fun ReplayPanel(state: ReplayState, pause: () -> Unit, resume: () -> Unit, stop:
         Row(horizontalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
             IdrButton("Pause", pause, enabled = state.phase == ReplayPhase.PLAYING,
                 variant = IdrButtonVariant.SECONDARY, glyph = IdrGlyph.PAUSE,
-                testTag = "replay_pause", minHeight = 44.dp, modifier = Modifier.weight(1f))
+                testTag = "replay_pause", minHeight = IdrSize.touchTarget, modifier = Modifier.weight(1f))
             IdrButton("Resume", resume, enabled = state.phase == ReplayPhase.PAUSED,
                 variant = IdrButtonVariant.PRIMARY, glyph = IdrGlyph.PLAY,
-                testTag = "replay_resume", minHeight = 44.dp, modifier = Modifier.weight(1f))
+                testTag = "replay_resume", minHeight = IdrSize.touchTarget, modifier = Modifier.weight(1f))
             IdrButton("Stop replay", stop, enabled = state.busy && state.phase != ReplayPhase.STOPPING,
                 variant = IdrButtonVariant.GHOST, glyph = IdrGlyph.STOP,
-                testTag = "replay_stop", minHeight = 44.dp, modifier = Modifier.weight(1f))
+                testTag = "replay_stop", minHeight = IdrSize.touchTarget, modifier = Modifier.weight(1f))
         }
         Text(
             "Select a live source explicitly to leave replay. Nothing restarts automatically.",

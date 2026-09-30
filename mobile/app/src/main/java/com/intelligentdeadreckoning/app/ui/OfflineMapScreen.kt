@@ -37,6 +37,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -72,6 +74,7 @@ import com.intelligentdeadreckoning.app.ui.design.IdrChip
 import com.intelligentdeadreckoning.app.ui.design.IdrEmphasis
 import com.intelligentdeadreckoning.app.ui.design.IdrGlyph
 import com.intelligentdeadreckoning.app.ui.design.IdrIcon
+import com.intelligentdeadreckoning.app.ui.design.IdrOverlayChip
 import com.intelligentdeadreckoning.app.ui.design.IdrPalette
 import com.intelligentdeadreckoning.app.ui.design.IdrSectionLabel
 import com.intelligentdeadreckoning.app.ui.design.IdrShapes
@@ -235,7 +238,13 @@ fun OfflineMapScreen(
                     // Interactive-surface marker for the open upper map area. The renderer fills
                     // the whole hero, but pan/rotate gestures are addressed here so they can
                     // never land on the floating console on a short display.
-                    Box(Modifier.fillMaxWidth().fillMaxHeight(0.6f).testTag("offline_map"))
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.6f)
+                            .semantics { contentDescription = "Interactive offline map of central Hyderabad. Pan, rotate and zoom." }
+                            .testTag("offline_map"),
+                    )
                 }
             }
 
@@ -277,7 +286,7 @@ fun OfflineMapScreen(
                             testTag = "map_source_live",
                         )
                     }
-                    MapChip(
+                    IdrOverlayChip(
                         text = if (mode == MapMode.LIVE)
                             "Live GNSS only · no dead reckoning, fusion or routing yet"
                         else "Preview only · no live position, DR, routing or navigation",
@@ -285,10 +294,10 @@ fun OfflineMapScreen(
                         glyph = if (mode == MapMode.LIVE) IdrGlyph.SATELLITE else IdrGlyph.NAVIGATE,
                         testTag = "map_mode",
                     )
-                    MapChip(
+                    IdrOverlayChip(
                         text = when (mode) {
-                            MapMode.RECORDED -> "MAP SOURCE: RECORDED SESSION — real GNSS fixes, no fusion or DR"
-                            MapMode.LIVE -> "MAP SOURCE: LIVE PHONE GNSS — your position, no fusion or DR"
+                            MapMode.RECORDED -> "MAP SOURCE: RECORDED SESSION — raw GNSS fixes as recorded, no fusion or DR"
+                            MapMode.LIVE -> "MAP SOURCE: LIVE PHONE GNSS — raw fixes as reported, no fusion or DR"
                             MapMode.SYNTHETIC -> "MAP SOURCE: SYNTHETIC UI FIXTURE — independent of acquisition"
                         },
                         tone = if (mode == MapMode.SYNTHETIC) IdrTone.WARNING else IdrTone.INFO,
@@ -296,7 +305,7 @@ fun OfflineMapScreen(
                         testTag = "map_source",
                     )
                     if (error == null) {
-                        MapChip(
+                        IdrOverlayChip(
                             text = if (ready && pack != null) "Offline map loaded · ${pack!!.tiles} tiles"
                             else "Loading local style…",
                             tone = if (ready) IdrTone.ACCENT else IdrTone.INFO,
@@ -361,6 +370,7 @@ fun OfflineMapScreen(
                                 snapshot.elapsedMs * 1_000_000L,
                                 snapshot.outageMarks(),
                                 Modifier.testTag("demo_timeline"),
+                                "Scripted GNSS availability: lime marks a scripted fix and amber a scripted loss.",
                             )
                             Text(
                                 "Scripted GNSS availability over the demo clock so far: lime is a " +
@@ -381,7 +391,7 @@ fun OfflineMapScreen(
                                 variant = IdrButtonVariant.PRIMARY,
                                 glyph = IdrGlyph.PLAY,
                                 testTag = "map_demo_start",
-                                minHeight = 42.dp,
+                                minHeight = IdrSize.touchTarget,
                                 modifier = Modifier.weight(1.4f),
                             )
                             IdrButton(
@@ -391,7 +401,7 @@ fun OfflineMapScreen(
                                 variant = IdrButtonVariant.SECONDARY,
                                 glyph = IdrGlyph.STOP,
                                 testTag = "map_demo_stop",
-                                minHeight = 42.dp,
+                                minHeight = IdrSize.touchTarget,
                                 modifier = Modifier.weight(1f),
                             )
                         }
@@ -570,11 +580,16 @@ private fun LivePanel(
             )
             // Drawn from the window rather than from the losses: a window the fixes did cover
             // reads as an unbroken bar even when nothing was lost.
-            OutageTimeline(live.stats.spanNs, live.stats.outageMarks(), Modifier.testTag("live_timeline"))
+            OutageTimeline(
+                live.stats.spanNs,
+                live.stats.outageMarks(),
+                Modifier.testTag("live_timeline"),
+                "Raw GNSS availability: lime marks a reported fix and amber a loss.",
+            )
         }
         Text(
             if (running)
-                "The phone's own GNSS fixes, drawn exactly as the platform reported them. No dead " +
+                "The phone's own raw GNSS fixes, drawn exactly as the platform reported them. No dead " +
                     "reckoning, fusion, correction, road matching or routing runs yet, so when GNSS is " +
                     "unavailable this marker stops: nothing is drawn in its place and no position is " +
                     "estimated. Providers: ${live.stats.providers.joinToString().ifEmpty { "none" }}" +
@@ -644,9 +659,14 @@ private fun RecordedPanel(view: RecordedView?, busy: Boolean, renderer: MapRende
                 modifier = Modifier.testTag("recorded_stats"),
             )
             // The same intervals that split the trail, drawn over the session's own observed window.
-            OutageTimeline(view.stats.spanNs, view.stats.outageMarks(), Modifier.testTag("recorded_timeline"))
+            OutageTimeline(
+                view.stats.spanNs,
+                view.stats.outageMarks(),
+                Modifier.testTag("recorded_timeline"),
+                "Recorded raw GNSS availability: lime marks a recorded fix and amber a loss.",
+            )
             Text(
-                "Real recorded GNSS fixes only. No dead reckoning, fusion, road matching, routing or " +
+                "Raw GNSS fixes exactly as recorded. No dead reckoning, fusion, road matching, routing or " +
                     "live position exists yet, so no DR or comparison line is drawn, and the trail breaks " +
                     "wherever the recording has no fix. Providers: ${view.stats.providers.joinToString().ifEmpty { "none" }}" +
                     (view.stats.lastFixRadiusMetres?.let {
@@ -683,9 +703,15 @@ private fun RecordedPanel(view: RecordedView?, busy: Boolean, renderer: MapRende
  * whose history is unknown. A window that is only now beginning therefore stays blank instead of
  * pretending to be continuous. Time only: a loss has no distance to report and none is drawn. */
 @Composable
-private fun OutageTimeline(spanNs: Long, marks: List<OutageMark>, modifier: Modifier = Modifier) {
+private fun OutageTimeline(
+    spanNs: Long,
+    marks: List<OutageMark>,
+    modifier: Modifier = Modifier,
+    description: String = "GNSS availability: lime marks a fix and amber a loss.",
+) {
     if (spanNs <= 0L) return
-    Canvas(modifier.fillMaxWidth().height(10.dp).clip(IdrShapes.pill)) {
+    // Data visualisation: spoken as one sentence instead of an unlabelled bar.
+    Canvas(modifier.semantics { contentDescription = description }.fillMaxWidth().height(10.dp).clip(IdrShapes.pill)) {
         drawRect(color = IdrPalette.accent)
         marks.forEach { mark ->
             drawRect(
@@ -702,30 +728,6 @@ private fun OutageTimeline(spanNs: Long, marks: List<OutageMark>, modifier: Modi
     }
 }
 
-/** Compact translucent status chip for map-overlay information. */
-@Composable
-private fun MapChip(text: String, tone: IdrTone, glyph: IdrGlyph, testTag: String) {
-    Row(
-        Modifier
-            .clip(IdrShapes.pill)
-            .background(IdrPalette.glass)
-            .border(1.dp, IdrPalette.border, IdrShapes.pill)
-            .padding(horizontal = IdrSpace.md, vertical = IdrSpace.sm),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IdrIcon(glyph, tint = tone.color, size = 13.dp)
-        Spacer(Modifier.width(IdrSpace.sm))
-        Text(
-            text,
-            color = if (tone == IdrTone.NEUTRAL) IdrPalette.textSecondary else tone.color,
-            style = IdrType.labelSmall,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.testTag(testTag),
-        )
-    }
-}
-
 @Composable
 private fun MapLimitsCard() {
     IdrCard(emphasis = IdrEmphasis.UTILITY) {
@@ -734,10 +736,10 @@ private fun MapLimitsCard() {
             Spacer(Modifier.width(IdrSpace.sm))
             IdrSectionLabel("What this map is")
         }
-        Text(
-            "Bundled central Hyderabad vector tiles only: 17.30–17.55° N, 78.35–78.60° E. Not the whole city, " +
-                "no routing graph, no live position. Purple marks a scripted reference trace and amber the automatic " +
-                "outage segment; the red comparison line is an illustration, not measured INS or AI output.",
+        Text(                "Bundled central Hyderabad vector tiles only: 17.30–17.55° N, 78.35–78.60° E. Not the whole city, " +
+                "no routing graph, no live position. Purple marks drawn raw GNSS positions and trails (synthetic " +
+                "fixture, recorded session or live phone fixes), amber the automatic outage segment, and the red " +
+                "comparison line is an illustration, not measured INS or AI output.",
             color = IdrPalette.textSecondary,
             style = IdrType.bodySmall,
         )

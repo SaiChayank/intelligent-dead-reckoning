@@ -16,10 +16,13 @@ import java.io.File
 import com.intelligentdeadreckoning.app.sessions.*
 import android.net.Uri
 import com.intelligentdeadreckoning.app.replay.*
+import com.intelligentdeadreckoning.app.navigation.NavigationRuntime
+import com.intelligentdeadreckoning.app.navigation.UninitializedNavigationEngine
 import com.intelligentdeadreckoning.app.map.LiveGnssView
 import com.intelligentdeadreckoning.app.map.NO_LIVE_GNSS
 import com.intelligentdeadreckoning.app.map.RecordedSessionMap
 import com.intelligentdeadreckoning.contracts.v1.GnssMeasurement
+import com.intelligentdeadreckoning.contracts.v1.Header
 import com.intelligentdeadreckoning.contracts.v1.Source
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,6 +48,32 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
     private var foreground = false
     private val files = SessionFiles { File(application.noBackupFilesDir, "recordings") }
     private val player = ReplayController(files, viewModelScope, SystemClock::elapsedRealtimeNanos)
+
+    /** The seam to the future navigation engine. Fed by the same canonical record streams the
+     *  recorder consumes; owns its own engine worker; touches no sensors, maps or files.
+     *  Its output is exposed but nothing consumes it yet — there is no engine to show. */
+    private val navigation = NavigationRuntime(UninitializedNavigationEngine(), viewModelScope, SystemClock::elapsedRealtimeNanos)
+    val navigationState = navigation.state
+    val navigationEvents = navigation.output
+    /** The producer session the engine was bound to. One bind per session: a failed engine is
+     *  never rebound or restarted — a new session must be started explicitly. */
+    private var navigationSession: String? = null
+    private var navigationSource: Source? = null
+
+    private fun bindNavigation(sessionId: String, originNs: Long?, source: Source) {
+        if (originNs == null) return
+        navigationSession = sessionId
+        navigationSource = source
+        // A refused start (e.g. after an unreset failure) is final for this session.
+        navigation.start(Header(sessionId, source), originNs)
+    }
+
+    private fun releaseNavigation() {
+        navigationSession = null
+        navigationSource = null
+        navigation.stop()
+    }
+
     @OptIn(FlowPreview::class)
     val replay = player.state.sample(100).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ReplayState())
     val replayEvents = player.events
@@ -52,6 +81,8 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
     fun startReplay(id: String) {
         if (!foreground || recorder.state.value.busy || export.value.busy || player.state.value.busy) return
         coordinator.stop()
+        // A replay is a different producer session: the live engine session ends first.
+        releaseNavigation()
         replayVisible.value = true
         player.start(id)
     }
@@ -98,8 +129,39 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
             export.collect { saved["export_writing"] = it.phase == ExportPhase.WRITING }
         }
         recorder.loadInterrupted()
+        // Both canonical producers feed the navigation seam. Records are offered, never
+        // awaited: a stopped or failed engine session simply refuses them.
         viewModelScope.launch {
-            real.state.collect { if (!it.running) recorder.stop("Acquisition stopped.") }
+            real.events.collect { navigation.offer(it) }
+        }
+        viewModelScope.launch {
+            player.events.collect { navigation.offer(it) }
+        }
+        viewModelScope.launch {
+            real.state.collect { snapshot ->
+                if (!snapshot.running) recorder.stop("Acquisition stopped.")
+                val id = snapshot.sessionId
+                when {
+                    snapshot.running && id != null && id != navigationSession ->
+                        bindNavigation(id, snapshot.originNs, Source.REAL)
+                    !snapshot.running && navigationSource == Source.REAL ->
+                        releaseNavigation()
+                }
+            }
+        }
+        // Replay rows carry their recorded acquisition identity plus the replay source; the
+        // engine session binds to exactly that, so replayed rows can never mix with live ones.
+        viewModelScope.launch {
+            player.state.collect { r ->
+                val id = r.acquisitionSessionId
+                when {
+                    r.phase == ReplayPhase.PLAYING && id != null && r.source != null && id != navigationSession ->
+                        bindNavigation(id, r.originNs, r.source)
+                    id != null && id == navigationSession &&
+                        r.phase in listOf(ReplayPhase.STOPPED, ReplayPhase.COMPLETED, ReplayPhase.FAILED) ->
+                        releaseNavigation()
+                }
+            }
         }
     }
     private val coordinator = SourceCoordinator(object : SourceControl {
@@ -122,11 +184,19 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NO_LIVE_GNSS)
     fun select(source: InputSource) {
         player.stop(); replayVisible.value = false
+        // A source change ends the engine session; the new one binds only with a new session.
+        releaseNavigation()
         if (source != coordinator.source.value) recorder.stop("Source switched.")
         coordinator.select(source)
     }
     fun start() { if (!player.state.value.busy) { replayVisible.value = false; coordinator.start() } }
-    fun stop() { recorder.stop("Acquisition stopped."); coordinator.stop() }
+    fun stop() {
+        recorder.stop("Acquisition stopped.")
+        if (navigationSource == Source.REAL) releaseNavigation()
+        coordinator.stop()
+    }
+    /** Clears a stopped or failed engine session so a new one may start. Never automatic. */
+    fun resetNavigation() = navigation.reset()
     fun startRecording() {
         val snapshot = capture.value
         if (foreground && !player.state.value.busy && !replayVisible.value && !export.value.busy && source.value == InputSource.REAL && snapshot.running && snapshot.sensors.isNotEmpty()) {
@@ -158,11 +228,14 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
     fun onBackground() {
         foreground = false
         player.stop()
+        // Lifecycle stop: the engine session ends with the foreground owner and nothing
+        // restarts it on return.
+        releaseNavigation()
         detailJob?.cancel()
         exporter.onBackground()
         recorder.stop("Foreground owner stopped.")
         simulation.stop(StopReason.BACKGROUND)
         coordinator.background()
     }
-    override fun onCleared() { player.stop(); recorder.close(); real.close(); super.onCleared() }
+    override fun onCleared() { player.stop(); releaseNavigation(); navigation.close(); recorder.close(); real.close(); super.onCleared() }
 }

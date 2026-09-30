@@ -1,0 +1,1060 @@
+{
+  "corpus": {
+    "root": "mobile\\artifacts",
+    "sessions_discovered": 45,
+    "sessions_read": 45,
+    "sessions_unreadable": [],
+    "sessions_with_gnss": 4,
+    "sessions_without_gnss": 41,
+    "fixes": 1782,
+    "providers": {
+      "gps": 1660,
+      "network": 122
+    }
+  },
+  "census": {
+    "horizontal_accuracy_m": {
+      "count": 1782,
+      "min": 3.7900924682617188,
+      "p50": 9.935046195983887,
+      "p90": 13.09117317199707,
+      "p95": 100.0,
+      "p99": 100.0,
+      "max": 100.0,
+      "method": "nearest-rank percentile"
+    },
+    "vertical_accuracy_m": {
+      "count": 1782,
+      "min": 1.0,
+      "p50": 2.7914509773254395,
+      "p90": 6.6778388023376465,
+      "p95": 100.0,
+      "p99": 100.0,
+      "max": 100.0,
+      "method": "nearest-rank percentile"
+    },
+    "satellites_used": {
+      "count": 1660,
+      "min": 5.0,
+      "p50": 22.0,
+      "p90": 42.0,
+      "p95": 44.0,
+      "p99": 47.0,
+      "max": 53.0,
+      "method": "nearest-rank percentile"
+    },
+    "receipt_delay_ms": {
+      "count": 1782,
+      "min": 3.864948,
+      "p50": 31.81349,
+      "p90": 44.697604,
+      "p95": 47.988802,
+      "p99": 55.901563,
+      "max": 1459.203485,
+      "method": "nearest-rank percentile"
+    },
+    "inter_fix_interval_all_providers_s": {
+      "count": 1777,
+      "min": 0.998665832,
+      "p50": 1.000024686,
+      "p90": 1.00075901,
+      "p95": 20.103045045,
+      "p99": 20.108284836,
+      "max": 20.135143326,
+      "method": "nearest-rank percentile"
+    },
+    "horizontal_accuracy_repeats": [
+      {
+        "value": 9.935046195983887,
+        "count": 1202
+      },
+      {
+        "value": 100.0,
+        "count": 119
+      },
+      {
+        "value": 3.7900924682617188,
+        "count": 53
+      },
+      {
+        "value": 9.935094833374023,
+        "count": 1
+      },
+      {
+        "value": 9.949745178222656,
+        "count": 1
+      }
+    ],
+    "vertical_accuracy_repeats": [
+      {
+        "value": 2.5,
+        "count": 744
+      },
+      {
+        "value": 100.0,
+        "count": 104
+      },
+      {
+        "value": 1.0,
+        "count": 1
+      },
+      {
+        "value": 2.5009207725524902,
+        "count": 1
+      },
+      {
+        "value": 2.5029714107513428,
+        "count": 1
+      }
+    ]
+  },
+  "availability": {
+    "speed_m_s": {
+      "present": 1660,
+      "null": 122,
+      "total": 1782
+    },
+    "bearing_deg": {
+      "present": 0,
+      "null": 1782,
+      "total": 1782
+    },
+    "horizontal_accuracy_m": {
+      "present": 1782,
+      "null": 0,
+      "total": 1782
+    },
+    "vertical_accuracy_m": {
+      "present": 1782,
+      "null": 0,
+      "total": 1782
+    },
+    "satellites_used": {
+      "present": 1660,
+      "null": 122,
+      "total": 1782
+    }
+  },
+  "per_provider": {
+    "gps": {
+      "fixes": 1660,
+      "inter_fix_interval_s": {
+        "count": 1659,
+        "min": 0.998665832,
+        "p50": 1.000006926,
+        "p90": 1.000513594,
+        "p95": 1.000691718,
+        "p99": 1.000894949,
+        "max": 1.001025259,
+        "method": "nearest-rank percentile"
+      },
+      "horizontal_accuracy_m": {
+        "count": 1660,
+        "min": 3.7900924682617188,
+        "p50": 9.935046195983887,
+        "p90": 11.296514511108398,
+        "p95": 12.63898754119873,
+        "p99": 13.836215019226074,
+        "max": 16.064613342285156,
+        "method": "nearest-rank percentile"
+      },
+      "vertical_accuracy_m": {
+        "count": 1660,
+        "min": 2.5,
+        "p50": 2.6814451217651367,
+        "p90": 4.981276512145996,
+        "p95": 6.047195911407471,
+        "p99": 9.814489364624023,
+        "max": 13.069305419921875,
+        "method": "nearest-rank percentile"
+      },
+      "satellites_used": {
+        "count": 1660,
+        "min": 5.0,
+        "p50": 22.0,
+        "p90": 42.0,
+        "p95": 44.0,
+        "p99": 47.0,
+        "max": 53.0,
+        "method": "nearest-rank percentile"
+      },
+      "horizontal_accuracy_repeats": [
+        {
+          "value": 9.935046195983887,
+          "count": 1202
+        },
+        {
+          "value": 3.7900924682617188,
+          "count": 53
+        },
+        {
+          "value": 9.935094833374023,
+          "count": 1
+        },
+        {
+          "value": 9.949745178222656,
+          "count": 1
+        },
+        {
+          "value": 9.95644760131836,
+          "count": 1
+        }
+      ],
+      "vertical_accuracy_repeats": [
+        {
+          "value": 2.5,
+          "count": 744
+        },
+        {
+          "value": 2.5009207725524902,
+          "count": 1
+        },
+        {
+          "value": 2.5029714107513428,
+          "count": 1
+        },
+        {
+          "value": 2.5059573650360107,
+          "count": 1
+        },
+        {
+          "value": 2.5061838626861572,
+          "count": 1
+        }
+      ],
+      "receipt_delay_ms": {
+        "count": 1660,
+        "min": 14.484948,
+        "p50": 32.521822,
+        "p90": 44.939687,
+        "p95": 48.262448,
+        "p99": 55.74125,
+        "max": 69.290989,
+        "method": "nearest-rank percentile"
+      }
+    },
+    "network": {
+      "fixes": 122,
+      "inter_fix_interval_s": {
+        "count": 118,
+        "min": 1.002625052,
+        "p50": 20.103927544,
+        "p90": 20.110193587,
+        "p95": 20.113492909,
+        "p99": 20.115587336,
+        "max": 20.135143326,
+        "method": "nearest-rank percentile"
+      },
+      "horizontal_accuracy_m": {
+        "count": 122,
+        "min": 17.145999908447266,
+        "p50": 100.0,
+        "p90": 100.0,
+        "p95": 100.0,
+        "p99": 100.0,
+        "max": 100.0,
+        "method": "nearest-rank percentile"
+      },
+      "vertical_accuracy_m": {
+        "count": 122,
+        "min": 1.0,
+        "p50": 100.0,
+        "p90": 100.0,
+        "p95": 100.0,
+        "p99": 100.0,
+        "max": 100.0,
+        "method": "nearest-rank percentile"
+      },
+      "satellites_used": {
+        "count": 0,
+        "min": null,
+        "p50": null,
+        "p90": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "method": "nearest-rank percentile"
+      },
+      "horizontal_accuracy_repeats": [
+        {
+          "value": 100.0,
+          "count": 119
+        },
+        {
+          "value": 17.145999908447266,
+          "count": 1
+        },
+        {
+          "value": 68.4000015258789,
+          "count": 1
+        },
+        {
+          "value": 96.5498046875,
+          "count": 1
+        }
+      ],
+      "vertical_accuracy_repeats": [
+        {
+          "value": 100.0,
+          "count": 104
+        },
+        {
+          "value": 1.0,
+          "count": 1
+        },
+        {
+          "value": 7.636115550994873,
+          "count": 1
+        },
+        {
+          "value": 14.673564910888672,
+          "count": 1
+        },
+        {
+          "value": 21.70961570739746,
+          "count": 1
+        }
+      ],
+      "receipt_delay_ms": {
+        "count": 122,
+        "min": 3.864948,
+        "p50": 12.087239,
+        "p90": 23.717136,
+        "p95": 28.05,
+        "p99": 945.211096,
+        "max": 1459.203485,
+        "method": "nearest-rank percentile"
+      }
+    }
+  },
+  "candidate_stale_bounds": {
+    "1s": {
+      "gps": {
+        "intervals": 1659,
+        "over_bound": 863,
+        "over_bound_fraction": 0.5202,
+        "max_over_bound_s": 1.001025259
+      },
+      "network": {
+        "intervals": 118,
+        "over_bound": 118,
+        "over_bound_fraction": 1.0,
+        "max_over_bound_s": 20.135143326
+      }
+    },
+    "2s": {
+      "gps": {
+        "intervals": 1659,
+        "over_bound": 0,
+        "over_bound_fraction": 0.0,
+        "max_over_bound_s": null
+      },
+      "network": {
+        "intervals": 118,
+        "over_bound": 117,
+        "over_bound_fraction": 0.9915,
+        "max_over_bound_s": 20.135143326
+      }
+    },
+    "3s": {
+      "gps": {
+        "intervals": 1659,
+        "over_bound": 0,
+        "over_bound_fraction": 0.0,
+        "max_over_bound_s": null
+      },
+      "network": {
+        "intervals": 118,
+        "over_bound": 117,
+        "over_bound_fraction": 0.9915,
+        "max_over_bound_s": 20.135143326
+      }
+    },
+    "5s": {
+      "gps": {
+        "intervals": 1659,
+        "over_bound": 0,
+        "over_bound_fraction": 0.0,
+        "max_over_bound_s": null
+      },
+      "network": {
+        "intervals": 118,
+        "over_bound": 117,
+        "over_bound_fraction": 0.9915,
+        "max_over_bound_s": 20.135143326
+      }
+    },
+    "10s": {
+      "gps": {
+        "intervals": 1659,
+        "over_bound": 0,
+        "over_bound_fraction": 0.0,
+        "max_over_bound_s": null
+      },
+      "network": {
+        "intervals": 118,
+        "over_bound": 116,
+        "over_bound_fraction": 0.9831,
+        "max_over_bound_s": 20.135143326
+      }
+    },
+    "15s": {
+      "gps": {
+        "intervals": 1659,
+        "over_bound": 0,
+        "over_bound_fraction": 0.0,
+        "max_over_bound_s": null
+      },
+      "network": {
+        "intervals": 118,
+        "over_bound": 116,
+        "over_bound_fraction": 0.9831,
+        "max_over_bound_s": 20.135143326
+      }
+    },
+    "30s": {
+      "gps": {
+        "intervals": 1659,
+        "over_bound": 0,
+        "over_bound_fraction": 0.0,
+        "max_over_bound_s": null
+      },
+      "network": {
+        "intervals": 118,
+        "over_bound": 0,
+        "over_bound_fraction": 0.0,
+        "max_over_bound_s": null
+      }
+    },
+    "60s": {
+      "gps": {
+        "intervals": 1659,
+        "over_bound": 0,
+        "over_bound_fraction": 0.0,
+        "max_over_bound_s": null
+      },
+      "network": {
+        "intervals": 118,
+        "over_bound": 0,
+        "over_bound_fraction": 0.0,
+        "max_over_bound_s": null
+      }
+    }
+  },
+  "candidate_horizontal_accuracy_bounds": {
+    "3m": {
+      "gps": {
+        "known": 1660,
+        "unknown": 0,
+        "within_bound": 0,
+        "within_bound_fraction": 0.0
+      },
+      "network": {
+        "known": 122,
+        "unknown": 0,
+        "within_bound": 0,
+        "within_bound_fraction": 0.0
+      }
+    },
+    "5m": {
+      "gps": {
+        "known": 1660,
+        "unknown": 0,
+        "within_bound": 53,
+        "within_bound_fraction": 0.0319
+      },
+      "network": {
+        "known": 122,
+        "unknown": 0,
+        "within_bound": 0,
+        "within_bound_fraction": 0.0
+      }
+    },
+    "10m": {
+      "gps": {
+        "known": 1660,
+        "unknown": 0,
+        "within_bound": 1270,
+        "within_bound_fraction": 0.7651
+      },
+      "network": {
+        "known": 122,
+        "unknown": 0,
+        "within_bound": 0,
+        "within_bound_fraction": 0.0
+      }
+    },
+    "15m": {
+      "gps": {
+        "known": 1660,
+        "unknown": 0,
+        "within_bound": 1656,
+        "within_bound_fraction": 0.9976
+      },
+      "network": {
+        "known": 122,
+        "unknown": 0,
+        "within_bound": 0,
+        "within_bound_fraction": 0.0
+      }
+    },
+    "20m": {
+      "gps": {
+        "known": 1660,
+        "unknown": 0,
+        "within_bound": 1660,
+        "within_bound_fraction": 1.0
+      },
+      "network": {
+        "known": 122,
+        "unknown": 0,
+        "within_bound": 1,
+        "within_bound_fraction": 0.0082
+      }
+    },
+    "30m": {
+      "gps": {
+        "known": 1660,
+        "unknown": 0,
+        "within_bound": 1660,
+        "within_bound_fraction": 1.0
+      },
+      "network": {
+        "known": 122,
+        "unknown": 0,
+        "within_bound": 1,
+        "within_bound_fraction": 0.0082
+      }
+    },
+    "50m": {
+      "gps": {
+        "known": 1660,
+        "unknown": 0,
+        "within_bound": 1660,
+        "within_bound_fraction": 1.0
+      },
+      "network": {
+        "known": 122,
+        "unknown": 0,
+        "within_bound": 1,
+        "within_bound_fraction": 0.0082
+      }
+    },
+    "100m": {
+      "gps": {
+        "known": 1660,
+        "unknown": 0,
+        "within_bound": 1660,
+        "within_bound_fraction": 1.0
+      },
+      "network": {
+        "known": 122,
+        "unknown": 0,
+        "within_bound": 122,
+        "within_bound_fraction": 1.0
+      }
+    }
+  },
+  "candidate_satellite_bounds": {
+    "3": {
+      "gps": {
+        "known": 1660,
+        "unknown": 0,
+        "at_least_bound": 1660,
+        "at_least_bound_fraction": 1.0
+      },
+      "network": {
+        "known": 0,
+        "unknown": 122,
+        "at_least_bound": 0,
+        "at_least_bound_fraction": null
+      }
+    },
+    "4": {
+      "gps": {
+        "known": 1660,
+        "unknown": 0,
+        "at_least_bound": 1660,
+        "at_least_bound_fraction": 1.0
+      },
+      "network": {
+        "known": 0,
+        "unknown": 122,
+        "at_least_bound": 0,
+        "at_least_bound_fraction": null
+      }
+    },
+    "5": {
+      "gps": {
+        "known": 1660,
+        "unknown": 0,
+        "at_least_bound": 1660,
+        "at_least_bound_fraction": 1.0
+      },
+      "network": {
+        "known": 0,
+        "unknown": 122,
+        "at_least_bound": 0,
+        "at_least_bound_fraction": null
+      }
+    },
+    "6": {
+      "gps": {
+        "known": 1660,
+        "unknown": 0,
+        "at_least_bound": 1658,
+        "at_least_bound_fraction": 0.9988
+      },
+      "network": {
+        "known": 0,
+        "unknown": 122,
+        "at_least_bound": 0,
+        "at_least_bound_fraction": null
+      }
+    },
+    "8": {
+      "gps": {
+        "known": 1660,
+        "unknown": 0,
+        "at_least_bound": 1651,
+        "at_least_bound_fraction": 0.9946
+      },
+      "network": {
+        "known": 0,
+        "unknown": 122,
+        "at_least_bound": 0,
+        "at_least_bound_fraction": null
+      }
+    },
+    "10": {
+      "gps": {
+        "known": 1660,
+        "unknown": 0,
+        "at_least_bound": 1650,
+        "at_least_bound_fraction": 0.994
+      },
+      "network": {
+        "known": 0,
+        "unknown": 122,
+        "at_least_bound": 0,
+        "at_least_bound_fraction": null
+      }
+    }
+  },
+  "sessions": [
+    {
+      "recording_id": "f50068f4-f977-4090-9add-e109efa75a69",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 139.026,
+      "calibration": "not_applied",
+      "fix_count": 7,
+      "providers": {
+        "network": 7
+      }
+    },
+    {
+      "recording_id": "02edb616-0a6d-4cd1-82a9-aae0f55340b3",
+      "source": "real",
+      "completion": "incomplete",
+      "duration_s": 23.286,
+      "calibration": "not_applied",
+      "fix_count": 1,
+      "providers": {
+        "network": 1
+      }
+    },
+    {
+      "recording_id": "0309c1f1-2475-49a5-9f88-71fe6dbfb156",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.199,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "06f7e84a-cb4c-40a9-97f5-ba7b7d36c31a",
+      "source": "real",
+      "completion": "incomplete",
+      "duration_s": 8.983,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "1d2828f6-5ea2-4d95-9b67-af3bfe9e70c8",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.904,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "26e912f7-f3eb-4a42-9154-a4b128115939",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.219,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "2bb36636-4268-4342-9299-e39be7f640ce",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.157,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "3058a392-bd3d-4af9-aec8-55be0f4d85a1",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.243,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "31b0b817-8f8c-40e1-9934-ca45d2db91ea",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.907,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "3666f222-3ce2-4217-8288-bcfab3bda8c5",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.198,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "3b68c148-03d3-4ba3-a211-1987d1cc629a",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.24,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "42cabe3e-eb6b-46d9-8c0a-9f0b3323b483",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.246,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "42de0f40-d578-4964-ab4a-ba4c7efca95f",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.116,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "436dd463-8db7-4083-a053-1d37f561d94a",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.208,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "47a5f751-7f02-40b1-8ac3-0b87a86753cd",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.281,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "4a6a273c-763b-4060-ac36-dc8604de7751",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.888,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "4fbceac4-a2d5-4745-b544-e5531eeb9f6f",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.245,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "5c2a81b0-0075-4375-aafe-3ffcdd5b3212",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.874,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "6be39eaf-fb97-4c62-851c-13369ad6a271",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.827,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "6be83e31-acd4-40f5-aba5-59d8aa2165ec",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.229,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "6e31e754-82f9-404c-952e-5ede6aca7c25",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.231,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "799b22ab-3c16-4d82-97c7-8f0ef4f1b207",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.245,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "7f300930-7506-4b88-93cb-55bbc2dd1327",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.212,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "80eba24f-d8cd-461e-9922-cce7c6d60f41",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.246,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "816b358e-379a-4765-98e4-75c33832c7b9",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.227,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "8c6eb81d-bb6f-4b36-a1fe-82af523613a7",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.861,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "9dc790e2-b1f0-40ee-9387-4e8e48f97681",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.259,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "a4bd2e41-31da-42de-b415-7f4b8b0933a0",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.145,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "ab57576e-cccd-4e12-9452-ef19649e9e20",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.754,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "ad5a629a-0272-4adc-bff3-6155b8732def",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.234,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "afff558b-dbb2-40ea-84d0-b2049bf1d98f",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.869,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "b8158b36-ed9c-40e7-ae74-7d91892d5442",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.293,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "c3db6fd7-bbcd-4b93-93cd-694f34d97108",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 603.757,
+      "calibration": "not_applied",
+      "fix_count": 30,
+      "providers": {
+        "network": 30
+      }
+    },
+    {
+      "recording_id": "c630f009-2d88-419a-bc0e-f1ddfc1e2b07",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.205,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "c920150a-841e-4359-a449-29c53b488ba3",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.284,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "cd486840-5516-4a31-adb3-bf5750b518ff",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.203,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "d9f0b4d7-5515-45af-8188-196884f94d58",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.241,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "e3e38239-40ef-40c1-9ce9-ac8b0ab8489c",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.19,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "e85f7c8d-a1bd-4762-8762-0607826b74a4",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.133,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "ebca7e5a-9d74-4683-808a-693f81b510c4",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.888,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "ec89d515-0f2d-49f6-bd90-9a213a282f1f",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.181,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "f2608548-d1c8-4007-9e72-87045a094f47",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 1660.211,
+      "calibration": "not_applied",
+      "fix_count": 1744,
+      "providers": {
+        "gps": 1660,
+        "network": 84
+      }
+    },
+    {
+      "recording_id": "f7e9c8a1-a12a-433e-8ee2-7660853d4938",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.244,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "fab5ff5e-bca9-4ffb-9941-15ab0102e80d",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.291,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    },
+    {
+      "recording_id": "fb20974f-d5d5-4823-bc12-71bd384ac228",
+      "source": "real",
+      "completion": "completed",
+      "duration_s": 0.876,
+      "calibration": "not_applied",
+      "fix_count": 0,
+      "providers": {}
+    }
+  ]
+}

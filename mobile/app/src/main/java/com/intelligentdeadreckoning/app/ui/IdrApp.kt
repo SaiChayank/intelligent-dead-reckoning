@@ -73,8 +73,11 @@ import com.intelligentdeadreckoning.app.ui.design.IdrMeter
 import com.intelligentdeadreckoning.app.ui.design.IdrMotion
 import com.intelligentdeadreckoning.app.ui.design.IdrPalette
 import com.intelligentdeadreckoning.app.ui.design.IdrSectionLabel
+import com.intelligentdeadreckoning.app.ui.design.IdrShapes
 import com.intelligentdeadreckoning.app.ui.design.IdrSize
 import com.intelligentdeadreckoning.app.ui.design.IdrSpace
+import com.intelligentdeadreckoning.app.ui.design.KeyValueRow
+import com.intelligentdeadreckoning.app.ui.design.StatusDot
 import com.intelligentdeadreckoning.app.map.LiveGnssView
 import com.intelligentdeadreckoning.app.map.NO_LIVE_GNSS
 import com.intelligentdeadreckoning.app.ui.design.IdrStateTone
@@ -239,7 +242,7 @@ private fun AppHeader(
     Column(Modifier.fillMaxWidth().padding(horizontal = IdrSpace.xl).padding(top = IdrSpace.lg, bottom = IdrSpace.md)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
-                Modifier.size(38.dp).background(IdrPalette.accent, RoundedCornerShape(12.dp)),
+                Modifier.size(38.dp).background(IdrPalette.accent, IdrShapes.control),
                 contentAlignment = Alignment.Center,
             ) {
                 IdrIcon(IdrGlyph.NAVIGATE, tint = IdrPalette.background, size = 21.dp, strokeWidth = 2.dp)
@@ -253,7 +256,7 @@ private fun AppHeader(
         Spacer(Modifier.height(IdrSpace.lg))
         Row(
             Modifier.fillMaxWidth()
-                .background(banner.tone.color.copy(alpha = 0.10f), RoundedCornerShape(IdrSpace.md))
+                .background(banner.tone.color.copy(alpha = 0.10f), IdrShapes.control)
                 .padding(horizontal = IdrSpace.md, vertical = IdrSpace.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -353,10 +356,10 @@ private fun RecordingPanel(
             Text("Recording requires the Phone sensors acquisition stream.", color = IdrPalette.textMuted, style = IdrType.bodySmall)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
-            IdrButton("Recording details", onToggleDetails, variant = IdrButtonVariant.GHOST, minHeight = 40.dp,
-                glyph = IdrGlyph.SLIDERS)
-            IdrButton("Saved sessions", onOpenSessions, variant = IdrButtonVariant.GHOST, minHeight = 40.dp,
-                glyph = IdrGlyph.LAYERS, testTag = "saved_sessions")
+            IdrButton("Recording details", onToggleDetails, variant = IdrButtonVariant.GHOST,
+                minHeight = IdrSize.touchTarget, glyph = IdrGlyph.SLIDERS)
+            IdrButton("Saved sessions", onOpenSessions, variant = IdrButtonVariant.GHOST,
+                minHeight = IdrSize.touchTarget, glyph = IdrGlyph.LAYERS, testTag = "saved_sessions")
         }
         if (detailsOpen) {
             Text(
@@ -388,12 +391,7 @@ private fun Dashboard(state: SimulationState, onStart: () -> Unit, onStop: () ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IdrSectionLabel("Motion preview")
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        Modifier.size(7.dp).background(
-                            if (state.isRunning) IdrPalette.accent else IdrPalette.textMuted,
-                            CircleShape,
-                        ),
-                    )
+                    StatusDot(if (state.isRunning) IdrPalette.accent else IdrPalette.textMuted)
                     Spacer(Modifier.width(IdrSpace.sm))
                     Text(
                         statusLabel(state),
@@ -515,10 +513,14 @@ private fun SpeedGauge(speed: Double?) {
             Text(
                 speed?.let { decimal(it, 1) } ?: "—",
                 color = IdrPalette.textPrimary,
-                fontSize = 52.sp,
-                fontWeight = FontWeight.Light,
-                letterSpacing = (-2).sp,
-                modifier = Modifier.testTag("demo_speed"),
+                style = IdrType.gauge,
+                modifier = Modifier
+                    .testTag("demo_speed")
+                    .semantics {
+                        contentDescription = speed?.let {
+                            "Demo speed ${decimal(it, 1)} kilometres per hour, scripted, not measured"
+                        } ?: "Demo speed, no scripted sample yet"
+                    },
             )
             Text("km/h", color = IdrPalette.accent, style = IdrType.titleMedium)
         }
@@ -564,7 +566,7 @@ private fun SensorCard(title: String, unit: String, vector: Vector3?, accent: Co
     val magnitude = vector?.let { max(abs(it.x), max(abs(it.y), abs(it.z))) } ?: 0.0
     IdrCard(emphasis = IdrEmphasis.SECONDARY) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(8.dp).background(accent, CircleShape))
+            StatusDot(accent)
             Spacer(Modifier.width(IdrSpace.sm))
             Text(title, color = IdrPalette.textPrimary, style = IdrType.titleMedium, modifier = Modifier.weight(1f))
             Text(unit, color = IdrPalette.textMuted, style = IdrType.monoSmall)
@@ -612,12 +614,7 @@ private fun RealDashboard(
         }
         IdrCard(emphasis = IdrEmphasis.PRIMARY) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    Modifier.size(8.dp).background(
-                        if (state.running) IdrPalette.accent else IdrPalette.textMuted,
-                        CircleShape,
-                    ),
-                )
+                StatusDot(if (state.running) IdrPalette.accent else IdrPalette.textMuted)
                 Spacer(Modifier.width(IdrSpace.sm))
                 Text(
                     if (state.running) "Running" else "Stopped",
@@ -645,9 +642,9 @@ private fun RealDashboard(
             }
             IdrDivider()
             val availableSensors = Sensor.entries.count { state.sensors[it]?.available == true }
-            KeyValue("Sensors available", "$availableSensors / ${Sensor.entries.size}")
-            KeyValue("Accepted", "${state.accepted} · dropped ${state.dropped} · invalid ${state.invalid}")
-            KeyValue("Queue", "${state.queueDepth}/256 · peak ${state.queueHighWater}")
+            KeyValueRow("Sensors available", "$availableSensors / ${Sensor.entries.size}", mono = true)
+            KeyValueRow("Accepted", "${state.accepted} · dropped ${state.dropped} · invalid ${state.invalid}", mono = true)
+            KeyValueRow("Queue", "${state.queueDepth}/256 · peak ${state.queueHighWater}", mono = true)
             IdrMeter(fraction = state.queueHighWater / 256f, tone = IdrTone.INFO)
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(IdrSpace.md)) {
@@ -678,14 +675,6 @@ private fun RealDashboard(
             "Foreground acquisition only · recording off · navigation not running",
             color = IdrPalette.textMuted, style = IdrType.bodySmall,
         )
-    }
-}
-
-@Composable
-private fun KeyValue(label: String, value: String) {
-    Row(Modifier.fillMaxWidth()) {
-        Text(label, color = IdrPalette.textMuted, style = IdrType.bodySmall, modifier = Modifier.weight(1f))
-        Text(value, color = IdrPalette.textSecondary, style = IdrType.monoSmall)
     }
 }
 

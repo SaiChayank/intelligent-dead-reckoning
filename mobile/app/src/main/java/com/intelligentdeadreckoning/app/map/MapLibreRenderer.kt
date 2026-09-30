@@ -6,9 +6,17 @@ import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.style.sources.GeoJsonSource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import com.intelligentdeadreckoning.app.ui.design.IdrPalette
 import org.maplibre.android.style.layers.*
 import org.maplibre.android.style.layers.PropertyFactory.*
 import org.maplibre.android.style.expressions.Expression.*
+import java.util.Locale
+
+/** MapLibre styles take CSS strings; the design palette holds the same values as Compose
+ *  colours, so the renderer and the UI chrome cannot drift apart. */
+private fun Color.css(): String = "#%06X".format(Locale.ROOT, 0xFFFFFF and toArgb())
 
 internal class MapLibreRenderer(private val map: MapLibreMap) : MapRenderer {
     override fun focus(point: MapPoint) {
@@ -38,24 +46,24 @@ internal class MapLibreRenderer(private val map: MapLibreMap) : MapRenderer {
             source = GeoJsonSource("navigation-display", MapOverlay.json(state,overlays))
             style.addSource(source)
             style.addLayer(LineLayer("display-scenario","navigation-display")
-                .withFilter(eq(get("kind"),literal("scenario"))).withProperties(lineColor("#637888"),lineWidth(3f),lineDasharray(arrayOf(2f,2f))))
+                .withFilter(eq(get("kind"),literal("scenario"))).withProperties(lineColor(IdrPalette.mapScenario.css()),lineWidth(3f),lineDasharray(arrayOf(2f,2f))))
             style.addLayer(LineLayer("display-outage","navigation-display")
-                .withFilter(eq(get("kind"),literal("outage"))).withProperties(lineColor("#d99100"),lineWidth(7f),lineOpacity(0.6f)))
+                .withFilter(eq(get("kind"),literal("outage"))).withProperties(lineColor(IdrPalette.mapOutage.css()),lineWidth(7f),lineOpacity(0.6f)))
             style.addLayer(FillLayer("display-accuracy","navigation-display")
-                .withFilter(eq(get("kind"),literal("accuracy"))).withProperties(fillColor("#3e8cd9"),fillOpacity(0.18f)))
+                .withFilter(eq(get("kind"),literal("accuracy"))).withProperties(fillColor(IdrPalette.mapAccuracy.css()),fillOpacity(0.18f)))
             style.addLayer(LineLayer("display-trail","navigation-display")
-                .withFilter(eq(get("kind"),literal("trail"))).withProperties(lineColor("#7856d8"),lineWidth(4f)))
+                .withFilter(eq(get("kind"),literal("trail"))).withProperties(lineColor(IdrPalette.mapTrail.css()),lineWidth(4f)))
             // A recorded fix with no neighbour is still a fix: drawn as a dot, never joined up.
             style.addLayer(CircleLayer("display-trail-fix","navigation-display")
-                .withFilter(eq(get("kind"),literal("trail-fix"))).withProperties(circleColor("#7856d8"),circleRadius(4f),circleStrokeColor("#ffffff"),circleStrokeWidth(1.5f)))
+                .withFilter(eq(get("kind"),literal("trail-fix"))).withProperties(circleColor(IdrPalette.mapTrail.css()),circleRadius(4f),circleStrokeColor("#ffffff"),circleStrokeWidth(1.5f)))
             style.addLayer(LineLayer("display-comparison-trail","navigation-display")
-                .withFilter(eq(get("kind"),literal("comparison-trail"))).withProperties(lineColor("#d74545"),lineWidth(3f),lineDasharray(arrayOf(2f,1f))))
+                .withFilter(eq(get("kind"),literal("comparison-trail"))).withProperties(lineColor(IdrPalette.mapComparison.css()),lineWidth(3f),lineDasharray(arrayOf(2f,1f))))
             style.addLayer(CircleLayer("display-comparison","navigation-display")
-                .withFilter(eq(get("kind"),literal("comparison"))).withProperties(circleColor("#d74545"),circleRadius(7f),circleStrokeColor("#ffffff"),circleStrokeWidth(2f)))
+                .withFilter(eq(get("kind"),literal("comparison"))).withProperties(circleColor(IdrPalette.mapComparison.css()),circleRadius(7f),circleStrokeColor("#ffffff"),circleStrokeWidth(2f)))
             style.addLayer(CircleLayer("display-position","navigation-display")
-                .withFilter(eq(get("kind"),literal("position"))).withProperties(circleColor("#7856d8"),circleRadius(6f),circleStrokeColor("#ffffff"),circleStrokeWidth(2f)))
+                .withFilter(eq(get("kind"),literal("position"))).withProperties(circleColor(IdrPalette.mapTrail.css()),circleRadius(6f),circleStrokeColor("#ffffff"),circleStrokeWidth(2f)))
             style.addLayer(FillLayer("display-heading","navigation-display")
-                .withFilter(eq(get("kind"),literal("heading"))).withProperties(fillColor("#40228b")))
+                .withFilter(eq(get("kind"),literal("heading"))).withProperties(fillColor(IdrPalette.mapHeading.css())))
         } else source.setGeoJson(MapOverlay.json(state,overlays))
     }
     override fun recenter() {

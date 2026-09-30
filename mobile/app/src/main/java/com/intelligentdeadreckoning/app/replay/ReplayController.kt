@@ -11,6 +11,9 @@ enum class ReplayPhase { IDLE, LOADING, PLAYING, PAUSED, STOPPING, STOPPED, COMP
 data class ReplayState(val phase: ReplayPhase = ReplayPhase.IDLE, val id: String? = null,
     val source: Source? = null, val emitted: Long = 0, val total: Long? = null,
     val elapsedNs: Long = 0, val latest: Record? = null, val incomplete: Boolean = false,
+    // Provenance for engine-session binding only: the recorded acquisition identity and the
+    // origin of its timestamp domain. Never used to present replay as live.
+    val acquisitionSessionId: String? = null, val originNs: Long? = null,
     val message: String = "Select a saved session. Replay is not navigation.") {
     val busy get() = phase in listOf(ReplayPhase.LOADING, ReplayPhase.PLAYING, ReplayPhase.PAUSED, ReplayPhase.STOPPING)
 }
@@ -41,9 +44,11 @@ class ReplayController(private val files: SessionFiles, private val scope: Corou
                         withContext(scope.coroutineContext.minusKey(Job)) {
                             wallOrigin = nowNs(); pausedNs = 0; pauseAt = null
                             mutable.value = mutable.value.copy(phase = ReplayPhase.PLAYING,
-                                source = replaySource(metadata.source), total = metadata.recordCount,
-                                incomplete = metadata.completionState == CompletionState.INCOMPLETE,
-                                message = "1× recorded arrival timing · no live sensors or navigation")
+                                    source = replaySource(metadata.source), total = metadata.recordCount,
+                                    incomplete = metadata.completionState == CompletionState.INCOMPLETE,
+                                    acquisitionSessionId = metadata.acquisitionSessionId,
+                                    originNs = metadata.clock.originNs,
+                                    message = "1× recorded arrival timing · no live sensors or navigation")
                         }
                         var firstReceived: Long? = null
                         var schedule = 0L

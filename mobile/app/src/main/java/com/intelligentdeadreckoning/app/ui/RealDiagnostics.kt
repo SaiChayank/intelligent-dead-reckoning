@@ -30,10 +30,13 @@ import com.intelligentdeadreckoning.app.ui.design.IdrPalette
 import com.intelligentdeadreckoning.app.ui.design.IdrSectionLabel
 import com.intelligentdeadreckoning.app.ui.design.IdrSize
 import com.intelligentdeadreckoning.app.ui.design.IdrSpace
+import com.intelligentdeadreckoning.app.ui.design.IdrStateTone
 import com.intelligentdeadreckoning.app.ui.design.IdrTone
 import com.intelligentdeadreckoning.app.ui.design.IdrType
 import com.intelligentdeadreckoning.app.ui.design.KeyValueRow
 import com.intelligentdeadreckoning.app.ui.design.StatTile
+import com.intelligentdeadreckoning.app.ui.design.StatePanel
+import com.intelligentdeadreckoning.app.ui.design.StatusDot
 import com.intelligentdeadreckoning.contracts.v1.DiagnosticEvent
 import com.intelligentdeadreckoning.contracts.v1.GnssMeasurement
 import com.intelligentdeadreckoning.contracts.v1.ImuMeasurement
@@ -57,12 +60,7 @@ fun RealDiagnostics(state: CaptureState, start: () -> Unit, stop: () -> Unit,
 
         IdrCard(emphasis = IdrEmphasis.PRIMARY) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    Modifier.size(8.dp).background(
-                        if (state.running) IdrPalette.accent else IdrPalette.textMuted,
-                        CircleShape,
-                    ),
-                )
+                StatusDot(if (state.running) IdrPalette.accent else IdrPalette.textMuted)
                 Spacer(Modifier.width(IdrSpace.sm))
                 Text(
                     if (state.running) "Running" else "Stopped",
@@ -128,15 +126,12 @@ fun RealDiagnostics(state: CaptureState, start: () -> Unit, stop: () -> Unit,
             val imu = reading?.record?.event?.data as? ImuMeasurement
             IdrCard(emphasis = IdrEmphasis.SECONDARY) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        Modifier.size(8.dp).background(
-                            when (info?.available) {
-                                true -> IdrPalette.accent
-                                false -> IdrPalette.danger
-                                null -> IdrPalette.textMuted
-                            },
-                            CircleShape,
-                        ),
+                    StatusDot(
+                        when (info?.available) {
+                            true -> IdrPalette.accent
+                            false -> IdrPalette.danger
+                            null -> IdrPalette.textMuted
+                        },
                     )
                     Spacer(Modifier.width(IdrSpace.sm))
                     Text(
@@ -190,20 +185,17 @@ fun RealDiagnostics(state: CaptureState, start: () -> Unit, stop: () -> Unit,
             }
         }
 
+        // Named honestly: every value below is exactly what the platform reported — no
+        // smoothing, correction, fusion or interpolation has touched it.
+        IdrSectionLabel("Raw GNSS fixes (as reported)")
         val providers = state.readings.filterKeys { it.startsWith("gnss_") }
         if (providers.isEmpty()) {
-            IdrCard(emphasis = IdrEmphasis.UTILITY) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IdrIcon(IdrGlyph.SATELLITE, tint = IdrPalette.textMuted, size = IdrSize.iconSm)
-                    Spacer(Modifier.width(IdrSpace.sm))
-                    Text("No location provider fixes yet", color = IdrPalette.textPrimary, style = IdrType.titleMedium)
-                }
-                Text(
-                    "Start acquisition and grant location for GNSS/network fixes. Missing values stay null, never zero.",
-                    color = IdrPalette.textMuted,
-                    style = IdrType.bodySmall,
-                )
-            }
+            StatePanel(
+                title = "No location provider fixes yet",
+                message = "Start acquisition and grant location for GNSS/network fixes. Missing values stay null, never zero.",
+                tone = IdrStateTone.EMPTY,
+                testTag = "gnss_empty",
+            )
         }
         for ((key, reading) in providers) {
             val fix = reading.record.event.data as GnssMeasurement
@@ -244,15 +236,14 @@ fun RealDiagnostics(state: CaptureState, start: () -> Unit, stop: () -> Unit,
             for (record in recent) {
                 val d = record.event.data as DiagnosticEvent
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                    Box(
-                        Modifier.padding(top = 5.dp).size(6.dp).background(
-                            when (d.severity.wire) {
-                                "error" -> IdrPalette.danger
-                                "warning" -> IdrPalette.warning
-                                else -> IdrPalette.info
-                            },
-                            CircleShape,
-                        ),
+                    StatusDot(
+                        when (d.severity.wire) {
+                            "error" -> IdrPalette.danger
+                            "warning" -> IdrPalette.warning
+                            else -> IdrPalette.info
+                        },
+                        modifier = Modifier.padding(top = 5.dp),
+                        size = IdrSize.dotSm,
                     )
                     Spacer(Modifier.width(IdrSpace.sm))
                     Text(

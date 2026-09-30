@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.mandatorySystemGestures
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
@@ -405,6 +406,9 @@ fun IdrChip(
             .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick)
             .semantics { this.selected = selected; role = Role.Checkbox }
             .then(if (testTag != null) Modifier.testTag(testTag) else Modifier)
+            // Chips carry real actions, so they keep the 44 dp touch target even though the
+            // pill itself stays visually compact.
+            .heightIn(min = IdrSize.touchTarget)
             .padding(horizontal = IdrSpace.md, vertical = IdrSpace.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -427,6 +431,13 @@ enum class IdrTone(val color: Color) {
     WARNING(IdrPalette.warning),
     DANGER(IdrPalette.danger),
     INFO(IdrPalette.info),
+}
+
+/** Small round state marker. The only "decorative colour" the system allows: it always
+ *  sits next to a text label that says what the colour means. */
+@Composable
+fun StatusDot(color: Color, modifier: Modifier = Modifier, size: Dp = IdrSize.dot) {
+    Box(modifier.size(size).clip(IdrShapes.pill).background(color))
 }
 
 /** Dot + label + optional detail, used for source and mode banners. */
@@ -459,6 +470,39 @@ fun StatusPill(
             Spacer(Modifier.width(IdrSpace.sm))
             Text(detail, color = IdrPalette.textSecondary, style = IdrType.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
+    }
+}
+
+/**
+ * Translucent status chip for information floating over the map. The glass is reserved for
+ * exactly this: chrome that sits on top of the renderer and must let the map read through.
+ */
+@Composable
+fun IdrOverlayChip(
+    text: String,
+    tone: IdrTone,
+    glyph: IdrGlyph,
+    modifier: Modifier = Modifier,
+    testTag: String? = null,
+) {
+    Row(
+        modifier
+            .clip(IdrShapes.pill)
+            .background(IdrPalette.glass)
+            .border(1.dp, IdrPalette.border, IdrShapes.pill)
+            .padding(horizontal = IdrSpace.md, vertical = IdrSpace.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IdrIcon(glyph, tint = tone.color, size = 13.dp)
+        Spacer(Modifier.width(IdrSpace.sm))
+        Text(
+            text,
+            color = if (tone == IdrTone.NEUTRAL) IdrPalette.textSecondary else tone.color,
+            style = IdrType.labelSmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = if (testTag != null) Modifier.testTag(testTag) else Modifier,
+        )
     }
 }
 
@@ -547,10 +591,10 @@ fun KeyValueRow(
 }
 
 // ---------------------------------------------------------------------------------------------
-// Loading, empty and error states — never a blank screen.
+// Loading, empty, degraded, error and success states — never a blank screen.
 // ---------------------------------------------------------------------------------------------
 
-enum class IdrStateTone { LOADING, EMPTY, ERROR }
+enum class IdrStateTone { LOADING, EMPTY, DEGRADED, ERROR, SUCCESS }
 
 /** Static placeholder blocks. Deliberately not animated: a keyboard-driven test clock must
  *  never be blocked by a running pulsing animation while a screen is under test. */
@@ -582,12 +626,16 @@ fun StatePanel(
     val accent = when (tone) {
         IdrStateTone.LOADING -> IdrTone.INFO
         IdrStateTone.EMPTY -> IdrTone.NEUTRAL
+        IdrStateTone.DEGRADED -> IdrTone.WARNING
         IdrStateTone.ERROR -> IdrTone.DANGER
+        IdrStateTone.SUCCESS -> IdrTone.SUCCESS
     }
     val glyph = when (tone) {
         IdrStateTone.LOADING -> IdrGlyph.SATELLITE
         IdrStateTone.EMPTY -> IdrGlyph.INFO
+        IdrStateTone.DEGRADED -> IdrGlyph.WARNING
         IdrStateTone.ERROR -> IdrGlyph.WARNING
+        IdrStateTone.SUCCESS -> IdrGlyph.CHECK
     }
     IdrCard(modifier, emphasis = IdrEmphasis.UTILITY) {
         Row(verticalAlignment = Alignment.CenterVertically) {
