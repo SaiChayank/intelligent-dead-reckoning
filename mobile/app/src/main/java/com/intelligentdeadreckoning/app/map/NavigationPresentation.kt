@@ -14,6 +14,34 @@ data class MapPresentation(
     val trailSegments: List<List<MapPoint>> = emptyList(),
     /** Platform-reported horizontal accuracy radius (68%). Never a calibrated 95% value. */
     val fixRadiusMetres: Double? = null,
+    /**
+     * The engine's own covariance restated as a 95% circular radius while its paired
+     * `Confidence` state is `UNVALIDATED`.
+     *
+     * It is a model claim about itself: not a validated error bound, not the calibrated
+     * [accuracy95Metres], and not the platform radius in [fixRadiusMetres]. It lives in its own
+     * field so no consumer can read it as a calibrated 95% value by accident, and at most one of
+     * [accuracy95Metres] and this field is ever non-null.
+     */
+    val unvalidatedAccuracy95Metres: Double? = null,
+    /** The paired `Confidence.state` wire string, when a paired record supplied one. */
+    val confidenceState: String? = null,
+    /** The engine's horizontal speed sigma in m/s, from the same paired record. */
+    val speedStdMetresPerSecond: Double? = null,
+    /** Engine-reported localization regime (contract 1.1.0 `localization_mode`), when one exists. */
+    val localizationMode: String? = null,
+    /**
+     * Evaluation-only map-matched output: a parallel claim drawn beside the raw position,
+     * never in place of it. `point` and `trail` stay the raw fused navigation truth; these
+     * fields exist only while the evaluation toggle is enabled and a match was accepted.
+     */
+    val matchedPoint: MapPoint? = null,
+    val matchedTrail: List<MapPoint> = emptyList(),
+    val matchConfidence: Double? = null,
+    val matchedEdgeId: String? = null,
+    val matcherVersion: String? = null,
+    /** Source-local graph-install error; raw navigation remains usable when matching is unavailable. */
+    val matchingIssue: String? = null,
 )
 
 /** One live GNSS view: what the map draws from the phone's own stream, plus the counts it may state.
@@ -22,6 +50,9 @@ data class LiveGnssView(val presentation: MapPresentation, val stats: RecordedSe
 
 /** Before the live stream has produced a fix: a real source with nothing drawn. */
 val NO_LIVE_GNSS = LiveGnssView(MapPresentation(Source.REAL), RecordedSessionMap(source = Source.REAL).stats())
+
+/** Before an engine session has published anything: a real source with nothing drawn. */
+val NO_ENGINE_VIEW = MapPresentation(Source.REAL, status = "No engine output yet")
 
 /** Display conversion only: exact WGS84 origin + ENU -> ECEF -> geographic position.
  * No propagation, correction, road snapping or inference of a GNSS/DR/fused mode.
@@ -69,22 +100,40 @@ class NavigationPresentation(private val header: Header, private val mode: Initi
         if (lastTime != null && time-lastTime!! > STALE_NS) trail.clear()
         lastTime = time
         if (nowNs-time > STALE_NS) return reject("Stale position — hidden")
+        if (nav.status == NavigationStatus.FAILED) {
+            // A finite last state is still no longer a trustworthy position once the producer
+            // declares itself failed. Do not leave the previous marker/trail looking current.
+            return reject("Navigation failed — position hidden")
+        }
         val origin = nav.origin_wgs84_deg_m; val position = nav.position_enu_m
         if (origin == null || position == null) return reject("${nav.status.wire} — no position")
         val point = try { MapCoordinates.fromEnu(origin,position) } catch (_: IllegalArgumentException) { return reject("Invalid geographic position") }
+        if (!point.latitude.isFinite() || !point.longitude.isFinite() ||
+            point.latitude !in -90.0..90.0 || point.longitude !in -180.0..180.0
+        ) return reject("Invalid geographic position")
         if (!HyderabadMap.contains(point.latitude,point.longitude)) return reject("Outside offline coverage")
         if (trail.lastOrNull() != point) { trail.addLast(point); if(trail.size > capacity) trail.removeFirst() }
         // Confidence has no navigation event reference in v1: require same session and exact time.
-        val accuracy = confidence?.let {
+        // The state decides which field the radius lands in — a calibrated 95% accuracy, or the
+        // engine's own covariance while it is honest that nothing has validated it. The two are
+        // never merged, so no reader can mistake one for the other.
+        val paired = confidence?.let {
             try {
                 Codec.encodeJson(it)
                 val value = it.event.data as? Confidence
-                if (it.header == header && it.event.t_ns == time && it.event.received_ns <= nowNs &&
-                    value?.state == ConfidenceState.CALIBRATED) value.horizontal_accuracy_95_m else null
+                if (it.header == header && it.event.t_ns == time && it.event.received_ns <= nowNs) value else null
             } catch (_: IllegalArgumentException) { null }
         }
+        val calibrated = if (paired?.state == ConfidenceState.CALIBRATED) paired.horizontal_accuracy_95_m else null
+        val unvalidated = if (paired?.state == ConfidenceState.UNVALIDATED) paired.horizontal_accuracy_95_m else null
+        // A speed sigma travels only with a state that actually claims an uncertainty: a record
+        // that published neither a radius nor a probability has nothing to carry alongside it.
+        val speedStd = if (calibrated != null || unvalidated != null) paired?.speed_std_m_s else null
         state = MapPresentation(header.source,point,nav.heading_deg,
-            nav.velocity_enu_m_s?.let { hypot(it.x,it.y) },accuracy,trail.toList(),nav.status.wire)
+            nav.velocity_enu_m_s?.let { hypot(it.x,it.y) },calibrated,trail.toList(),nav.status.wire,
+            unvalidatedAccuracy95Metres = unvalidated,
+            confidenceState = paired?.state?.wire,
+            speedStdMetresPerSecond = speedStd)
         return state
     }
     fun snapshot(nowNs: Long): MapPresentation {
@@ -118,7 +167,7 @@ object SyntheticMapDemo {
             if(scenario == DemoScenario.STRAIGHT) Vector3(10*t,0.0,0.0)
             else Vector3(direction*150*sin(angle),direction*150*(1-cos(angle)),0.0),
             Vector3(10*cos(angle),10*sin(angle),0.0),
-            Quaternion(cos(yaw/2),0.0,0.0,sin(yaw/2)),heading,"synthetic-only",false)
+            Quaternion(cos(yaw/2),0.0,0.0,sin(yaw/2)),heading,"synthetic-only",false,null)
         val stamp = Math.addExact(startNs,Math.multiplyExact(elapsedMs,1_000_000L))
         return Record(header,Event(elapsedMs.toString(),stamp,stamp,nav))
     }

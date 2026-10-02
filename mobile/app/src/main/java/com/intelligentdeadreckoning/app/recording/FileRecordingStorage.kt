@@ -18,19 +18,61 @@ class FileRecordingStorage(rootProvider: () -> File) : RecordingStorage {
         val processLock = Any()
         val activeDirectories = hashSetOf<String>()
     }
+    private fun recordingsRoot(create: Boolean = false): File {
+        val path = root.toPath().toAbsolutePath().normalize()
+        var ancestor: java.nio.file.Path? = path
+        while (ancestor != null) {
+            require(!Files.isSymbolicLink(ancestor)) { "UNSAFE_RECORDING_ROOT" }
+            ancestor = ancestor.parent
+        }
+        if (create && !Files.exists(path, java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
+            Files.createDirectories(path)
+        }
+        require(!Files.exists(path, java.nio.file.LinkOption.NOFOLLOW_LINKS) ||
+            Files.isDirectory(path, java.nio.file.LinkOption.NOFOLLOW_LINKS)) { "UNSAFE_RECORDING_ROOT" }
+        return path.toFile()
+    }
+
     private fun directory(id: String): File {
         require(id.matches(Regex("[A-Za-z0-9_-]{1,128}"))) { "UNSAFE_RECORDING_ID" }
-        return File(root, id)
+        val base = recordingsRoot()
+        val path = base.toPath().resolve(id).normalize()
+        require(path.parent == base.toPath() && !Files.isSymbolicLink(path)) { "UNSAFE_RECORDING_PATH" }
+        return path.toFile()
     }
+
+    private fun regularFileForCreate(dir: File, name: String): File {
+        require(name == "measurements.jsonl") { "UNSAFE_RECORDING_ARTIFACT" }
+        val parent = dir.toPath().toAbsolutePath().normalize()
+        require(Files.isDirectory(parent, java.nio.file.LinkOption.NOFOLLOW_LINKS) && !Files.isSymbolicLink(parent)) {
+            "UNSAFE_RECORDING_PATH"
+        }
+        val path = parent.resolve(name)
+        require(!Files.exists(path, java.nio.file.LinkOption.NOFOLLOW_LINKS) && !Files.isSymbolicLink(path)) {
+            "UNSAFE_RECORDING_ARTIFACT"
+        }
+        return path.toFile()
+    }
+
+    private fun regularFile(dir: File, name: String): File {
+        require(name in setOf("metadata.json", "measurements.jsonl")) { "UNSAFE_RECORDING_ARTIFACT" }
+        val parent = dir.toPath().toAbsolutePath().normalize()
+        val path = parent.resolve(name).normalize()
+        require(path.parent == parent && !Files.isSymbolicLink(path) &&
+            Files.isRegularFile(path, java.nio.file.LinkOption.NOFOLLOW_LINKS)) { "UNSAFE_RECORDING_ARTIFACT" }
+        return path.toFile()
+    }
+
     override fun create(metadata: RecordingMetadata): RecordingOutput = synchronized(processLock) {
         val raw = RecordingCodec.encodeMetadata(metadata)
-        Files.createDirectories(root.toPath())
+        val base = recordingsRoot(create = true)
         val dir = directory(metadata.recordingId)
+        check(dir.parentFile?.toPath() == base.toPath()) { "UNSAFE_RECORDING_PATH" }
         Files.createDirectory(dir.toPath()) // Never overwrite an existing recording.
         activeDirectories.add(dir.absolutePath)
         try {
             atomicMetadata(dir, raw)
-            val file = File(dir, "measurements.jsonl")
+            val file = regularFileForCreate(dir, "measurements.jsonl")
             check(file.createNewFile()) { "MEASUREMENTS_ALREADY_EXIST" }
             val output = FileOutputStream(file)
             object : RecordingOutput {
@@ -50,29 +92,38 @@ class FileRecordingStorage(rootProvider: () -> File) : RecordingStorage {
     }
 
     private fun atomicMetadata(dir: File, bytes: ByteArray) {
-        val temporary = File(dir, "metadata.json.tmp")
-        FileOutputStream(temporary).use { it.write(bytes); it.fd.sync() }
-        // If atomic rename is unsupported/fails, propagate failure; keep the previous metadata.
-        Files.move(temporary.toPath(), File(dir, "metadata.json").toPath(),
-            StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+        require(Files.isDirectory(dir.toPath(), java.nio.file.LinkOption.NOFOLLOW_LINKS) &&
+            !Files.isSymbolicLink(dir.toPath())) { "UNSAFE_RECORDING_PATH" }
+        val target = dir.toPath().resolve("metadata.json")
+        require(!Files.exists(target, java.nio.file.LinkOption.NOFOLLOW_LINKS) ||
+            Files.isRegularFile(target, java.nio.file.LinkOption.NOFOLLOW_LINKS)) { "UNSAFE_RECORDING_ARTIFACT" }
+        val temporary = Files.createTempFile(dir.toPath(), "metadata-", ".tmp")
+        try {
+            FileOutputStream(temporary.toFile()).use { it.write(bytes); it.fd.sync() }
+            // If atomic rename is unsupported/fails, propagate failure; keep previous metadata.
+            Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+        } finally {
+            Files.deleteIfExists(temporary)
+        }
     }
 
     override fun recover(): RecoverySummary = synchronized(processLock) {
-        if (!root.exists()) return@synchronized RecoverySummary()
+        val base = recordingsRoot()
+        if (!Files.exists(base.toPath(), java.nio.file.LinkOption.NOFOLLOW_LINKS)) return@synchronized RecoverySummary()
         var recovered = 0
         var failed = 0
         var trimmedBytes = 0L
-        var lastError: String? = null
-        Files.newDirectoryStream(root.toPath()).use { paths ->
+        Files.newDirectoryStream(base.toPath()).use { paths ->
             for (path in paths) {
-                if (!Files.isDirectory(path)) continue
+                if (Files.isSymbolicLink(path)) { failed++; continue }
+                if (!Files.isDirectory(path, java.nio.file.LinkOption.NOFOLLOW_LINKS)) continue
                 if (path.toFile().absolutePath in activeDirectories) continue
                 try {
                     val dir = path.toFile()
-                    val metaFile = File(dir, "metadata.json")
-                    require(metaFile.length() in 1..262_144) { "MISSING_OR_OVERSIZED_METADATA" }
+                    val metaFile = regularFile(dir, "metadata.json")
+                    require(metaFile.length() in 1..262_144) { "METADATA_LIMIT" }
                     val metadata = RecordingCodec.decodeMetadata(metaFile.readBytes())
-                    require(directory(metadata.recordingId).canonicalFile == dir.canonicalFile) { "DIRECTORY_ID_MISMATCH" }
+                    require(directory(metadata.recordingId).absoluteFile.normalize() == dir.absoluteFile.normalize()) { "DIRECTORY_ID_MISMATCH" }
                     if (metadata.completionState == CompletionState.OPEN || metadata.recoveryState == RecoveryState.REQUIRED) {
                         try {
                             val result = recoverSession(dir, metadata)
@@ -81,28 +132,26 @@ class FileRecordingStorage(rootProvider: () -> File) : RecordingStorage {
                             recovered++
                         } catch (e: Exception) {
                             // No skip/repair of complete corruption. Preserve the measurement bytes.
-                            finalize(metadata.copy(completionState = CompletionState.INCOMPLETE,
-                                endState = RecordingEndState.INTERRUPTED, recoveryState = RecoveryState.UNRECOVERABLE,
-                                recordCount = null, channelCounts = null))
-                            throw e
+                            runCatching {
+                                finalize(metadata.copy(completionState = CompletionState.INCOMPLETE,
+                                    endState = RecordingEndState.INTERRUPTED, recoveryState = RecoveryState.UNRECOVERABLE,
+                                    recordCount = null, channelCounts = null))
+                            }
+                            failed++
                         }
                     } else if (metadata.recoveryState == RecoveryState.UNRECOVERABLE) {
                         failed++
-                        lastError = "${dir.name}: previously marked unrecoverable"
                     }
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     failed++
-                    lastError = "${path.fileName}: ${e.javaClass.simpleName}: ${e.message}"
                 }
             }
         }
-        RecoverySummary(recovered, failed, "Recovered/incomplete: $recovered; trimmed trailing bytes: $trimmedBytes; unrecoverable: $failed." +
-            (lastError?.let { " Last error: $it" } ?: ""))
+        RecoverySummary(recovered, failed, "Recovered/incomplete: $recovered; trimmed trailing bytes: $trimmedBytes; rejected: $failed.")
     }
 
     private fun recoverSession(dir: File, metadata: RecordingMetadata): Pair<RecordingMetadata, Long> {
-        val file = File(dir, "measurements.jsonl")
-        require(file.isFile) { "MISSING_MEASUREMENTS" }
+        val file = regularFile(dir, "measurements.jsonl")
         val guard = AcquisitionRecordGuard(metadata)
         var count = 0L
         val counts = linkedMapOf<String, Long>()
@@ -126,7 +175,7 @@ class FileRecordingStorage(rootProvider: () -> File) : RecordingStorage {
                 val record = try { RecordingCodec.decodeRecord(raw, metadata) }
                 catch (e: IllegalArgumentException) {
                     if (!lf && isIncompleteJsonObject(raw)) { trimAt = lineStart; break }
-                    throw IOException("CORRUPT_RECORD at line ${count + 1}: ${e.message}", e)
+                    throw IOException("CORRUPT_RECORD at line ${count + 1}", e)
                 }
                 guard.accept(record)
                 count++

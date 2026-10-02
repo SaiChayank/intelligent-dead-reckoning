@@ -1,0 +1,188 @@
+{
+  "evaluation_contract_version": "1.0.0",
+  "evaluation_id": "scripted-outage-70s",
+  "created_utc_ms": "1790812800000",
+  "session": {
+    "session_id": "scripted-drive-70s",
+    "source": "simulation",
+    "contract_version": "1.1.0",
+    "duration_s": 70.0,
+    "records": 14070,
+    "description": "Scripted 70 s drive (straight, 92 degree turn, straight) with a 20 s GNSS outage; IMU at 100 Hz and GNSS at 1 Hz generated from the trajectory."
+  },
+  "platform": {
+    "host": true,
+    "device_model": null,
+    "android_release": null,
+    "note": "Host JVM replay through NavigationRuntime on the test dispatcher. Device memory and the sensor-to-display latency path were not measured, and are null rather than estimated; there is no AI model to time."
+  },
+  "reference": {
+    "kind": "scripted_truth",
+    "independent": true,
+    "description": "The closed-form trajectory the IMU and GNSS samples were generated from (ScriptedDrive). No arm receives it; it is not field data."
+  },
+  "segments": [
+    {
+      "kind": "gnss_good",
+      "start_ns": "0",
+      "end_ns": "30000000000"
+    },
+    {
+      "kind": "denied",
+      "start_ns": "30000000000",
+      "end_ns": "50000000000"
+    },
+    {
+      "kind": "recovery",
+      "start_ns": "50000000000",
+      "end_ns": "70000000000"
+    }
+  ],
+  "arms": [
+    {
+      "arm_id": "classical_ins",
+      "label": "Classical INS (anchored inertial coast, no GNSS aiding)",
+      "implementation": {
+        "name": "FusionNavigationEngine, GNSS disabled after the alignment fix",
+        "version": "1.1.0"
+      },
+      "status": "evaluated",
+      "reason": null,
+      "accuracy": {
+        "reference_consumed": false,
+        "outage_duration_s": 20.0,
+        "outage_distance_m": 240.0,
+        "final_position_error_m": 540.064814,
+        "drift_percent": 130.451988,
+        "position_rmse_m": 258.180908,
+        "speed_mae_m_s": 7.164011,
+        "speed_rmse_m_s": 8.693353,
+        "heading_error_deg": 2.507363,
+        "recovery_convergence_s": null,
+        "recovery_threshold_m": 5.0,
+        "samples": 691
+      },
+      "timing": {
+        "output_hz": 9.871429,
+        "inference_latency_p50_ms": null,
+        "inference_latency_p95_ms": null,
+        "end_to_end_p50_ms": null,
+        "end_to_end_p95_ms": null,
+        "queue_high_water": 3,
+        "drops": 0,
+        "errors": 0,
+        "memory_peak_mb": null,
+        "samples": 691
+      }
+    },
+    {
+      "arm_id": "classical_fusion",
+      "label": "Classical fusion (GNSS+INS filter, no motion constraints)",
+      "implementation": {
+        "name": "FusionNavigationEngine, motionConstraintsEnabled = false",
+        "version": "1.1.0"
+      },
+      "status": "evaluated",
+      "reason": null,
+      "accuracy": {
+        "reference_consumed": false,
+        "outage_duration_s": 20.0,
+        "outage_distance_m": 240.0,
+        "final_position_error_m": 1.097527,
+        "drift_percent": 35.341933,
+        "position_rmse_m": 25.463214,
+        "speed_mae_m_s": 1.855096,
+        "speed_rmse_m_s": 2.426449,
+        "heading_error_deg": 32.875619,
+        "recovery_convergence_s": 1.1,
+        "recovery_threshold_m": 5.0,
+        "samples": 692
+      },
+      "timing": {
+        "output_hz": 9.885714,
+        "inference_latency_p50_ms": null,
+        "inference_latency_p95_ms": null,
+        "end_to_end_p50_ms": null,
+        "end_to_end_p95_ms": null,
+        "queue_high_water": 3,
+        "drops": 0,
+        "errors": 0,
+        "memory_peak_mb": null,
+        "samples": 692
+      }
+    },
+    {
+      "arm_id": "fusion_constraints",
+      "label": "Fusion + vehicle-motion constraints",
+      "implementation": {
+        "name": "FusionNavigationEngine, motionConstraintsEnabled = true",
+        "version": "1.1.0"
+      },
+      "status": "evaluated",
+      "reason": null,
+      "accuracy": {
+        "reference_consumed": false,
+        "outage_duration_s": 20.0,
+        "outage_distance_m": 240.0,
+        "final_position_error_m": 1.097527,
+        "drift_percent": 35.341933,
+        "position_rmse_m": 25.463214,
+        "speed_mae_m_s": 1.855096,
+        "speed_rmse_m_s": 2.426449,
+        "heading_error_deg": 32.875619,
+        "recovery_convergence_s": 1.1,
+        "recovery_threshold_m": 5.0,
+        "samples": 692
+      },
+      "timing": {
+        "output_hz": 9.885714,
+        "inference_latency_p50_ms": null,
+        "inference_latency_p95_ms": null,
+        "end_to_end_p50_ms": null,
+        "end_to_end_p95_ms": null,
+        "queue_high_water": 3,
+        "drops": 0,
+        "errors": 0,
+        "memory_peak_mb": null,
+        "samples": 692
+      }
+    },
+    {
+      "arm_id": "fusion_ai",
+      "label": "Fusion + AI correction",
+      "implementation": {
+        "name": "none",
+        "version": "not-implemented"
+      },
+      "status": "not_implemented",
+      "reason": "No trained error-correction model exists in this repository, so there is no inference to time and no arm to evaluate. Nothing is reported for it.",
+      "accuracy": null,
+      "timing": null
+    },
+    {
+      "arm_id": "fusion_map_match",
+      "label": "Fusion + constraints + map matching",
+      "implementation": {
+        "name": "MapMatcher over the synthetic road built along the truth path",
+        "version": "idr-map-match/1"
+      },
+      "status": "evaluated",
+      "reason": null,
+      "accuracy": {
+        "reference_consumed": false,
+        "outage_duration_s": 20.0,
+        "outage_distance_m": 240.0,
+        "final_position_error_m": 0.030711,
+        "drift_percent": 35.341933,
+        "position_rmse_m": 25.32666,
+        "speed_mae_m_s": 1.855096,
+        "speed_rmse_m_s": 2.426449,
+        "heading_error_deg": 32.875619,
+        "recovery_convergence_s": 1.1,
+        "recovery_threshold_m": 5.0,
+        "samples": 692
+      },
+      "timing": null
+    }
+  ]
+}

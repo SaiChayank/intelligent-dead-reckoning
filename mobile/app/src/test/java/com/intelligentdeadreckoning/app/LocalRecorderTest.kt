@@ -13,6 +13,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -273,6 +274,37 @@ class LocalRecorderTest {
         storage.finalize(metadata()) // Release process lease, leave interrupted metadata for fixture.
         assertEquals(1, FileRecordingStorage(root).recover().recovered)
     }
+    @Test fun filesystemStorageRejectsSymlinkedRootAndRecordingArtifacts() {
+        val outside = temporary.newFolder()
+        val linkedRoot = File(temporary.root, "linked-root")
+        try {
+            Files.createSymbolicLink(linkedRoot.toPath(), outside.toPath())
+        } catch (_: Exception) {
+            // Windows hosts may disable creating symlinks for unprivileged test users.
+            return
+        }
+        val rootError = runCatching { FileRecordingStorage(linkedRoot).recover() }.exceptionOrNull()
+        assertEquals("UNSAFE_RECORDING_ROOT", rootError?.message)
+
+        val root = temporary.newFolder()
+        val storage = FileRecordingStorage(root)
+        storage.create(metadata()).close()
+        storage.finalize(metadata())
+        val directory = File(root, "recording-1")
+        val measurements = File(directory, "measurements.jsonl")
+        val external = File(outside, "outside.jsonl").apply { writeBytes(RecordingCodec.encodeRecord(record(), metadata())) }
+        measurements.delete()
+        try {
+            Files.createSymbolicLink(measurements.toPath(), external.toPath())
+        } catch (_: Exception) {
+            return
+        }
+        val before = external.readBytes()
+        assertEquals(1, storage.recover().failed)
+        assertArrayEquals(before, external.readBytes())
+        assertEquals(RecoveryState.UNRECOVERABLE, readMetadata(measurements).recoveryState)
+    }
+
     @Test fun missingMetadataAndUnsupportedVersionRemainUntouched() {
         val root = temporary.newFolder()
         val dir = File(root, "unknown").apply { mkdir() }

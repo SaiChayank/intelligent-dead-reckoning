@@ -119,7 +119,7 @@ def check_artifacts() -> list[str]:
 
     if manifest.get("tile_count", 0) < 1:
         findings.append("map manifest declares no tiles")
-    if not (pack / "OFL.txt").is_file:
+    if not (pack / "OFL.txt").is_file():
         findings.append("map pack missing OFL.txt attribution licence")
     for entry in manifest.get("files", []):
         rel_path = entry.get("path", "")

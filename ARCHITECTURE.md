@@ -18,14 +18,15 @@ permission in the shipped manifest. Anything that implies otherwise is a defect.
 | Acquisition | `mobile/.../acquisition/` | Foreground sensor/GNSS capture, timestamps, bounded queues, validation, and the deterministic GNSS quality/outage state machine with its validated per-provider thresholds ([mobile/GNSS_QUALITY.md](mobile/GNSS_QUALITY.md)) | Write files, do navigation math, or invent values |
 | Recording | `mobile/.../recording/` | Session writing, atomic metadata, interrupted-session recovery | Reshape, sort, resample or interpolate what acquisition produced |
 | Replay | `mobile/.../replay/` | Strict read-only session reading and playback control | Repair, rewrite or reinterpret a session |
-| Maps | `mobile/.../map/`, `mobile/.../ui/OfflineMapScreen.kt`, `mobile/app/src/main/assets/offline/` | Presentation of positions the platform or a recording reported; bundled tile pack | Act as a second localization engine: no propagation, map matching, or inferred positions |
+| Maps | `mobile/.../map/`, `mobile/.../ui/OfflineMapScreen.kt`, `mobile/app/src/main/assets/` | Presentation of positions the platform, a recording or the navigation engine published; four never-blended sources; bundled tile pack ([mobile/MAP_ENGINE_VIEW.md](mobile/MAP_ENGINE_VIEW.md)) | Act as a second localization engine: no propagation, no inferred positions, and no reading of sensors to estimate navigation; smoothing is a display effect that never extends a published track |
 | Navigation runtime | `mobile/.../navigation/` | The seam to the engine: one engine-session lifecycle (start/stop/reset), record ownership and routing, bounded ingress/output, worker thread, failure isolation | Touch sensors or the map, write files, implement navigation math, or invent estimates |
 | Calibration | `mobile/.../calibration/` | Phone-to-vehicle frame estimation from gravity and straight-motion evidence, sensor-bias estimation, remount detection: the first real `NavigationEngine` implementation | Touch sensors, GNSS providers, files or the map; produce a position, velocity or heading solution; publish a transform or a bias it did not measure. Documented in [mobile/CALIBRATION.md](mobile/CALIBRATION.md) |
 | Fusion | `mobile/.../fusion/` | The classical GNSS+INS error-state EKF: 15-state covariance (position, velocity, attitude error, gyro/accel biases), prediction driven by the validated strapdown baseline, joint chi-square-gated GNSS position/velocity updates, rejection diagnostics, prediction-only outage coasting, non-snapping recovery, and gated vehicle-motion constraints (ZUPT / NHC with speed, yaw-rate, calibration, longitudinal-force and GNSS-freshness gates). Emits only canonical `NavigationState` / `Confidence` / `DiagnosticEvent` ([mobile/FUSION.md](mobile/FUSION.md)) | Touch sensors, GNSS providers, files or the map; emit anything outside the frozen contract set; snap to a returning fix; claim accuracy against ground truth |
+| Map matching | `mobile/.../matching/`, `mobile/app/src/main/assets/roadgraph/`, `tools/build_road_graph.py` | The offline OSM road-graph package (`idr-road-graph/1`, ODbL-licensed, version/checksum/licensing manifest, deterministic build) and the causal MVP matcher: candidate search, distance/heading/previous-edge-continuity scoring, uncertainty gating; emits the map-matched position beside — never over — the raw fused position, surfaced only through the engine map view's evaluation toggle ([mobile/MAP_MATCHING.md](mobile/MAP_MATCHING.md)) | Read or alter the tile pack or renderer; overwrite or modify a `NavigationState`; look ahead in time; route, cost or give directions |
 | Navigation core | `core/` (**reserved, empty**) | Future frames, propagation, fusion shared with the edge runtime | — (nothing implements it yet; the calibration and fusion engines live in the app module until there is a second consumer, and `NavigationEngine` in `contracts/v1` is the frozen interface both must satisfy) |
 | ML / training | `training/` | Offline research: audits, diagnostics, the classical strapdown INS baseline (`strapdown_ins.py`), and the historical experimental INS script | Ship into the app or claim product-grade results. The baseline is host-tested and GNSS-free at runtime ([report](reports/ins_baseline_2026_09_30.md)); the older experimental script is neither, and the two are not interchangeable |
 | Experiment data | `experiments/` (**content gitignored**), `docs/PS26168_Experiment_Data_Collection_Protocol.md` | Collected drives: manifests, annotations, outage masks, optional references, integrity manifests | Define a measurement or session schema (use contracts), modify a raw recording, or claim navigation accuracy. Loaded read-only by `contracts/experiment/v1`; sealed by `tools/seal_experiment.py` |
-| Evaluation | `reports/` + `tests/` | Measured evidence and the deterministic suites that keep it honest | Store raw dataset copies or unlabelled numbers |
+| Evaluation | `contracts/evaluation/v1`, `mobile/.../evaluation/`, `reports/` + `tests/` | The arm-comparison report contract with its honesty rules; measured evidence and the deterministic suites that keep it honest | Compute a metric in the UI, fill an absent value, or render a document that failed the strict codec |
 | Models / artifacts | `models/` (**reserved, empty**) | Future trained/exported weights (gitignored patterns exist) | — (no model has been trained or approved) |
 | Edge runtime | `edge/` (**reserved, empty**) | Future higher-frequency deployment target | — (reuses the navigation core when that exists) |
 | Tests | `tests/` (Python), `mobile/app/src/test`, `mobile/app/src/androidTest` | Host suites in both languages, instrumented device suite | Require the raw dataset (synthetic fixtures only) |
@@ -54,20 +55,55 @@ Rules that follow from it:
 1. Contracts depend on nothing and are compiled into the app via
    `sourceSets` in `mobile/app/build.gradle.kts` — one schema, two languages,
    kept honest by golden fixtures and `tools/parity_probe.py`.
-2. The map layer may only *present* positions from the platform, a recording,
-   or a labelled synthetic fixture. The three sources are never blended and
-   each states its identity in the UI (`map_source`).
+2. The map layer may only *present* positions from the platform, a recording, the
+   navigation engine's published output, or a labelled synthetic fixture. The four
+   sources are never blended and each states its identity in the UI (`map_source`).
+   The engine source runs NavigationEngine → NavigationState → NavigationPresentation
+   → MapOverlay → MapLibreRenderer and reads no sensor to estimate navigation.
 3. `training/` reads the offline dataset and writes reports; it never feeds
    the app at runtime. `training/common.py` is a data utility, **not** the
    navigation core.
 4. Tools call contract code; they do not re-implement validation.
+5. Map matching is a parallel output stream: it consumes published positions
+   and writes nothing back. The raw fused position is navigation truth; the
+   matched position may only accompany it, and only while the engine view's
+   evaluation toggle is on.
+6. The navigation exchange is versioned: `localization_mode` exists only in
+   contract 1.1.0, and `NavigationRuntime` refuses a session header that cannot
+   carry it. Staleness (3 s), session ownership and expiry are presentation
+   rules; the engine is never restarted by a screen, and it is never rebound to a
+   failed session.
+7. Confidence states never merge. The engine's `unvalidated` covariance and a
+   `calibrated` accuracy occupy different display fields, are set only from the
+   matching state, and are labelled differently wherever shown; the Android
+   provider's own fix accuracy can never become fused confidence, and no consumer
+   may promote an unvalidated radius into an accuracy claim. Measured coverage and
+   the evidence a `calibrated` claim still requires:
+   [mobile/CONFIDENCE.md](mobile/CONFIDENCE.md).
+8. The evaluation surface is a renderer, not an evaluator. The arm-comparison
+   table is decoded from a `contracts/evaluation/v1` document through the strict
+   codec; the UI computes no metric, averages nothing, borrows nothing from another
+   arm, and never fills an absent value — it says which kind of absence it is
+   (`not measured`, `not evaluated`, `not in this report`, `not implemented`). The
+   checked-in golden report is regenerated by the JVM harness on every run and the
+   shipped asset is byte-identical to it, so the displayed evidence is the tested
+   evidence. Only a device run or a trained model can turn a host `null` into a
+   number. Documented in [mobile/EVALUATION.md](mobile/EVALUATION.md).
 
 ## Versioning and frozen semantics
 
 - `contracts/v1` and `contracts/recording/v1` are versioned. Existing fields,
   units, nullability, timestamps (exact Int64 nanoseconds), source identity and
   replay semantics are frozen; additions require a documented contract change,
-  never a silent edit.
+  never a silent edit. `contracts/v1` now carries two frozen versions: `1.0.0`
+  unchanged, and `1.1.0` which adds only `navigation.localization_mode` — a 1.0.0
+  envelope cannot carry it, and a 1.1.0 navigation record must.
+- `contracts/evaluation/v1` carries its own version (1.0.0). Its metric
+  definitions and failure codes are frozen with it: an old report must keep meaning
+  what it meant, so changing a definition or an honesty rule requires a documented
+  version change, never a silent reinterpretation. The report names the session and
+  reference it evaluated by identity and never redefines a measurement or session
+  field — those belong to `contracts/v1` and `contracts/recording/v1`.
 - Frozen test tags and status strings (`tab_*`, `map_source`, `offline_map`,
   `map_attribution`, `map_status`, `map_mode`, `demo_*`, `overlay_*`,
   `scenario_*`, `rate_*`, `signal_*`, "Offline map loaded · 247 tiles",
@@ -93,7 +129,10 @@ Policy (enforced by `.gitignore`):
 - **Generated but tracked:** the Gradle wrapper (verified by SHA-256 in
   `gradle-wrapper.properties`) and the bundled map pack manifest + tiles under
   `mobile/app/src/main/assets/offline/hyderabad/` (247 tiles, integrity pinned
-  in `manifest.json` and asserted by `OfflineMapTest`).
+  in `manifest.json` and asserted by `OfflineMapTest`), plus the offline
+  road-graph package under `mobile/app/src/main/assets/roadgraph/hyderabad-v1/`
+  (deterministic OSM-derived build, integrity pinned in `manifest.json` and
+  asserted by `RoadGraphTest` and `tests/test_road_graph_asset.py`).
 - **Session data on device** lives in app-private `no_backup/recordings/`;
   it is never synced (allowBackup=false) and exported only by explicit user
   action to a local document destination.

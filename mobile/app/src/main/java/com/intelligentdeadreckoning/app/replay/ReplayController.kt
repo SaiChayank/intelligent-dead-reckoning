@@ -1,6 +1,7 @@
 package com.intelligentdeadreckoning.app.replay
 
 import com.intelligentdeadreckoning.app.sessions.SessionFiles
+import com.intelligentdeadreckoning.app.security.SafeSecurityMessages
 import com.intelligentdeadreckoning.contracts.recording.v1.*
 import com.intelligentdeadreckoning.contracts.v1.Record
 import com.intelligentdeadreckoning.contracts.v1.Source
@@ -79,7 +80,9 @@ class ReplayController(private val files: SessionFiles, private val scope: Corou
             } catch (e: CancellationException) {
                 mutable.value = mutable.value.copy(phase = ReplayPhase.STOPPED, message = "Replay stopped; explicit start required.")
             } catch (e: Exception) {
-                mutable.value = mutable.value.copy(phase = ReplayPhase.FAILED, message = "${e.message}. Playback aborted; any emitted prefix is not a validated whole session.")
+                val code = SafeSecurityMessages.code(e, "REPLAY_REJECTED")
+                mutable.value = mutable.value.copy(phase = ReplayPhase.FAILED,
+                    message = "Replay failed ($code). Playback aborted; any emitted prefix is not a validated whole session.")
             }
         }
         return true

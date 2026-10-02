@@ -129,6 +129,37 @@ internal fun minDiagonal(p: DoubleArray, n: Int): Double {
     return smallest
 }
 
+/** A covariance is usable only when it is finite, symmetric, and positive definite. */
+internal fun isUsableCovariance(p: DoubleArray, n: Int): Boolean {
+    if (n <= 0 || p.size != n * n || p.any { !it.isFinite() }) return false
+    for (i in 0 until n) {
+        for (j in i + 1 until n) {
+            val a = p[i * n + j]
+            val b = p[j * n + i]
+            val tolerance = 1e-8 * maxOf(1.0, abs(a), abs(b))
+            if (abs(a - b) > tolerance) return false
+        }
+    }
+    // Cholesky is both the positive-definiteness test and the factorization the measurement gate
+    // will eventually need. Do not treat positive diagonal entries alone as a valid covariance.
+    val lower = DoubleArray(n * n)
+    for (i in 0 until n) {
+        for (j in 0..i) {
+            var sum = p[i * n + j]
+            for (k in 0 until j) sum -= lower[i * n + k] * lower[j * n + k]
+            if (i == j) {
+                if (!(sum > 0.0) || !sum.isFinite()) return false
+                lower[i * n + j] = sqrt(sum)
+            } else {
+                val value = sum / lower[j * n + j]
+                if (!value.isFinite()) return false
+                lower[i * n + j] = value
+            }
+        }
+    }
+    return true
+}
+
 /**
  * Solve `a x = b` for a small symmetric positive-definite `a` by Cholesky decomposition.
  *

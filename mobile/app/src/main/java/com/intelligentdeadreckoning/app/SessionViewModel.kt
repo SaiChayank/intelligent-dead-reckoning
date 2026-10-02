@@ -14,18 +14,28 @@ import com.intelligentdeadreckoning.app.acquisition.*
 import com.intelligentdeadreckoning.app.recording.*
 import java.io.File
 import com.intelligentdeadreckoning.app.sessions.*
+import com.intelligentdeadreckoning.app.security.SafeSecurityMessages
 import android.net.Uri
 import com.intelligentdeadreckoning.app.replay.*
+import com.intelligentdeadreckoning.app.fusion.FusionNavigationEngine
+import com.intelligentdeadreckoning.app.navigation.ENGINE_OUTPUT_CONTRACT_VERSION
 import com.intelligentdeadreckoning.app.navigation.NavigationRuntime
-import com.intelligentdeadreckoning.app.navigation.UninitializedNavigationEngine
+import com.intelligentdeadreckoning.app.evaluation.EvaluationLibrary
+import com.intelligentdeadreckoning.app.evaluation.EvaluationStore
+import com.intelligentdeadreckoning.app.map.EngineSessionMap
 import com.intelligentdeadreckoning.app.map.LiveGnssView
+import com.intelligentdeadreckoning.app.map.MapPresentation
+import com.intelligentdeadreckoning.app.map.NO_ENGINE_VIEW
 import com.intelligentdeadreckoning.app.map.NO_LIVE_GNSS
 import com.intelligentdeadreckoning.app.map.RecordedSessionMap
+import com.intelligentdeadreckoning.app.matching.RoadGraph
+import com.intelligentdeadreckoning.app.matching.RoadGraphPack
 import com.intelligentdeadreckoning.contracts.v1.GnssMeasurement
 import com.intelligentdeadreckoning.contracts.v1.Header
 import com.intelligentdeadreckoning.contracts.v1.Source
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.FlowPreview
@@ -34,6 +44,9 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.flow.stateIn
+
+/** Map-rate engine publications: fast enough for a smooth marker, slow enough to read. */
+private const val ENGINE_PUBLICATION_INTERVAL_NS = 100_000_000L
 
 class SessionViewModel(application: Application, private val saved: SavedStateHandle) : AndroidViewModel(application) {
     private val simulation = SimulationController(viewModelScope, SystemClock::elapsedRealtime)
@@ -49,10 +62,18 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
     private val files = SessionFiles { File(application.noBackupFilesDir, "recordings") }
     private val player = ReplayController(files, viewModelScope, SystemClock::elapsedRealtimeNanos)
 
-    /** The seam to the future navigation engine. Fed by the same canonical record streams the
-     *  recorder consumes; owns its own engine worker; touches no sensors, maps or files.
-     *  Its output is exposed but nothing consumes it yet — there is no engine to show. */
-    private val navigation = NavigationRuntime(UninitializedNavigationEngine(), viewModelScope, SystemClock::elapsedRealtimeNanos)
+    /** The seam to the production navigation engine (the classical GNSS+INS error-state EKF).
+     *  Fed by the same canonical record streams the recorder consumes; owns its own engine
+     *  worker; touches no sensors, maps or files. Its output drives the map through the
+     *  presentation pipeline and is never altered by it. Publications are capped at 10 Hz so
+     *  the displayed state moves at a rate a person can follow; the filter itself runs at
+     *  sensor rate regardless. A session without a calibration record runs honestly
+     *  uncalibrated: position, speed and localization mode are published, the vehicle-frame
+     *  heading is null until calibration composition lands. */
+    private val navigation = NavigationRuntime(
+        FusionNavigationEngine(publicationIntervalNs = ENGINE_PUBLICATION_INTERVAL_NS),
+        viewModelScope, SystemClock::elapsedRealtimeNanos,
+    )
     val navigationState = navigation.state
     val navigationEvents = navigation.output
     /** The producer session the engine was bound to. One bind per session: a failed engine is
@@ -64,8 +85,10 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
         if (originNs == null) return
         navigationSession = sessionId
         navigationSource = source
-        // A refused start (e.g. after an unreset failure) is final for this session.
-        navigation.start(Header(sessionId, source), originNs)
+        // The engine output stream speaks the navigation exchange contract (1.1.0): its
+        // NavigationState carries localization_mode. A refused start (e.g. after an unreset
+        // failure) is final for this session.
+        navigation.start(Header(sessionId, source, ENGINE_OUTPUT_CONTRACT_VERSION), originNs)
     }
 
     private fun releaseNavigation() {
@@ -105,7 +128,7 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
                 libraryMutable.value = withContext(Dispatchers.IO) { files.list(after) }
                 libraryError.value = null
             } catch (e: CancellationException) { throw e }
-            catch (e: Exception) { libraryError.value = e.message ?: "Cannot read sessions" }
+            catch (e: Exception) { libraryError.value = "Cannot read sessions (${SafeSecurityMessages.code(e, "SESSION_IO_ERROR")})." }
         }
     }
     fun chooseExport(id: String): Boolean {
@@ -172,16 +195,116 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
     val capture = real.state
     val measurements = real.events
     val source = coordinator.source
-    /** Live phone GNSS folded for display only: the same fold a replayed session gets, claimed as
-     * live rather than replayed. Rebuilt per subscriber, so leaving the map and returning starts a
-     * fresh live trail instead of resuming a stale one. Nothing is propagated or fused. */
-    val liveGnss = flow {
-        val map = RecordedSessionMap(source = Source.REAL)
-        emit(LiveGnssView(map.snapshot(), map.stats()))
-        measurements.filter { it.event.data is GnssMeasurement }.collect { record ->
-            emit(LiveGnssView(map.accept(record), map.stats()))
+    /**
+     * Live phone GNSS folded for display only, from this capture session's fixes. The fold is
+     * session-owned, reset on stop/restart and permission loss, and ticked so stale fixes leave
+     * the marker even when Android has simply stopped sending callbacks. Nothing is propagated or
+     * fused; a stale trail may remain as history, but its current-position field is hidden.
+     */
+    val liveGnss = channelFlow {
+        val lock = Any()
+        val map = RecordedSessionMap(
+            staleAfterForProvider = { provider -> GnssQualityPolicy().staleAfterNs(provider) ?: RecordedSessionMap.DEFAULT_GAP_NS },
+            source = Source.REAL,
+        )
+        var capture = real.state.value
+        var sessionId: String? = null
+        fun view(nowNs: Long = SystemClock.elapsedRealtimeNanos()) = synchronized(lock) {
+            LiveGnssView(map.snapshot(nowNs), map.stats())
+        }
+        send(view())
+        launch {
+            real.state.collect { next ->
+                val current = synchronized(lock) {
+                    val newSession = next.running && next.sessionId != sessionId
+                    capture = next
+                    sessionId = next.sessionId.takeIf { next.running }
+                    val permitted = next.permission in listOf(
+                        LocationAccess.PRECISE, LocationAccess.APPROXIMATE,
+                    )
+                    if (!next.running || newSession || !permitted) map.reset()
+                    LiveGnssView(map.snapshot(SystemClock.elapsedRealtimeNanos()), map.stats())
+                }
+                send(current)
+            }
+        }
+        launch {
+            measurements.filter { it.event.data is GnssMeasurement }.collect { record ->
+                val current = synchronized(lock) {
+                    val permitted = capture.running &&
+                        capture.permission in listOf(LocationAccess.PRECISE, LocationAccess.APPROXIMATE) &&
+                        record.header.session_id == sessionId
+                    if (permitted) map.accept(record)
+                    else map.snapshot(SystemClock.elapsedRealtimeNanos())
+                    LiveGnssView(map.snapshot(SystemClock.elapsedRealtimeNanos()), map.stats())
+                }
+                send(current)
+            }
+        }
+        while (isActive) {
+            delay(500)
+            send(view())
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NO_LIVE_GNSS)
+    /**
+     * The evaluation reports this app can show: the document staged from
+     * `contracts/evaluation/v1/golden_report.json` at build time, plus anything installed under the
+     * app's own evaluation directory. Reading them is I/O; nothing here computes a metric.
+     */
+    private val evaluationMutable = MutableStateFlow(EvaluationLibrary())
+    val evaluationLibrary = evaluationMutable.asStateFlow()
+    private var evaluationJob: Job? = null
+    fun refreshEvaluation() {
+        evaluationJob?.cancel()
+        evaluationJob = viewModelScope.launch {
+            evaluationMutable.value = withContext(Dispatchers.IO) { EvaluationStore.load(getApplication()) }
+        }
+    }
+
+    /** The evaluation toggle: on, the map matcher runs beside the raw output; off, it does not. */
+    val mapEvaluation = MutableStateFlow(false)
+    private var evaluationGraph: RoadGraph? = null
+    /**
+     * The engine session's map display: NavigationEngine → NavigationState →
+     * NavigationPresentation → MapOverlay → MapLibreRenderer. Rebuilt per subscriber like the
+     * live view, so returning to the map starts a fresh trail. A 500 ms ticker expires stale
+     * state on schedule: when the engine stops, its position leaves the screen within the
+     * presentation's staleness bound instead of lingering, and nothing is extrapolated or
+     * restarted in the meantime.
+     */
+    val engineMap = channelFlow {
+        val fold = EngineSessionMap()
+        fun now() = SystemClock.elapsedRealtimeNanos()
+        send(fold.snapshot(now()))
+        launch { navigationEvents.collect { send(fold.accept(it, now())) } }
+        launch {
+            mapEvaluation.collect { enabled ->
+                if (!enabled) {
+                    fold.evaluation = null
+                    fold.matchingIssue = null
+                } else {
+                    try {
+                        fold.matchingIssue = null
+                        fold.evaluation = evaluationGraph ?: withContext(Dispatchers.IO) {
+                            RoadGraphPack(getApplication()).install()
+                        }.also { evaluationGraph = it }
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (error: Exception) {
+                        // Matching is an optional overlay. A missing/corrupt graph must not
+                        // terminate engine-map collection or hide raw navigation output.
+                        fold.evaluation = null
+                        fold.matchingIssue = "Road graph unavailable (${SafeSecurityMessages.code(error, "ROAD_GRAPH_REJECTED")}); raw navigation is unchanged."
+                    }
+                }
+                send(fold.snapshot(now()))
+            }
+        }
+        while (isActive) {
+            delay(500)
+            send(fold.snapshot(now()))
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NO_ENGINE_VIEW)
     fun select(source: InputSource) {
         player.stop(); replayVisible.value = false
         // A source change ends the engine session; the new one binds only with a new session.
@@ -238,4 +361,8 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
         coordinator.background()
     }
     override fun onCleared() { player.stop(); releaseNavigation(); navigation.close(); recorder.close(); real.close(); super.onCleared() }
+
+    // Declared last on purpose: property initializers and init blocks run in declaration order, so
+    // the report read starts only after every field it touches exists.
+    init { refreshEvaluation() }
 }

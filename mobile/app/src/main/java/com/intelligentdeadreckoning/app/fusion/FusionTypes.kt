@@ -62,6 +62,12 @@ data class FusionConfig(
      * disagreement, and outages are coasted through however long they last.
      */
     val maxRejectionGapS: Double = 5.0,
+    /**
+     * Accepted GNSS updates the published `localization_mode` stays `recovery` after a stale
+     * stretch ends, before reporting `fused` again. "Convergence over several fixes rather than
+     * a teleport" made countable: chosen, not measured.
+     */
+    val localizationRecoveryFixes: Int = 3,
 
     // ---------------------------------------------------------------------------------------
     // Vehicle-motion constraints (zero-velocity update and non-holonomic constraints)
@@ -205,6 +211,9 @@ enum class PropagationOutcome {
     FAILED_GAP,
 
     FAILED_NON_FINITE,
+
+    /** The propagated state or error covariance ceased to be finite, positive and usable. */
+    FAILED_NUMERICAL,
     FAILED,
 }
 
@@ -271,6 +280,7 @@ data class FusionInitialState(
 /** A fatal condition. The filter stops claiming state beyond this point. */
 enum class FusionFailure(val code: String) {
     NON_FINITE_SAMPLE("NON_FINITE_SAMPLE"),
+    NUMERICAL_INVALIDITY("NUMERICAL_INVALIDITY"),
     TIME_GAP_EXCEEDS_LIMIT("TIME_GAP_EXCEEDS_LIMIT"),
 
     /**

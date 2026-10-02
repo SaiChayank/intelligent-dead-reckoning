@@ -52,7 +52,7 @@ class PythonParityTest {
         Event(id.toString(),t,t,DiagnosticEvent(Severity.INFO,"TEST","fixture",0)))
 
     private fun navigation(id: Long, t: Long, mode: InitializationMode) = Record(Header("acq",Source.REAL),
-        Event(id.toString(),t,t,NavigationState(NavigationStatus.UNINITIALIZED,mode,null,null,null,null,null,null,false)))
+        Event(id.toString(),t,t,NavigationState(NavigationStatus.UNINITIALIZED,mode,null,null,null,null,null,null,false,null)))
 
     private fun records(name: String, m: RecordingMetadata, body: List<Record>): File {
         // The stored recording ID must name its own directory, on both sides.

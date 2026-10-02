@@ -135,7 +135,11 @@ private class Fields(value: JsonElement, val path: String) {
 object Codec {
     private val gson = GsonBuilder().serializeNulls().disableHtmlEscaping().create()
 
-    private fun payload(kind: String, raw: JsonElement): Payload {
+    /** Versions this codec speaks. Records declaring any other contract_version are rejected
+     * whole, including patch differences. 1.1.0 adds navigation.localization_mode. */
+    private val CONTRACT_VERSIONS = setOf("1.0.0", "1.1.0")
+
+    private fun payload(kind: String, raw: JsonElement, version: String): Payload {
         val v = Fields(raw, "$.event.data")
         val result: Payload = when (kind) {
             "imu" -> {
@@ -176,7 +180,12 @@ object Codec {
                 )
             }
             "navigation" -> {
-                v.keys("status", "initialization_mode", "origin_wgs84_deg_m", "position_enu_m", "velocity_enu_m_s", "q_enu_from_vehicle_wxyz", "heading_deg", "calibration_id", "gnss_used_after_initialization")
+                // 1.0.0 predates localization_mode: the key is forbidden there and decodes to
+                // null. 1.1.0 requires the key with an explicit value or null.
+                val base = listOf("status", "initialization_mode", "origin_wgs84_deg_m", "position_enu_m",
+                    "velocity_enu_m_s", "q_enu_from_vehicle_wxyz", "heading_deg", "calibration_id",
+                    "gnss_used_after_initialization")
+                if (version == "1.1.0") v.keys(*(base + "localization_mode").toTypedArray()) else v.keys(*base.toTypedArray())
                 NavigationState(
                     v.enum("status", NavigationStatus.entries),
                     v.enum("initialization_mode", InitializationMode.entries),
@@ -186,7 +195,8 @@ object Codec {
                     v.nullable("q_enu_from_vehicle_wxyz") { v.quaternion("q_enu_from_vehicle_wxyz") },
                     v.nullable("heading_deg") { v.number("heading_deg", 0.0, 360.0, true) },
                     v.nullable("calibration_id") { v.string("calibration_id") },
-                    v.boolean("gnss_used_after_initialization")
+                    v.boolean("gnss_used_after_initialization"),
+                    if (version == "1.1.0") v.nullable("localization_mode") { v.enum("localization_mode", LocalizationMode.entries) } else null
                 )
             }
             "gnss_quality" -> {
@@ -239,6 +249,13 @@ object Codec {
                     fail("INVARIANT", "$p.origin_wgs84_deg_m")
                 if (result.status in listOf(NavigationStatus.UNINITIALIZED, NavigationStatus.CALIBRATING, NavigationStatus.FAILED) &&
                     (spatial.any { it != null } || result.heading_deg != null)) fail("INVARIANT", p)
+                if (version == "1.1.0") {
+                    // A mode names the regime of a presented position: no position, no mode, and a
+                    // presented position must name its regime. 1.0.0 is exempt: it cannot carry it.
+                    if ((result.localization_mode == null) != (result.position_enu_m == null)) fail("INVARIANT", "$p.localization_mode")
+                    if ((result.localization_mode == LocalizationMode.FUSED || result.localization_mode == LocalizationMode.RECOVERY) &&
+                        !result.gnss_used_after_initialization) fail("INVARIANT", "$p.localization_mode")
+                }
             }
             is Confidence -> if (result.state != ConfidenceState.CALIBRATED && result.probability != null) fail("INVARIANT", "$p.probability")
             else -> Unit
@@ -249,14 +266,15 @@ object Codec {
     private fun record(raw: JsonElement): Record {
         val h = Fields(raw, "$")
         h.keys("contract_version", "session_id", "source", "event")
-        if (h["contract_version"] != JsonPrimitive("1.0.0")) fail("INVALID_VERSION", "$.contract_version")
-        val header = Header(h.string("session_id"), h.enum("source", Source.entries))
+        val version = (h["contract_version"] as? JsonPrimitive)?.takeIf { it.isString }?.asString
+        if (version == null || version !in CONTRACT_VERSIONS) fail("INVALID_VERSION", "$.contract_version")
+        val header = Header(h.string("session_id"), h.enum("source", Source.entries), version)
         val e = Fields(h["event"], "$.event")
         e.keys("event_id", "type", "t_ns", "received_ns", "data")
         e.decimal("event_id")
         val t = e.decimal("t_ns"); val received = e.decimal("received_ns")
         if (received < t) fail("INVARIANT", "$.event.received_ns")
-        return Record(header, Event(e.string("event_id"), t, received, payload(e.string("type"), e["data"])))
+        return Record(header, Event(e.string("event_id"), t, received, payload(e.string("type"), e["data"], version)))
     }
 
     // Explicit token types prevent Gson's normal numeric/string coercion. Never use fromJson DTO reflection.
@@ -369,7 +387,8 @@ object Codec {
                 "q_enu_from_vehicle_wxyz" to p.q_enu_from_vehicle_wxyz,
                 "heading_deg" to p.heading_deg,
                 "calibration_id" to p.calibration_id,
-                "gnss_used_after_initialization" to p.gnss_used_after_initialization
+                "gnss_used_after_initialization" to p.gnss_used_after_initialization,
+                "localization_mode" to p.localization_mode
             )
             is GnssQualityState -> linkedMapOf(
                 "state" to p.state,
@@ -391,6 +410,12 @@ object Codec {
             )
         }
         val h = value.header; val e = value.event
+        if (p is NavigationState && h.contract_version == "1.0.0") {
+            // A 1.0.0 envelope cannot carry localization_mode. Dropping a non-null value would
+            // silently lose meaning, so a typed caller must declare a 1.1.0 header instead.
+            if (p.localization_mode != null) fail("INVALID_MODEL", "$.event.data.localization_mode")
+            data.remove("localization_mode")
+        }
         if (e.t_ns < 0 || e.received_ns < 0) fail("OUT_OF_RANGE", "$.event.t_ns")
         val raw = wire(linkedMapOf("contract_version" to h.contract_version, "session_id" to h.session_id,
             "source" to h.source, "event" to linkedMapOf("event_id" to e.event_id, "type" to p.type,

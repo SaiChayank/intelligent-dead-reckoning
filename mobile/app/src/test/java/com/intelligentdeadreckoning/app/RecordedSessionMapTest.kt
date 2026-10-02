@@ -87,6 +87,44 @@ class RecordedSessionMapTest {
         assertTrue(map.snapshot().trailSegments.isEmpty())
     }
 
+    @Test fun outOfOrderFixCannotMoveMarkerBackwardsOrExtendTrail() {
+        val map = RecordedSessionMap()
+        val latest = map.accept(fix("1", ns + 1_000_000_000L, longitude = 78.4510))
+        val stale = map.accept(fix("0", ns, longitude = 78.4500))
+        assertEquals(latest.point, stale.point)
+        assertEquals(latest.trail, stale.trail)
+        assertEquals(1, map.stats().fixes)
+        assertEquals(1, map.stats().malformed)
+        assertTrue(stale.status.contains("Out-of-order"))
+    }
+
+    @Test fun currentPositionExpiresOnClockTicksWithoutNewCallbacks() {
+        val map = RecordedSessionMap()
+        val first = map.accept(fix("0", ns))
+        assertNotNull(first.point)
+        assertEquals(first.point, map.snapshot(ns + RecordedSessionMap.DEFAULT_GAP_NS).point)
+        val stale = map.snapshot(ns + RecordedSessionMap.DEFAULT_GAP_NS + 1)
+        assertNull(stale.point)
+        assertNull(stale.headingDegrees)
+        assertNull(stale.speedMetresPerSecond)
+        assertTrue(stale.status.contains("Stale fix"))
+        assertFalse("historical path remains available", stale.trail.isEmpty())
+        map.reset()
+        assertNull(map.snapshot().point)
+        assertTrue(map.snapshot().trail.isEmpty())
+        assertEquals(0, map.stats().fixes)
+    }
+
+    @Test fun mapFreshnessUsesProviderCadenceInsteadOfAOneSizeFiveSecondBound() {
+        val map = RecordedSessionMap(staleAfterForProvider = { provider ->
+            if (provider == "network") 40_200_000_000L else 2_000_000_000L
+        })
+        val network = fix("0", ns, provider = "network")
+        map.accept(network)
+        assertNotNull(map.snapshot(ns + 5_000_000_000L).point)
+        assertNull(map.snapshot(ns + 40_200_000_001L).point)
+    }
+
     @Test fun recordedSourceCannotProduceTheSyntheticComparisonOrScenarioLayers() {
         val map = RecordedSessionMap()
         map.accept(fix("0", ns, longitude = 78.4500))

@@ -34,6 +34,15 @@ import kotlinx.coroutines.launch
 enum class NavigationPhase { IDLE, STARTING, RUNNING, STOPPING, FAILED }
 
 /**
+ * The contract version an engine session speaks: the navigation exchange whose
+ * `NavigationState` can carry `localization_mode`. The producer declares the schema it
+ * writes, so the session header passed to [NavigationRuntime.start] must carry exactly
+ * this version — an engine output stream that cannot represent its own results is refused
+ * at the seam instead of failing later inside a consumer.
+ */
+const val ENGINE_OUTPUT_CONTRACT_VERSION = "1.1.0"
+
+/**
  * What consumers may observe. Counters belong to one engine session: they are cleared
  * when a new session starts and by [NavigationRuntime.reset], and they survive [NavigationRuntime.stop]
  * so a finished session can still be read. `engineStatus` is copied verbatim from the
@@ -45,6 +54,10 @@ enum class NavigationPhase { IDLE, STARTING, RUNNING, STOPPING, FAILED }
  * but never reached the engine (bounded queue overflow, or abandoned when a session ended).
  * `accepted*` is written on the engine worker, so it lags [NavigationRuntime.offer] by one
  * dispatch — it counts delivery, not admission.
+ *
+ * `ingressHighWater` is the largest number of records that were ever admitted and not yet
+ * handed to the engine — the queue depth a producer actually reached, which is the figure a
+ * backlog report needs and `ingressCapacity` alone cannot give.
  */
 data class NavigationRuntimeState(
     val phase: NavigationPhase = NavigationPhase.IDLE,
@@ -55,6 +68,8 @@ data class NavigationRuntimeState(
     val acceptedGnss: Long = 0,
     val rejected: Long = 0,
     val ingressDropped: Long = 0,
+    /** Deepest the ingress queue ever got: admitted records not yet handed to the engine. */
+    val ingressHighWater: Long = 0,
     val outputDropped: Long = 0,
     val outputRejected: Long = 0,
     val message: String = "No navigation session. Explicit start required.",
@@ -123,13 +138,19 @@ class NavigationRuntime(
     private val bootId: String = UUID.randomUUID().toString()
     private var session: EngineSession? = null
     private var ingress: Channel<Record>? = null
+
+    /** Admitted-but-unprocessed records. Guarded by [lock]; feeds `ingressHighWater`. */
+    private var inFlight = 0L
     private var nextEventId = 0L
 
     /**
      * Creates one engine session bound to [header]. Every record offered later must carry
-     * this exact header (session id AND source). Returns false without side effects when a
-     * session already exists, when one is still stopping, or after a failure that has not
-     * been reset — there is never more than one session and never an automatic restart.
+     * this exact header (session id AND source); the offered records' own contract versions
+     * are irrelevant because session ownership is identity, not schema. The header must
+     * declare [ENGINE_OUTPUT_CONTRACT_VERSION] — the engine output stream speaks it.
+     * Returns false without side effects when a session already exists, when one is still
+     * stopping, when the header declares another contract version, or after a failure that
+     * has not been reset — there is never more than one session and never an automatic restart.
      */
     fun start(
         header: Header,
@@ -142,6 +163,7 @@ class NavigationRuntime(
         val calibrationRecord: Record
         synchronized(lock) {
             if (mutable.value.phase != NavigationPhase.IDLE) return false
+            if (header.contract_version != ENGINE_OUTPUT_CONTRACT_VERSION) return false
             session = EngineSession(header, bootId, originNs)
             // Honest default: no calibration exists yet, and PENDING says exactly that.
             calibrationRecord = calibration ?: Record(
@@ -191,6 +213,10 @@ class NavigationRuntime(
                 mutable.value = current.copy(ingressDropped = current.ingressDropped + 1)
                 return false
             }
+            inFlight += 1
+            mutable.value = mutable.value.copy(
+                ingressHighWater = maxOf(mutable.value.ingressHighWater, inFlight),
+            )
             return true
         }
     }
@@ -228,7 +254,7 @@ class NavigationRuntime(
             } else {
                 NavigationRuntimeState(
                     phase = NavigationPhase.FAILED,
-                    message = "Navigation engine failed to reset (${result.exceptionOrNull()?.message}). Reset required.",
+                    message = "Navigation engine failed to reset (ENGINE_RESET_FAILED). Reset required.",
                 )
             }
         }
@@ -269,6 +295,7 @@ class NavigationRuntime(
                 // Counted as accepted only here, when the record is actually handed to the
                 // engine. A record admitted by offer() but abandoned before this point is
                 // counted as an ingress drop instead, so the counters never overlap.
+                synchronized(lock) { inFlight -= 1 }
                 when (record.event.data) {
                     is ImuMeasurement -> {
                         countAccepted(imu = true)
@@ -356,14 +383,17 @@ class NavigationRuntime(
                 while (channel.tryReceive().isSuccess) abandoned++
                 channel.close()
             }
+            // Nothing is in flight once the channel is drained and closed; the high-water mark
+            // stays where it was, because it is a measurement of the session, not a live depth.
+            inFlight = 0L
             header = session?.header ?: Header("none", Source.REAL)
             mutable.value = mutable.value.copy(
                 phase = NavigationPhase.FAILED,
                 ingressDropped = mutable.value.ingressDropped + abandoned,
-                message = "Navigation engine failed (${t.message}); acquisition and recording are unaffected. Reset required.",
+                message = "Navigation engine failed (ENGINE_FAILURE); acquisition and recording are unaffected. Reset required.",
             )
         }
-        publishDiagnostic(header, Severity.ERROR, "ENGINE_FAILURE", "Engine worker stopped: ${t.message}", 0)
+        publishDiagnostic(header, Severity.ERROR, "ENGINE_FAILURE", "Engine worker stopped; diagnostic details were withheld.", 0)
     }
 
     private fun publishDiagnostic(header: Header, severity: Severity, code: String, message: String, count: Long) {

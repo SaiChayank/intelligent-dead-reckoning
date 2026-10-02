@@ -32,6 +32,12 @@ only to `SyntheticMapDemo`. A real mode badge needs a separately approved contra
 extension before integration; frozen v1 is unchanged. NavigationEngine remains
 unimplemented.
 
+**Superseded 2026-10-01.** The separately approved extension exists: contract
+**1.1.0** adds `navigation.localization_mode` (gnss/dr/fused/recovery), the fusion
+engine publishes it, and the map's fourth source draws real engine output. The
+`1.0.0` layer described above is untouched. See
+[MAP_ENGINE_VIEW.md](MAP_ENGINE_VIEW.md).
+
 On Map, tap **Start synthetic demo**. The camera centers on a 30-second synthetic
 curve at zoom 16. Purple position, heading triangle, travelled trail and a shaded
 synthetic uncertainty circle are local GeoJSON overlays. The 20 Hz display target
@@ -197,10 +203,10 @@ connected phone/emulator, the standard runner command is:
 ## Next bounded stages
 
 First pass the rendering/lifecycle gate, including the synthetic overlay checks.
-The tested presentation adapter is now present; real engine integration is not.
-Do not invent DR or fused
-positions while the navigation engine is unimplemented. Raw GNSS, if separately
-enabled, must be labelled raw GNSS, not fused navigation.
+The tested presentation adapter is present and real engine output now drives it
+([MAP_ENGINE_VIEW.md](MAP_ENGINE_VIEW.md)); the remaining device gap is a run with
+the engine actually publishing. Raw GNSS stays labelled raw GNSS, never fused
+navigation, and the engine source is labelled as engine output.
 
 Map rendering draws data; positioning estimates pose; map matching constrains
 estimates to roads; routing finds a path; turn-by-turn navigation follows that path.

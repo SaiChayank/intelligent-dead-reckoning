@@ -11,6 +11,7 @@ invalid outage interval, a clock mismatch and a duplicated experiment ID.
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -563,11 +564,37 @@ class IntegrityManifestTest(ExperimentFixture):
     def test_escaping_paths_are_refused(self):
         root = self.root / "exp"
         root.mkdir()
-        for name in ("/etc/passwd", "../escape", "a/../../b", "a\\b"):
+        for name in ("/etc/passwd", "../escape", "a/../../b", "a\\b", "C:/Windows/win.ini",
+                     "C:\\\\Windows\\\\win.ini", "a/./b", "a//b", "./metadata.json"):
             with self.subTest(name=name):
                 with self.assertRaises(IntegrityError) as raised:
                     verify_integrity(root, {name: "a" * 64})
                 self.assertEqual(raised.exception.code, "UNSAFE_PATH")
+                with self.assertRaises(IntegrityError) as raised:
+                    encode_integrity({name: "a" * 64})
+                self.assertEqual(raised.exception.code, "UNSAFE_PATH")
+
+    def test_symlinked_directory_roots_and_artifacts_are_refused(self):
+        real = self.root / "real"
+        real.mkdir()
+        (real / "payload.json").write_bytes(b"fixture")
+        entries = decode_integrity(build_integrity(real))
+        try:
+            linked_root = self.root / "linked-root"
+            linked_root.symlink_to(real, target_is_directory=True)
+            with self.assertRaises(IntegrityError) as raised:
+                build_integrity(linked_root)
+            self.assertEqual(raised.exception.code, "UNSAFE_PATH")
+            with self.assertRaises(IntegrityError) as raised:
+                verify_integrity(linked_root, entries)
+            self.assertEqual(raised.exception.code, "UNSAFE_PATH")
+
+            (real / "linked-payload.json").symlink_to(real / "payload.json")
+            with self.assertRaises(IntegrityError) as raised:
+                build_integrity(real)
+            self.assertEqual(raised.exception.code, "UNSAFE_PATH")
+        except (OSError, NotImplementedError):
+            self.skipTest("symlinks are unavailable in this environment")
 
 
 # --------------------------------------------------------------------------------------
@@ -1085,6 +1112,139 @@ class ExperimentToolTest(ExperimentFixture):
         experiment = open_experiment(directory)
         self.assertEqual(experiment.manifest.primary.measurements_sha256,
                          sha256_file(directory / "sessions/rec-primary/measurements.jsonl"))
+
+    def test_seal_dry_run_writes_nothing(self):
+        directory = self.root / "exp-alpha"
+        builder = ExperimentBuilder(directory)
+        builder.add_session("rec-primary", standard_records(), digest="0" * 64)
+        builder.write_manifest()
+        before = {path.name for path in directory.iterdir()}
+        result = self.run_tool("seal_experiment.py", str(directory), "--dry-run")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual({path.name for path in directory.iterdir()}, before)
+        self.assertFalse((directory / INTEGRITY_NAME).exists())
+        self.assertIn("0" * 64, (directory / MANIFEST_NAME).read_text("utf-8"))
+
+    def test_seal_manifest_covers_only_the_final_experiment_files(self):
+        directory = self.root / "exp-alpha"
+        builder = ExperimentBuilder(directory)
+        builder.add_session("rec-primary", standard_records(), digest="0" * 64)
+        builder.write_manifest()
+        result = self.run_tool("seal_experiment.py", str(directory))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        integrity = decode_integrity((directory / INTEGRITY_NAME).read_bytes())
+        self.assertEqual(set(integrity), {
+            "experiment.json", "annotations.jsonl",
+            "sessions/rec-primary/metadata.json",
+            "sessions/rec-primary/measurements.jsonl",
+        })
+        self.assertFalse(any(name.endswith(".tmp") for name in integrity))
+        self.assertEqual(integrity["experiment.json"], sha256_file(directory / MANIFEST_NAME))
+        self.assertEqual(integrity, decode_integrity(build_integrity(directory)))
+
+    def test_seal_refuses_symlinked_experiment_artifacts(self):
+        directory = self.root / "exp-alpha"
+        builder = ExperimentBuilder(directory)
+        builder.add_session("rec-primary", standard_records(), digest="0" * 64)
+        builder.write_manifest()
+        outside = self.root / "outside.jsonl"
+        outside.write_bytes((directory / ANNOTATIONS_NAME).read_bytes())
+        try:
+            (directory / ANNOTATIONS_NAME).unlink()
+            (directory / ANNOTATIONS_NAME).symlink_to(outside)
+        except (OSError, NotImplementedError):
+            self.skipTest("symlinks are unavailable in this environment")
+        result = self.run_tool("seal_experiment.py", str(directory))
+        self.assertEqual(result.returncode, 3)
+        self.assertEqual(json.loads(result.stdout)["rejected"], "UNSAFE_PATH")
+        self.assertFalse((directory / INTEGRITY_NAME).exists())
+
+    def test_seal_and_dataset_snapshot_reject_symlink_trees(self):
+        from training.phase0.audit import snapshot
+
+        real = self.root / "dataset-real"
+        real.mkdir()
+        (real / "capture.csv").write_text("time,value\\n0,1\\n", encoding="utf-8")
+        link = self.root / "dataset-link"
+        try:
+            link.symlink_to(real, target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, "real directory"):
+                snapshot(link)
+            (real / "nested-link").symlink_to(real / "capture.csv")
+        except (OSError, NotImplementedError):
+            self.skipTest("symlinks are unavailable in this environment")
+        with self.assertRaisesRegex(ValueError, "symbolic link"):
+            snapshot(real)
+
+    def test_integrity_manifest_rejects_symlinked_parent_directories(self):
+        real = self.root / "real-parent"
+        (real / "nested").mkdir(parents=True)
+        (real / "nested/payload.json").write_bytes(b"fixture")
+        entries = decode_integrity(build_integrity(real))
+        linked = self.root / "linked-parent"
+        try:
+            linked.symlink_to(real, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            self.skipTest("symlinks are unavailable in this environment")
+        with self.assertRaises(IntegrityError) as raised:
+            verify_integrity(linked, entries)
+        self.assertEqual(raised.exception.code, "UNSAFE_PATH")
+
+    def test_dependency_audit_wrapper_requires_but_never_installs_pip_audit(self):
+        result = self.run_tool("audit_dependencies.py", "--pip-audit", "definitely-not-installed-pip-audit")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("not installed", result.stderr)
+        self.assertNotIn("requirements.txt", result.stdout)
+
+    def test_hygiene_gate_scans_tracked_secret_policy_and_assets(self):
+        result = subprocess.run(
+            [sys.executable, "-B", str(REPO_ROOT / "tools" / "check_repo_hygiene.py")],
+            cwd=REPO_ROOT, capture_output=True, text=True, check=False)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("clean:", result.stdout)
+
+    def test_model_policy_remains_explicit_and_never_deploys_or_mutates_online(self):
+        readme = (REPO_ROOT / "models/README.md").read_text("utf-8").lower()
+        architecture = (REPO_ROOT / "docs/PS26168_ML_Architecture_Decision.md").read_text("utf-8").lower()
+        self.assertIn("no model has been trained or approved", readme)
+        self.assertIn("no online learning", architecture)
+        self.assertIn("model artifact hash/version traceability", architecture)
+        self.assertFalse(any((REPO_ROOT / "mobile/app/src/main/assets").rglob("*.tflite")))
+        self.assertFalse(any((REPO_ROOT / "mobile/app/src/main/assets").rglob("*.onnx")))
+
+    def test_runtime_source_does_not_add_logging_calls(self):
+        app = REPO_ROOT / "mobile/app/src/main/java/com/intelligentdeadreckoning/app"
+        forbidden = re.compile(r"\b(?:android\.util\.)?Log\.(?:v|d|i|w|e)\s*\(|\bprintStackTrace\s*\(|\bTimber\.")
+        for path in app.rglob("*.kt"):
+            with self.subTest(path=path.relative_to(REPO_ROOT)):
+                self.assertIsNone(forbidden.search(path.read_text("utf-8")), str(path))
+
+    def test_installed_manifest_source_disallows_network_and_background_location(self):
+        import xml.etree.ElementTree as ET
+        manifest = ET.parse(REPO_ROOT / "mobile/app/src/main/AndroidManifest.xml").getroot()
+        android = "{http://schemas.android.com/apk/res/android}"
+        tools = "{http://schemas.android.com/tools}"
+        declared = [(node.get(android + "name"), node.get(tools + "node"))
+                    for node in manifest.findall("uses-permission")]
+        granted = {name for name, action in declared if action != "remove"}
+        self.assertEqual(granted, {
+            "android.permission.ACCESS_COARSE_LOCATION",
+            "android.permission.ACCESS_FINE_LOCATION",
+        })
+        self.assertTrue(all(action == "remove" for name, action in declared
+                            if name in {"android.permission.INTERNET",
+                                        "android.permission.ACCESS_NETWORK_STATE",
+                                        "android.permission.ACCESS_WIFI_STATE"}))
+        self.assertFalse(any("BACKGROUND_LOCATION" in (name or "") or "FOREGROUND_SERVICE" in (name or "")
+                             for name in granted))
+        application = manifest.find("application")
+        self.assertEqual(application.get(android + "allowBackup"), "false")
+        self.assertEqual(application.get(android + "usesCleartextTraffic"), "false")
+        rules = ET.parse(REPO_ROOT / "mobile/app/src/main/res/xml/data_extraction_rules.xml").getroot()
+        self.assertEqual({child.tag for child in rules}, {"cloud-backup", "device-transfer"})
+        for section in rules:
+            self.assertTrue(section.findall("exclude"))
+            self.assertFalse(section.findall("include"))
 
     def test_seal_dry_run_writes_nothing(self):
         directory = self.root / "exp-alpha"

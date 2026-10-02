@@ -652,7 +652,7 @@ class CalibrationEngineTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun calibrationReachesTheRuntimeAsCanonicalContractRecords() = runTest {
-        val header = Header("synthetic-drive", Source.REAL)
+        val header = Header("synthetic-drive", Source.REAL, "1.1.0")
         val runtime = NavigationRuntime(
             CalibrationNavigationEngine(), this, { 0L }, StandardTestDispatcher(testScheduler),
         )

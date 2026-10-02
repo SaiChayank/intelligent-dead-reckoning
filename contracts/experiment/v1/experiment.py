@@ -146,9 +146,17 @@ def _read(path: Path, name: str) -> bytes:
 
 
 def _inside(root: Path, relative: str) -> Path:
-    """Resolve a canonical location, refusing anything that escapes the experiment."""
-    target = (root / relative).resolve()
-    if not target.is_relative_to(root.resolve()):
+    """Resolve a canonical location, refusing escapes and symlinks even when hashing is skipped."""
+    if (not relative or relative.startswith(("/", "~")) or "\\" in relative or ":" in relative
+            or any(part in ("", ".", "..") for part in relative.split("/"))):
+        _fail("UNSAFE_PATH", relative)
+    target = root
+    for segment in relative.split("/"):
+        target = target / segment
+        if target.is_symlink():
+            _fail("UNSAFE_PATH", relative)
+    resolved = target.resolve()
+    if not resolved.is_relative_to(root.resolve()):
         _fail("UNSAFE_PATH", relative)
     return target
 
@@ -355,8 +363,8 @@ class Experiment:
 
 
 def _resolve(directory: str | Path) -> Path:
-    path = Path(directory)
-    if path.is_symlink():
+    path = Path(directory).absolute()
+    if any(ancestor.is_symlink() for ancestor in (path, *path.parents)):
         _fail("UNSAFE_PATH", path.name)
     if not path.is_dir():
         _fail("MISSING_EXPERIMENT", path.name)

@@ -63,15 +63,29 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _safe_relative(root: Path, name: str) -> str:
-    """A listed path must stay inside `root` and must not be a symlink bait."""
-    if name.startswith("/") or "\\" in name or name.startswith("~"):
-        _fail("UNSAFE_PATH", name)
+def _validate_relative_name(name: str) -> str:
+    """Validate canonical POSIX-relative syntax before encoding or resolving a path."""
+    if (not isinstance(name, str) or not name or name.startswith(("/", "~"))
+            or "\\" in name or ":" in name
+            or any(ord(char) < 32 or ord(char) == 127 for char in name)):
+        _fail("UNSAFE_PATH", str(name))
     segments = name.split("/")
     if any(segment in ("", ".", "..") for segment in segments):
         _fail("UNSAFE_PATH", name)
-    target = (root / name).resolve()
-    if not target.is_relative_to(root.resolve()):
+    return name
+
+
+def _safe_relative(root: Path, name: str) -> str:
+    """A listed path must stay inside `root` and must not be a symlink bait."""
+    _validate_relative_name(name)
+    base = root.resolve()
+    target = root / name
+    current = root
+    for segment in name.split("/"):
+        current = current / segment
+        if current.is_symlink():
+            _fail("UNSAFE_PATH", name)
+    if not target.resolve().is_relative_to(base):
         _fail("UNSAFE_PATH", name)
     return name
 
@@ -81,8 +95,7 @@ def encode_integrity(entries: dict[str, str]) -> bytes:
     for name, digest in entries.items():
         if not re.fullmatch(r"[0-9a-f]{64}", digest):
             _fail("MALFORMED_INTEGRITY", name)
-        if not name or name.startswith("/") or "\\" in name:
-            _fail("UNSAFE_PATH", name)
+        _validate_relative_name(name)
     body = "".join(f"{entries[name]}  {name}\n" for name in sorted(entries))
     return body.encode("utf-8")
 
@@ -107,6 +120,7 @@ def decode_integrity(data: bytes) -> dict[str, str]:
         if match is None:
             _fail("MALFORMED_INTEGRITY", f"line {number}")
         digest, name = match.groups()
+        _validate_relative_name(name)
         if name in entries:
             _fail("DUPLICATE_ENTRY", name)
         if name == INTEGRITY_NAME:
@@ -118,12 +132,14 @@ def decode_integrity(data: bytes) -> dict[str, str]:
 
 def _walk(root: Path) -> list[str]:
     """Every regular file under `root`, excluding the manifest itself."""
+    if root.is_symlink():
+        _fail("UNSAFE_PATH", root.name)
     found: list[str] = []
     for path in sorted(root.rglob("*")):
-        if path.name == INTEGRITY_NAME and path.parent == root:
-            continue
         if path.is_symlink():
             _fail("UNSAFE_PATH", str(path.relative_to(root)))
+        if path.name == INTEGRITY_NAME and path.parent == root:
+            continue
         if path.is_dir():
             continue
         if not path.is_file():
@@ -132,9 +148,17 @@ def _walk(root: Path) -> list[str]:
     return found
 
 
+def _safe_root(root: Path) -> Path:
+    """Reject symlinks in the root or any ancestor before traversing a tree."""
+    root = Path(root).absolute()
+    if any(path.is_symlink() for path in (root, *root.parents)):
+        _fail("UNSAFE_PATH", root.name)
+    return root
+
+
 def build_integrity(root: Path) -> bytes:
     """Hash every artifact in a finished experiment directory into manifest bytes."""
-    root = Path(root)
+    root = _safe_root(Path(root))
     if not root.is_dir():
         _fail("MISSING_ARTIFACT", root.name)
     return encode_integrity({name: sha256_file(root / name) for name in _walk(root)})
@@ -146,7 +170,9 @@ def verify_integrity(root: Path, declared: dict[str, str]) -> None:
     A file present but unlisted fails as hard as a listed file that is missing: an
     artifact nobody committed to is an artifact nobody can reproduce.
     """
-    root = Path(root)
+    root = _safe_root(Path(root))
+    if not root.is_dir():
+        _fail("UNSAFE_PATH", root.name)
     present = _walk(root)
     for name in declared:
         _safe_relative(root, name)
@@ -156,7 +182,7 @@ def verify_integrity(root: Path, declared: dict[str, str]) -> None:
             _fail("UNLISTED_FILE", name)
     for name in sorted(listed):
         target = root / name
-        if not target.is_file():
+        if not target.is_file() or target.is_symlink():
             _fail("MISSING_ARTIFACT", name)
         if sha256_file(target) != declared[name]:
             _fail("HASH_MISMATCH", name)

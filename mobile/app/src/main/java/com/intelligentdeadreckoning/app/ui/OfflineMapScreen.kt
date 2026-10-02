@@ -55,15 +55,20 @@ import com.intelligentdeadreckoning.app.map.InstalledMap
 import com.intelligentdeadreckoning.app.map.LiveGnssView
 import com.intelligentdeadreckoning.app.map.MapDemoController
 import com.intelligentdeadreckoning.app.map.MapLibreRenderer
-import com.intelligentdeadreckoning.app.map.MapRenderer
+import com.intelligentdeadreckoning.app.map.MapPoint
 import com.intelligentdeadreckoning.app.map.MapPresentation
+import com.intelligentdeadreckoning.app.map.MapRenderer
+import com.intelligentdeadreckoning.app.map.MarkerAnimation
+import com.intelligentdeadreckoning.app.map.NO_ENGINE_VIEW
 import com.intelligentdeadreckoning.app.map.NO_LIVE_GNSS
+import com.intelligentdeadreckoning.app.security.SafeSecurityMessages
 import com.intelligentdeadreckoning.app.map.OfflineMapPack
 import com.intelligentdeadreckoning.app.map.OutageMark
 import com.intelligentdeadreckoning.app.map.RecordedSessionMap
 import com.intelligentdeadreckoning.app.map.currentOutageSeconds
 import com.intelligentdeadreckoning.app.map.forConsoleHidden
 import com.intelligentdeadreckoning.app.map.outageMarks
+import com.intelligentdeadreckoning.app.navigation.NavigationRuntimeState
 import com.intelligentdeadreckoning.app.replay.ReplayReader
 import com.intelligentdeadreckoning.app.sessions.SavedSession
 import com.intelligentdeadreckoning.app.sessions.SessionFiles
@@ -104,9 +109,9 @@ import java.util.Locale
  */
 
 /** What the map is drawing. The synthetic fixture is a UI fixture, a recording is real data from
- * the past, and live is real data now. The three are never blended, and the fixture is never shown
- * as though it were the phone's own position. */
-private enum class MapMode { SYNTHETIC, RECORDED, LIVE }
+ * the past, live is raw phone GNSS now, and engine is what the navigation engine published. They
+ * are never blended, and the fixture is never shown as though it were the phone's own position. */
+private enum class MapMode { SYNTHETIC, RECORDED, LIVE, ENGINE }
 
 @Composable
 fun OfflineMapScreen(
@@ -114,6 +119,10 @@ fun OfflineMapScreen(
     source: InputSource = InputSource.SIMULATION,
     capture: CaptureState = CaptureState(),
     liveGnss: LiveGnssView = NO_LIVE_GNSS,
+    engineMap: MapPresentation = NO_ENGINE_VIEW,
+    navigation: NavigationRuntimeState = NavigationRuntimeState(),
+    evaluation: Boolean = false,
+    onEvaluation: (Boolean) -> Unit = {},
     onStart: () -> Unit = {},
     onPermission: () -> Unit = {},
 ) {
@@ -129,9 +138,18 @@ fun OfflineMapScreen(
     var mode by remember { mutableStateOf(MapMode.SYNTHETIC) }
     var recordedView by remember { mutableStateOf<RecordedView?>(null) }
     var recordedBusy by remember { mutableStateOf(false) }
-    // Armed by every mode change: the live camera takes the first fix it sees and is then left
-    // alone. Following a track is the job of an engine this screen does not have.
+    var recordedError by remember { mutableStateOf<String?>(null) }
+    // Armed by every mode change: the live and engine cameras take the first position they see and
+    // are then left alone. Keeping the camera on a moving track belongs to the user, not the
+    // screen, and no camera motion ever implies motion nothing published.
     var liveFocusArmed by remember(mode) { mutableStateOf(true) }
+    var engineFocusArmed by remember(mode) { mutableStateOf(true) }
+    // Presentation-only easing of the engine marker: the drawn marker interpolates between two
+    // published positions and holds at the newest one. Published state is never modified — the
+    // console values, the trail and the status stay exactly what the engine published — and when
+    // published state expires the marker is gone rather than extrapolated.
+    val marker = remember { MarkerAnimation() }
+    var easedEnginePoint by remember { mutableStateOf<MapPoint?>(null) }
     fun update(action: () -> Unit) { action(); snapshot = demo.state }
     // The overlay switches live in the synthetic console, which is on screen only for the fixture.
     // A switch the user can no longer see or reach must not decide what real data draws.
@@ -140,6 +158,10 @@ fun OfflineMapScreen(
         MapMode.RECORDED -> recordedView?.presentation ?: NO_RECORDED_VIEW
         MapMode.LIVE -> liveGnss.presentation
         MapMode.SYNTHETIC -> snapshot.presentation
+        // Only the drawn point is eased, and only between points the engine really published. An
+        // expired (null) published point stays nothing: the marker does not linger.
+        MapMode.ENGINE -> if (engineMap.point == null) engineMap
+        else engineMap.copy(point = easedEnginePoint ?: engineMap.point)
     }
 
     val owner = LocalLifecycleOwner.current
@@ -164,10 +186,25 @@ fun OfflineMapScreen(
     // Recorded mode streams one saved session on the I/O dispatcher and draws exactly what it
     // contains: no propagation, dead reckoning, fusion, road matching or routing is applied.
     LaunchedEffect(mode) {
-        if (mode != MapMode.RECORDED) { recordedView = null; return@LaunchedEffect }
+        if (mode != MapMode.RECORDED) {
+            recordedView = null
+            recordedError = null
+            return@LaunchedEffect
+        }
         recordedBusy = true
-        recordedView = withContext(Dispatchers.IO) { loadRecordedView(context) }
-        recordedBusy = false
+        recordedError = null
+        try {
+            recordedView = withContext(Dispatchers.IO) { loadRecordedView(context) }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            // A bad recording is a source-local failure: report it in this panel, do not crash
+            // the map or replace it with a partial trail. Live GNSS and engine views are separate.
+            recordedView = null
+            recordedError = "Recording refused (${SafeSecurityMessages.code(error, "INVALID_RECORDING")}). No data was changed."
+        } finally {
+            recordedBusy = false
+        }
     }
     val shown = shownPresentation()
     val drawn = drawnOverlays()
@@ -187,10 +224,39 @@ fun OfflineMapScreen(
             liveFocusArmed = false
         }
     }
+    // Engine output gets the camera once, onto the first published position, and never again.
+    LaunchedEffect(mode, engineMap.point, renderer) {
+        val point = engineMap.point
+        if (mode == MapMode.ENGINE && engineFocusArmed && point != null) {
+            renderer?.focus(point)
+            engineFocusArmed = false
+        }
+    }
+    // Each published engine position eases the marker from where it currently is. The loop ends the
+    // moment the ease settles, so a stationary or stopped engine costs no work and the marker holds
+    // exactly on the last published point instead of drifting past it.
+    LaunchedEffect(mode, engineMap.point) {
+        if (mode != MapMode.ENGINE) {
+            marker.reset()
+            easedEnginePoint = null
+            return@LaunchedEffect
+        }
+        marker.publish(engineMap.point, SystemClock.elapsedRealtimeNanos())
+        if (engineMap.point == null) {
+            easedEnginePoint = null
+            return@LaunchedEffect
+        }
+        while (true) {
+            val now = SystemClock.elapsedRealtimeNanos()
+            easedEnginePoint = marker.display(now)
+            if (marker.settled(now)) break
+            delay(16)
+        }
+    }
     LaunchedEffect(Unit) {
         try { pack = withContext(Dispatchers.IO) { OfflineMapPack(context.applicationContext).install() } }
         catch (e: kotlinx.coroutines.CancellationException) { throw e }
-        catch (e: Exception) { error = e.message ?: "Offline map unavailable" }
+        catch (e: Exception) { error = "Offline map unavailable (${SafeSecurityMessages.code(e, "MAP_PACK_REJECTED")})." }
     }
 
     // The hero must fit the visible page area. 70% of the window is the intended proportion, but
@@ -285,12 +351,26 @@ fun OfflineMapScreen(
                             glyph = IdrGlyph.LOCATE,
                             testTag = "map_source_live",
                         )
+                        IdrChip(
+                            label = "Navigation engine",
+                            selected = mode == MapMode.ENGINE,
+                            onClick = { update { demo.stop() }; mode = MapMode.ENGINE },
+                            enabled = !recordedBusy,
+                            glyph = IdrGlyph.NAVIGATE,
+                            testTag = "map_source_engine",
+                        )
                     }
                     IdrOverlayChip(
-                        text = if (mode == MapMode.LIVE)
-                            "Live GNSS only · no dead reckoning, fusion or routing yet"
-                        else "Preview only · no live position, DR, routing or navigation",
-                        tone = if (mode == MapMode.LIVE) IdrTone.INFO else IdrTone.NEUTRAL,
+                        text = when (mode) {
+                            MapMode.LIVE -> "Live GNSS only · no dead reckoning, fusion or routing in this view"
+                            MapMode.ENGINE -> "Navigation engine output · published fused state, not raw sensor estimates"
+                            else -> "Preview only · no live position, DR, routing or navigation"
+                        },
+                        tone = when (mode) {
+                            MapMode.LIVE -> IdrTone.INFO
+                            MapMode.ENGINE -> IdrTone.ACCENT
+                            else -> IdrTone.NEUTRAL
+                        },
                         glyph = if (mode == MapMode.LIVE) IdrGlyph.SATELLITE else IdrGlyph.NAVIGATE,
                         testTag = "map_mode",
                     )
@@ -298,6 +378,7 @@ fun OfflineMapScreen(
                         text = when (mode) {
                             MapMode.RECORDED -> "MAP SOURCE: RECORDED SESSION — raw GNSS fixes as recorded, no fusion or DR"
                             MapMode.LIVE -> "MAP SOURCE: LIVE PHONE GNSS — raw fixes as reported, no fusion or DR"
+                            MapMode.ENGINE -> "MAP SOURCE: NAVIGATION ENGINE — fused output as published NavigationState"
                             MapMode.SYNTHETIC -> "MAP SOURCE: SYNTHETIC UI FIXTURE — independent of acquisition"
                         },
                         tone = if (mode == MapMode.SYNTHETIC) IdrTone.WARNING else IdrTone.INFO,
@@ -449,8 +530,12 @@ fun OfflineMapScreen(
                                 glyph = IdrGlyph.ARROW_NORTH)
                         }
                     }
-                    if (mode == MapMode.RECORDED) RecordedPanel(recordedView, recordedBusy, renderer, ready)
+                    if (mode == MapMode.RECORDED) RecordedPanel(recordedView, recordedBusy, recordedError, renderer, ready)
                     if (mode == MapMode.LIVE) LivePanel(capture, source, liveGnss, renderer, ready, onStart, onPermission)
+                    if (mode == MapMode.ENGINE) EnginePanel(
+                        capture, navigation, engineMap, evaluation, onEvaluation, renderer, ready,
+                        onStart, onPermission,
+                    )
                     Text(
                         "OpenFreeMap · © OpenMapTiles · © OpenStreetMap contributors · openstreetmap.org/copyright",
                         color = IdrPalette.textSecondary,
@@ -627,9 +712,190 @@ private fun LivePanel(
     }
 }
 
+/**
+ * What the navigation engine published, and what this screen did with it.
+ *
+ * Every value shown is a field the engine itself published: position, heading, speed and the
+ * travelled trail come from `NavigationState`, the confidence radius and speed sigma from the
+ * `Confidence` record paired with it — labelled calibrated only when that record's state is
+ * `CALIBRATED`, and otherwise as the UNVALIDATED model covariance it is — and the localization
+ * mode from the 1.1.0 `localization_mode` field. A value the engine did not publish stays `—`, and the heading legitimately stays `—`
+ * until a calibration record supplies the vehicle attitude. GNSS quality is the acquisition
+ * stream's own report and is labelled as acquisition, not engine, output: the engine publishes no
+ * quality record yet and this screen does not invent one. The evaluation toggle adds the
+ * map-matched claim beside the raw position — a parallel evaluation output, never a replacement
+ * for navigation truth.
+ */
+@Composable
+private fun EnginePanel(
+    capture: CaptureState,
+    navigation: NavigationRuntimeState,
+    engine: MapPresentation,
+    evaluation: Boolean,
+    onEvaluation: (Boolean) -> Unit,
+    renderer: MapRenderer?,
+    ready: Boolean,
+    onStart: () -> Unit,
+    onPermission: () -> Unit,
+) {
+    val quality = capture.quality
+    val point = engine.point
+    val mode = engine.localizationMode?.uppercase(Locale.ROOT) ?: "—"
+    val matched = engine.matchedPoint
+    val trail = engine.trail.size
+    IdrCard(emphasis = IdrEmphasis.GLASS) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IdrIcon(IdrGlyph.NAVIGATE, tint = IdrPalette.textMuted, size = IdrSize.iconSm)
+            Spacer(Modifier.width(IdrSpace.sm))
+            Text(
+                if (point == null) "No engine position" else "Fused navigation · $mode",
+                color = IdrPalette.textPrimary,
+                style = IdrType.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f).testTag("engine_status"),
+            )
+        }
+        Text(
+            "Navigation ${navigation.engineStatus.wire} · session ${navigation.phase.name.lowercase(Locale.ROOT)} · " +
+                "accepted ${navigation.acceptedImu + navigation.acceptedGnss} · rejected ${navigation.rejected}",
+            color = IdrPalette.textSecondary,
+            style = IdrType.monoSmall,
+            modifier = Modifier.testTag("engine_runtime"),
+        )
+        Text(
+            navigation.message,
+            color = IdrPalette.textSecondary,
+            style = IdrType.bodySmall,
+            modifier = Modifier.testTag("engine_message"),
+        )
+        Text(
+            "Position " + (point?.let { String.format(Locale.ROOT, "%.5f, %.5f", it.latitude, it.longitude) } ?: "—") +
+                " · heading " + (engine.headingDegrees?.let { String.format(Locale.ROOT, "%.1f", it) } ?: "—") +
+                "° · speed " + (engine.speedMetresPerSecond?.let { String.format(Locale.ROOT, "%.1f", it) } ?: "—") +
+                " m/s · trail $trail ${if (trail == 1) "point" else "points"}",
+            color = IdrPalette.textSecondary,
+            style = IdrType.monoSmall,
+            modifier = Modifier.testTag("engine_values"),
+        )
+        Text(
+            "Confidence radius " + engineConfidenceText(engine),
+            color = IdrPalette.textSecondary,
+            style = IdrType.monoSmall,
+            modifier = Modifier.testTag("engine_confidence"),
+        )
+        Text(
+            "Published status ${engine.status} · localization mode $mode · acquisition GNSS quality ${quality.state.wire}" +
+                (quality.fix_age_s?.let { " · fix age ${String.format(Locale.ROOT, "%.1f", it)} s" } ?: " · no fix yet"),
+            color = IdrPalette.textSecondary,
+            style = IdrType.monoSmall,
+            modifier = Modifier.testTag("engine_quality"),
+        )
+        IdrChip(
+            label = if (evaluation) "Map matching on" else "Map matching off",
+            selected = evaluation,
+            onClick = { onEvaluation(!evaluation) },
+            glyph = IdrGlyph.LAYERS,
+            testTag = "map_evaluation",
+        )
+        Text(
+            when {
+                !evaluation ->
+                    "Evaluation overlay off: the position and trail drawn are exactly what the engine published."
+                engine.matchingIssue != null -> "Evaluation overlay unavailable: ${engine.matchingIssue}"
+                matched == null ->
+                    "Evaluation overlay on: no map-matched claim for the latest fix yet" +
+                        (engine.matchConfidence?.let {
+                            " · last match confidence ${String.format(Locale.ROOT, "%.2f", it)}"
+                        } ?: "")
+                else ->
+                    "Evaluation overlay on: ${engine.matchedTrail.size} matched positions on " +
+                        (engine.matchedEdgeId ?: "an unnamed edge") + " · confidence " +
+                        (engine.matchConfidence?.let { String.format(Locale.ROOT, "%.2f", it) } ?: "—") +
+                        " · " + (engine.matcherVersion ?: "matcher") +
+                        " · the raw position is still the navigation truth"
+            },
+            color = IdrPalette.textMuted,
+            style = IdrType.bodySmall,
+            modifier = Modifier.testTag("engine_evaluation"),
+        )
+        Text(
+            "Navigation engine output only: this screen reads no sensor and estimates nothing. A stream that " +
+                "stops publishing leaves the screen within three seconds rather than being held or extrapolated, " +
+                "and the heading stays — until a calibration record supplies the vehicle attitude. The confidence " +
+                "radius is the engine's own covariance: it is labelled calibrated only when the engine's confidence " +
+                "state says CALIBRATED, and it stays UNVALIDATED — a model claim, drawn as a dashed ring — until an " +
+                "independent reference has shown it matches real error.",
+            color = IdrPalette.textMuted,
+            style = IdrType.bodySmall,
+            modifier = Modifier.testTag("engine_disclaimer"),
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
+            IdrChip(
+                label = "My position",
+                selected = false,
+                onClick = { point?.let { renderer?.focus(it) } },
+                enabled = ready && point != null,
+                glyph = IdrGlyph.LOCATE,
+                testTag = "engine_focus",
+            )
+            IdrChip(
+                label = "Fit trail",
+                selected = false,
+                onClick = { engine.trail.takeIf { it.size >= 2 }?.let { renderer?.frame(it) } },
+                enabled = ready && trail >= 2,
+                glyph = IdrGlyph.LAYERS,
+                testTag = "engine_fit",
+            )
+            IdrChip("Zoom +", selected = false, onClick = { renderer?.zoomBy(1.0) }, enabled = ready,
+                glyph = IdrGlyph.PLUS)
+            IdrChip("Zoom −", selected = false, onClick = { renderer?.zoomBy(-1.0) }, enabled = ready,
+                glyph = IdrGlyph.MINUS)
+        }
+        if (!capture.running) {
+            Text(
+                "The engine session follows the phone's measured stream: start sensors to give it something to publish.",
+                color = IdrPalette.textMuted,
+                style = IdrType.bodySmall,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
+                IdrChip("Allow location", selected = false, onClick = onPermission, glyph = IdrGlyph.LOCATE,
+                    testTag = "engine_permission")
+                IdrChip("Start sensors", selected = false, onClick = onStart, glyph = IdrGlyph.SATELLITE,
+                    testTag = "engine_start")
+            }
+        }
+    }
+}
+
+/**
+ * The confidence line, stated in the terms the engine has actually earned.
+ *
+ * A calibrated 95% accuracy is named calibrated. The engine's own covariance while its paired
+ * confidence state is `UNVALIDATED` says so and is never rounded up into a 95% accuracy claim,
+ * and `probability` is never read: the contract forbids it unless the state is calibrated, so a
+ * consumer here cannot manufacture a probability the engine did not publish. The platform's fix
+ * accuracy is not a candidate at all — it belongs to a different record and this line never reads
+ * it, so a provider figure can never be substituted for fused confidence.
+ */
+private fun engineConfidenceText(engine: MapPresentation): String {
+    val speedStd = engine.speedStdMetresPerSecond
+        ?.let { String.format(Locale.ROOT, " · speed σ %.2f m/s", it) } ?: ""
+    val calibrated = engine.accuracy95Metres
+    val unvalidated = engine.unvalidatedAccuracy95Metres
+    return when {
+        calibrated != null -> String.format(Locale.ROOT, "%.0f m (95%, CALIBRATED)", calibrated) + speedStd
+        unvalidated != null -> String.format(Locale.ROOT, "%.0f m", unvalidated) +
+            " (filter covariance, UNVALIDATED — not a calibrated accuracy)" + speedStd
+        engine.confidenceState != null ->
+            "not published · paired confidence state ${engine.confidenceState.uppercase(Locale.ROOT)}"
+        else -> "not published · no paired confidence record"
+    }
+}
+
 /** Honest summary of the recorded session on the map. Nothing shown here is inferred. */
 @Composable
-private fun RecordedPanel(view: RecordedView?, busy: Boolean, renderer: MapRenderer?, ready: Boolean) {
+private fun RecordedPanel(view: RecordedView?, busy: Boolean, error: String?, renderer: MapRenderer?, ready: Boolean) {
     IdrCard(emphasis = IdrEmphasis.GLASS) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IdrIcon(IdrGlyph.LAYERS, tint = IdrPalette.textMuted, size = IdrSize.iconSm)
@@ -637,6 +903,7 @@ private fun RecordedPanel(view: RecordedView?, busy: Boolean, renderer: MapRende
             Text(
                 when {
                     busy -> "Reading saved session…"
+                    error != null -> "Recording unavailable"
                     view == null -> "No replayable recording on this device"
                     else -> "Recorded session ${view.sessionId.take(8)}"
                 },
@@ -646,6 +913,9 @@ private fun RecordedPanel(view: RecordedView?, busy: Boolean, renderer: MapRende
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f).testTag("recorded_status"),
             )
+        }
+        if (error != null) {
+            Text(error, color = IdrPalette.warning, style = IdrType.bodySmall, modifier = Modifier.testTag("recorded_error"))
         }
         if (view != null) {
             Text(
@@ -736,16 +1006,21 @@ private fun MapLimitsCard() {
             Spacer(Modifier.width(IdrSpace.sm))
             IdrSectionLabel("What this map is")
         }
-        Text(                "Bundled central Hyderabad vector tiles only: 17.30–17.55° N, 78.35–78.60° E. Not the whole city, " +
-                "no routing graph, no live position. Purple marks drawn raw GNSS positions and trails (synthetic " +
-                "fixture, recorded session or live phone fixes), amber the automatic outage segment, and the red " +
-                "comparison line is an illustration, not measured INS or AI output.",
+        Text(                "Bundled central Hyderabad vector tiles only: 17.30–17.55° N, 78.35–78.60° E. Not the whole city and " +
+                "no routing. Purple marks drawn positions and trails in every mode (synthetic fixture, recorded " +
+                "session, live phone fixes, or the positions the navigation engine published). The blue ring is the " +
+                "95% confidence radius a calibrated record supplied, and the blue dashed ring is the engine's own " +
+                "covariance while its confidence is UNVALIDATED — a model claim, not a validated accuracy. Amber is " +
+                "the automatic outage segment, and the red dashed line and dot are the evaluation-only map-matched " +
+                "claim, drawn beside the raw position and never instead of it. The fixture's red comparison line is " +
+                "an illustration, not measured INS or AI output.",
             color = IdrPalette.textSecondary,
             style = IdrType.bodySmall,
         )
         Text(
-            "English/Latin labels · detail to tile zoom 14 · renderer only. GNSS loss and recovery must eventually come " +
-                "from the reviewed navigation pipeline, not this screen.",
+            "English/Latin labels · detail to tile zoom 14 · renderer only. The navigation engine view reads published " +
+                "navigation state and never a sensor: GNSS loss, dead reckoning and recovery come from the engine, not " +
+                "this screen.",
             color = IdrPalette.textMuted,
             style = IdrType.bodySmall,
         )
@@ -763,7 +1038,7 @@ private fun NativeOfflineMap(pack: InstalledMap, onReady: (MapRenderer) -> Unit,
     } }
     val view = created.getOrNull()
     if (view == null) {
-        LaunchedEffect(created) { onError(created.exceptionOrNull()?.message ?: "Renderer unavailable") }
+        LaunchedEffect(created) { onError("MAP_RENDERER_UNAVAILABLE") }
         return
     }
     DisposableEffect(view, owner) {
@@ -786,7 +1061,7 @@ private fun NativeOfflineMap(pack: InstalledMap, onReady: (MapRenderer) -> Unit,
         }
         context.registerComponentCallbacks(memory)
         owner.lifecycle.addObserver(observer)
-        val failure = MapView.OnDidFailLoadingMapListener { if (!disposed) onError(it) }
+        val failure = MapView.OnDidFailLoadingMapListener { if (!disposed) onError("MAP_RENDERER_FAILED") }
         view.addOnDidFailLoadingMapListener(failure)
         view.getMapAsync { map ->
             if (!disposed) {

@@ -84,6 +84,9 @@ uploaded. They depict synthetic positions, not captured location measurements.
   matching or turn-by-turn guidance was added or verified. The frozen v1 contract
   still lacks a current GNSS/DR/fused mode field. It needs explicit review before
   any such field is introduced. NavigationEngine remains an interface only.
+  *Superseded 2026-10-01: contract 1.1.0 adds `navigation.localization_mode`, the
+  fusion engine publishes it, and the map has a fourth source that draws it. The
+  device run for that view is still pending — see the last section of this file.*
 - Do not treat this acceptance as permission to start AI or EKF implementation.
 
 ## Attribution clipping fix — 2026-09-29
@@ -444,3 +447,59 @@ Honest limit: `recorded_timeline` and `live_timeline` are pixel-verified on real
 but still have no device **test**, for the two reasons above. The placement they rely
 on is the same function the scripted test exercises on the device and the host suite
 exercises directly.
+
+## Navigation engine mode — gate written 2026-10-01, run pending
+
+No device was attached when the engine view landed, so this section is the procedure and
+the expected results, not evidence. The host side (fold, presentation, marker easing,
+contract 1.1.0, lint) is green; see
+[MAP_ENGINE_VIEW.md](MAP_ENGINE_VIEW.md) and
+[reports/map_engine_integration_2026_10_01.md](../reports/map_engine_integration_2026_10_01.md).
+
+The suite gained `EngineMapDeviceTest` (3 tests). The current instrumented source has
+**41 test methods**: the 26 the 2026-09-29 run executed, the 12 in `DesignSystemUiTest`
+(added with the design-system commit) and these 3. `assembleDebugAndroidTest` proves they
+compile; `connectedDebugAndroidTest` must run them:
+
+1. `engineModeNamesItsOwnSourceAndShowsNothingItWasNotGiven` — the fourth chip selects the
+   engine source, the source and mode chips say NAVIGATION ENGINE / "Navigation engine
+   output", the fixture and live consoles are absent, every value reads `—` or "not
+   published" until the engine publishes, and the camera chips are disabled because no
+   position exists. Captures `engine-no-output.png`. The confidence line reads "not
+   published" until a paired `Confidence` record exists; once one does, it is labelled with
+   its state — `95%, CALIBRATED`, or `filter covariance, UNVALIDATED — not a calibrated
+   accuracy` with the speed sigma, and the unvalidated radius is the dashed ring rather
+   than the filled one ([CONFIDENCE.md](CONFIDENCE.md)). That labelling has no device run
+   yet either; it is pinned on the host by `NavigationPresentationTest` and
+   `EngineSessionMapTest`.
+2. `evaluationOverlayIsAnExplicitOptInThatChangesNoSourceLabel` — the toggle starts as
+   "Map matching off", turning it on installs and SHA-256-verifies the packaged road graph
+   on the device, the panel says the overlay is on, and the source label does not change;
+   turning it off restores the statement that the drawn position is what the engine
+   published.
+3. `engineModeSurvivesBackgroundingWithoutStartingAnything` — backgrounding and returning
+   keeps the engine source, still draws nothing, and starts neither the fixture nor the
+   live stream.
+
+Manual run on the target phone (OnePlus CPH2585 / Android 16):
+
+```bash
+cd mobile && bash gradlew connectedDebugAndroidTest --offline --console=plain
+# Install separately AFTER the test runner has finished:
+bash gradlew installDebug --console=plain
+```
+
+Expected: **41 tests, 0 failures**; `engine-no-output.png` in the app's private test cache.
+Then, on the same install:
+
+4. Start Sensors, open Map, select **Navigation engine**. Expected: the position appears
+   only after the engine publishes; no fixture or live marker appears; heading reads `—`
+   (no calibration record exists yet — this is the honest state, not a defect).
+5. Turn **Map matching on**. Expected: a dashed comparison-coloured claim appears beside
+   the raw position and trail; the raw purple claim does not move or disappear; the note
+   names the raw position as navigation truth.
+6. Stop Sensors while the engine view is open. Expected: the position, trail and matched
+   overlay leave the screen within three seconds and nothing is extrapolated or held.
+7. Leave and re-enter Map, background/foreground, and start a second sensor session.
+   Expected: the engine view follows the new session (no "Session/source mismatch" stuck
+   state) and never starts a session by itself.

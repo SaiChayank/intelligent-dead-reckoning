@@ -25,6 +25,7 @@ import com.intelligentdeadreckoning.contracts.v1.Header
 import com.intelligentdeadreckoning.contracts.v1.ImuMeasurement
 import com.intelligentdeadreckoning.contracts.v1.ImuUnit
 import com.intelligentdeadreckoning.contracts.v1.InitializationMode
+import com.intelligentdeadreckoning.contracts.v1.LocalizationMode
 import com.intelligentdeadreckoning.contracts.v1.NavigationEngine
 import com.intelligentdeadreckoning.contracts.v1.NavigationState
 import com.intelligentdeadreckoning.contracts.v1.NavigationStatus
@@ -125,6 +126,10 @@ class FusionNavigationEngine(
     private var lastAcceptedGnssProvider: String? = null
     private var lastAcceptedGnssSpeedM_S: Double? = null
     private var gnssUsed = false
+    /** False while the state is still exactly the alignment anchor (published mode `gnss`). */
+    private var movedOffAnchor = false
+    /** Accepted updates left in the post-outage convergence window (published mode `recovery`). */
+    private var recoveryFixesRemaining = 0
     private var lastCorrectionM = 0.0
     private var refusedSinceDiagnostic = 0L
     private var rejectedSinceDiagnostic = 0L
@@ -174,6 +179,8 @@ class FusionNavigationEngine(
         lastAcceptedGnssNs = null
         lastAcceptedGnssProvider = null
         gnssUsed = false
+        movedOffAnchor = false
+        recoveryFixesRemaining = 0
         lastCorrectionM = 0.0
         refusedSinceDiagnostic = 0L
         rejectedSinceDiagnostic = 0L
@@ -290,6 +297,8 @@ class FusionNavigationEngine(
         lastAcceptedGnssProvider = null
         lastAcceptedGnssSpeedM_S = null
         gnssUsed = false
+        movedOffAnchor = false
+        recoveryFixesRemaining = 0
         lastCorrectionM = 0.0
         failureAnnounced = false
         stationaryDetector.reset()
@@ -395,8 +404,8 @@ class FusionNavigationEngine(
                 }
             }
 
-            PropagationOutcome.FAILED_GAP, PropagationOutcome.FAILED_NON_FINITE ->
-                announceFailureIfAny()
+            PropagationOutcome.FAILED_GAP, PropagationOutcome.FAILED_NON_FINITE,
+            PropagationOutcome.FAILED_NUMERICAL -> announceFailureIfAny()
 
             PropagationOutcome.BACKWARDS_TIMESTAMP -> emitDiagnostic(
                 Severity.WARNING, "FUSION_TIMESTAMP",
@@ -404,9 +413,11 @@ class FusionNavigationEngine(
                     "integrated backwards; the stream is expected to be monotonic.",
             )
 
+            PropagationOutcome.FAILED, PropagationOutcome.NOT_ALIGNED -> announceFailureIfAny()
             else -> Unit
         }
         if (outcome == PropagationOutcome.PROPAGATED) {
+            movedOffAnchor = true
             applyMotionConstraints(tNs, accel.second, gyro.second)
         }
         publish(force = false)
@@ -625,13 +636,25 @@ class FusionNavigationEngine(
             horizontalVarianceM2 = accuracy * accuracy,
             verticalVarianceM2 = if (vertical != null && vertical > 0.0) vertical * vertical else null,
         )
+        if (position.result == GnssUpdateResult.FAILED) {
+            announceFailureIfAny()
+            publish(force = true)
+            return
+        }
         when (position.result) {
             GnssUpdateResult.ACCEPTED -> {
+                // Localization-mode bookkeeping, read before the acceptance clock moves: an
+                // update accepted after the stale bound lapsed opens the post-outage convergence
+                // window, and each further accepted update closes it one fix at a time.
+                val wasStale = !acceptedGnssFresh(tNs)
                 lastAcceptedGnssNs = tNs
                 lastAcceptedGnssProvider = payload.provider
                 lastCorrectionM = position.correctionM
                 lastAcceptedGnssSpeedM_S = payload.speed_m_s?.takeIf { it.isFinite() && it >= 0.0 }
                 gnssUsed = true
+                movedOffAnchor = true
+                recoveryFixesRemaining = if (wasStale) config.localizationRecoveryFixes
+                    else (recoveryFixesRemaining - 1).coerceAtLeast(0)
             }
 
             GnssUpdateResult.REJECTED_GATE -> reportRejection("position", position, tNs)
@@ -961,12 +984,40 @@ class FusionNavigationEngine(
 
     private fun trackingFreshnessSatisfied(solution: FusionSolution): Boolean {
         if (mountingQVehicleFromDevice == null || calibrationId == null) return false
-        // The engine's own acceptance clock, not the filter's: alignment accepts a fix as the
-        // anchor without running an update, and the status must not report an outage in the
-        // moments after aligning on a fix the solution is literally standing on.
+        return acceptedGnssFresh(solution.tNs)
+    }
+
+    /**
+     * Whether an accepted GNSS update is inside this provider's stale bound as of [tNs].
+     * The engine's own acceptance clock, not the filter's: alignment accepts a fix as the
+     * anchor without running an update, and freshness must not report an outage in the
+     * moments after aligning on a fix the solution is literally standing on.
+     */
+    private fun acceptedGnssFresh(tNs: Long): Boolean {
         val lastUpdate = lastAcceptedGnssNs ?: return false
         val freshness = qualityPolicy.staleAfterNs(lastAcceptedGnssProvider) ?: DEFAULT_FRESHNESS_NS
-        return solution.tNs - lastUpdate <= freshness
+        return tNs - lastUpdate <= freshness
+    }
+
+    /**
+     * The contract's `localization_mode`: which regime is holding up the published position.
+     *
+     * - `gnss` while the state is still exactly the alignment anchor — nothing has propagated
+     *   or updated it yet, so the presented position is the fix itself.
+     * - `dr` while no accepted GNSS update is inside the provider's stale bound: the state is
+     *   prediction-only dead reckoning.
+     * - `recovery` for the first [FusionConfig.localizationRecoveryFixes] accepted updates
+     *   after such a stretch: the state is converging toward the fixes, not teleporting.
+     * - `fused` otherwise: the integrated filter solution with current GNSS aiding.
+     *
+     * Called only where a position is published, which is the contract invariant: a mode names
+     * the regime of a presented position, and no position means no mode.
+     */
+    private fun localizationMode(tNs: Long): LocalizationMode = when {
+        !movedOffAnchor -> LocalizationMode.GNSS
+        !acceptedGnssFresh(tNs) -> LocalizationMode.DR
+        recoveryFixesRemaining > 0 -> LocalizationMode.RECOVERY
+        else -> LocalizationMode.FUSED
     }
 
     private fun navigationState(solution: FusionSolution, status: NavigationStatus): NavigationState {
@@ -987,6 +1038,7 @@ class FusionNavigationEngine(
                 heading_deg = null,
                 calibration_id = null,
                 gnss_used_after_initialization = gnssUsed,
+                localization_mode = null,
             )
         }
         // The filter's attitude is ENU-from-device; the contract's is ENU-from-vehicle, which
@@ -1002,6 +1054,7 @@ class FusionNavigationEngine(
             heading_deg = qEnuFromVehicle?.let { headingDegrees(it) },
             calibration_id = calibrationId,
             gnss_used_after_initialization = gnssUsed,
+            localization_mode = localizationMode(solution.tNs),
         )
     }
 

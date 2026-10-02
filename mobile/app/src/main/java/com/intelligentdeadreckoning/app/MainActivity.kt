@@ -36,6 +36,10 @@ class MainActivity : ComponentActivity() {
             val source by session.source.collectAsStateWithLifecycle()
             val capture by session.capture.collectAsStateWithLifecycle()
             val liveGnss by session.liveGnss.collectAsStateWithLifecycle()
+            val engineMap by session.engineMap.collectAsStateWithLifecycle()
+            val navigationState by session.navigationState.collectAsStateWithLifecycle()
+            val mapEvaluation by session.mapEvaluation.collectAsStateWithLifecycle()
+            val evaluationLibrary by session.evaluationLibrary.collectAsStateWithLifecycle()
             val recording by session.recording.collectAsStateWithLifecycle()
             val library by session.library.collectAsStateWithLifecycle()
             val libraryError by session.libraryError.collectAsStateWithLifecycle()
@@ -45,7 +49,10 @@ class MainActivity : ComponentActivity() {
             val replay by session.replay.collectAsStateWithLifecycle()
             val replayVisible by session.replayVisible.collectAsStateWithLifecycle()
             IdrTheme { IdrApp(state, session::start, session::stop, source, capture,
-                liveGnss = liveGnss, onSource = session::select,
+                liveGnss = liveGnss, engineMap = engineMap, navigation = navigationState,
+                evaluation = mapEvaluation, onEvaluation = { session.mapEvaluation.value = it },
+                evaluationLibrary = evaluationLibrary, onReloadEvaluation = session::refreshEvaluation,
+                onSource = session::select,
                 onPermission = {
                     session.markPermissionRequested()
                     permissions.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))

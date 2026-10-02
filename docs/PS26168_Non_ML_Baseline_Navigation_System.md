@@ -411,6 +411,15 @@ Before calibrated confidence exists:
 - expose filter covariance as **unvalidated**,
 - never call it 95% real-world accuracy without empirical calibration.
 
+**Status 2026-10-01:** the first item is implemented — the fusion engine publishes its covariance
+as `UNVALIDATED` with the stated `sqrt(5.991)` circular conversion, the display path keeps it in its
+own field and draws it as a dashed ring labelled as a model claim, and the provider's accuracy can
+never be substituted for it. The second item is what the measurement enforces: scripted-truth
+coverage (692 samples, one drive with a 20 s outage) is 97.9% fused, 100% DR and 64.5% recovery, so
+the needed correction is regime-dependent and no calibration is claimed
+([mobile/CONFIDENCE.md](../mobile/CONFIDENCE.md),
+[report](../reports/confidence_evaluation_2026_10_01.md)).
+
 ### Output
 
 `Confidence(state = UNVALIDATED, ...)`

@@ -53,6 +53,22 @@ class InitializationMode(str, Enum):
     EVALUATION = "evaluation"
     DEPLOYABLE = "deployable"
 
+class LocalizationMode(str, Enum):
+    """Which regime is responsible for the currently presented position (contract 1.1.0).
+
+    GNSS: the presented position is a GNSS fix the solution is standing on (an anchor),
+    not an inertial or filter estimate. DR: inertial dead reckoning alone; no GNSS update
+    has been accepted within the stale bound. FUSED: the integrated filter solution with
+    current GNSS aiding. RECOVERY: GNSS aiding resumed after a DR stretch and the filter
+    is still converging toward the fixes. Null exactly when no position is presented.
+    """
+
+    GNSS = "gnss"
+    DR = "dr"
+    FUSED = "fused"
+    RECOVERY = "recovery"
+
+
 class GnssState(str, Enum):
     UNAVAILABLE = "unavailable"
     ACQUIRING = "acquiring"
@@ -139,6 +155,8 @@ class NavigationState(Payload):
     heading_deg: float | None
     calibration_id: str | None
     gnss_used_after_initialization: bool
+    # 1.1.0 addition: absent (not null) in 1.0.0 records, which cannot represent it.
+    localization_mode: LocalizationMode | None
 
 @dataclass(frozen=True, slots=True)
 class GnssQualityState(Payload):

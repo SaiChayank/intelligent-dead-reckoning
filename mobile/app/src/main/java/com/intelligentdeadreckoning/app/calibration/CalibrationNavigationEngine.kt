@@ -364,6 +364,7 @@ class CalibrationNavigationEngine(
                     heading_deg = null,
                     calibration_id = calibrationId,
                     gnss_used_after_initialization = false,
+                    localization_mode = null,
                 ),
             )
             if (status == NavigationStatus.DEGRADED && !announcedNoNavigator) {

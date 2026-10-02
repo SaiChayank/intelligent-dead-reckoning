@@ -92,3 +92,38 @@ Next authorized task, when requested: **Prompt 2 — real sensor and GNSS
 acquisition without recording**, preserving simulation and using this typed
 boundary. Do not proceed to AI/EKF or assume unresolved IO-VNBD frame conventions
 have been fixed by serialization work.
+
+## 1.1.0 continuation — 2026-10-01
+
+Reason: the production navigation engine must name which regime is responsible for the
+position it publishes — a GNSS anchor, inertial DR, the fused solution, or convergence
+after an outage. `status` and `gnss_used_after_initialization` cannot express that, and
+the architecture documents required a versioned revision rather than a repurposed field.
+
+What 1.1.0 adds: `navigation.localization_mode`, required in a 1.1.0 navigation record,
+forbidden in 1.0.0 (dropped on encode, decoded as null), with the invariants "a mode
+exists exactly when a position exists" and "fused/recovery require
+gnss_used_after_initialization". New shared corpus `edge_records_1_1.jsonl` (7 records,
+session `golden-1-1-sim`, covering gnss/fused/dr/recovery and the null-mode state).
+`invalid_records.json` grew 47 -> 53 with the cross-version cases:
+`1_1_navigation_missing_localization_mode`, `1_1_navigation_mode_without_position`,
+`1_1_navigation_position_without_mode`, `1_1_navigation_fused_without_gnss_use`,
+`1_1_navigation_unknown_localization_mode`, `1_0_navigation_carries_localization_mode`.
+`interop.py` gained `--corpus 1.0.0|1.1.0`.
+
+Verification results (this workstation, Windows/Git Bash, Android Studio JBR):
+
+- Python: **256 tests passed, 1 environment-dependent skip** (`unittest discover`),
+  including two new codec tests for the field and for the version boundary.
+- Kotlin: **324 JVM tests, 0 failures, 0 errors**; `lintDebug` **0 errors, 5 warnings**
+  (all pre-existing SDK/dependency notices). `StrictContractTest` consumes the same 53
+  invalid cases and both corpora.
+- Bidirectional interoperability, actually executed: Python exported 17 typed records
+  for 1.0.0 and 7 for 1.1.0; Kotlin consumed the Python 1.1.0 stream and wrote its own;
+  Python then verified the Kotlin output for both corpora — **"Python verified 7 Kotlin
+  records; all typed values identical"** (1.1.0) and **17 records** (1.0.0).
+- The engine seam: `NavigationRuntime.ENGINE_OUTPUT_CONTRACT_VERSION = "1.1.0"`;
+  `start()` refuses any other version before a session is created, pinned by a test.
+
+1.0.0 is untouched: no 1.0.0 fixture was edited, no 1.0.0 reader changed behaviour, and
+a 1.0.0 envelope still cannot carry the new field.

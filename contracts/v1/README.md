@@ -1,10 +1,13 @@
-# Navigation exchange contract 1.0.0 — codecs implemented, engine not implemented
+# Navigation exchange contract 1.0.0 and 1.1.0 — codecs implemented, engine implemented
 
 This defines the **new Android/core boundary**, not the unresolved IO-VNBD export
 semantics. `golden.json` is a synthetic interoperability fixture. It is not a
 recorded trip, calibration approval, physically consistent time series or training
 example. Python and Kotlin typed models and strict codecs are implemented here.
-The contract is not yet integrated into acquisition or a navigation algorithm.
+1.1.0 is the navigation exchange: the fusion engine publishes `NavigationState` with
+`localization_mode`, the runtime refuses a session whose header cannot carry it, and
+the map's engine view draws exactly that output. 1.0.0 streams are unchanged and
+still readable.
 `golden_records.jsonl` expresses the original fixture as single-event envelopes;
 `edge_records.jsonl` adds missing optional data, all IMU sensor types and Int64
 boundaries. Both languages also consume the same invalid-record corpus.
@@ -16,7 +19,8 @@ unique keys. All defined fields are required; optional values use explicit JSON
 null rather than omission, zero, empty strings or sentinel coordinates.
 Arrays have fixed lengths as specified below. Booleans are JSON booleans.
 
-The production envelope has exactly `contract_version` (string `1.0.0`), nonempty
+The production envelope has exactly `contract_version` (the string `1.0.0` or
+`1.1.0`; no other version is accepted and readers opt in explicitly), nonempty
 `session_id`, `source` (`real`, `simulation`, `replay_real`, `replay_simulation`)
 and `event` (one event object).
 Every event has nonempty session-unique decimal-string `event_id`, `type`, `t_ns`,
@@ -58,8 +62,22 @@ Report IMU gaps >100 ms and do not propagate across >500 ms without reinitializi
 these are proposed safety thresholds, not dataset synchronization corrections.
 
 Unknown major/minor versions, event types, enum values, missing keys and unknown
-keys are rejected by a strict 1.0.0 consumer. Any field/meaning change requires
+keys are rejected by a strict consumer. Any field/meaning change requires
 a version change; readers explicitly opt into versions. No silent unit guessing.
+
+## Versions: 1.0.0 and 1.1.0
+
+1.1.0 adds exactly one field: `navigation.localization_mode`. It is required in a
+1.1.0 navigation record (explicit JSON `null` when no position is presented) and
+forbidden in 1.0.0, where the key is dropped on encode and decodes to `null`. The
+1.1.0 invariants are that a mode exists exactly when `position_enu_m` exists, and that
+`fused`/`recovery` require `gnss_used_after_initialization = true`. A typed caller
+passing a non-null mode under a 1.0.0 header is `INVALID_MODEL`, never a silent drop.
+`edge_records_1_1.jsonl` is the shared 1.1.0 corpus, `invalid_records.json` carries the
+cross-version cases, and `interop.py --corpus 1.0.0|1.1.0` bridges both. On Android the
+seam is `ENGINE_OUTPUT_CONTRACT_VERSION`: `NavigationRuntime.start()` refuses any other
+header version before a session is created, so an engine output stream that cannot
+represent its own results fails at the boundary instead of later inside a consumer.
 JSON object order/whitespace is immaterial. Ordered arrays and events are not.
 All version differences, including patch changes, are rejected. Integer-valued
 JSON fields (`satellites_used`, `utc_ms`, `dropped_count`) must use integer tokens
@@ -130,6 +148,12 @@ in [0, 9223372036854775807], not `1.0`, `1e0`, booleans or quoted numbers.
 - `q_enu_from_vehicle_wxyz`: four-element unit quaternion or null.
 - `heading_deg`: [0,360) or null; `calibration_id`: nonempty string or null.
 - `gnss_used_after_initialization`: boolean, including for evaluation runs.
+- `localization_mode` (1.1.0 only): `gnss`, `dr`, `fused` or `recovery` — which regime is
+  responsible for the presented position. `gnss` is an anchor fix the solution stands on,
+  `dr` is inertial dead reckoning with no accepted fix inside the stale bound, `fused` is
+  the integrated solution with current GNSS aiding, `recovery` is convergence after a DR
+  stretch. Null exactly when no position is presented; `fused`/`recovery` require
+  `gnss_used_after_initialization`. A 1.0.0 record cannot carry it.
 - Tracking requires origin, position, velocity, quaternion and calibration ID;
   unavailable states use nulls. A numeric position alone must not imply accuracy.
 - Uninitialized, calibrating and failed states require all spatial fields,
@@ -152,6 +176,12 @@ in [0, 9223372036854775807], not `1.0`, `1e0`, booleans or quoted numbers.
 - `horizontal_accuracy_95_m`: nonnegative or null; `speed_std_m_s`: nonnegative
   one-standard-deviation estimate or null. These are distinct from provider GNSS
   68% accuracy. Do not convert one into another without a stated error model.
+- `unvalidated` means a real number exists whose relation to actual error has not been
+  checked against independent truth; `calibrated` means it has been, under a stated
+  protocol. The production engine publishes only `unvalidated` (covariance restated with
+  the stated `sqrt(5.991)` circular conversion), and no consumer may read an unvalidated
+  radius as a calibrated accuracy: [mobile/CONFIDENCE.md](../mobile/CONFIDENCE.md) records
+  the measured coverage and what a `calibrated` claim would require.
 
 `diagnostic`:
 
@@ -267,13 +297,16 @@ and Android SDK/JDK configuration:
 ```powershell
 .venv\Scripts\python.exe -B -m unittest discover -s tests -v
 .venv\Scripts\python.exe -B -m contracts.v1.interop export mobile/app/build/contract_interop/python.jsonl
+.venv\Scripts\python.exe -B -m contracts.v1.interop export mobile/app/build/contract_interop/python-1_1.jsonl --corpus 1.1.0
 $env:IDR_CONTRACT_PYTHON_JSONL = Join-Path $PWD 'mobile/app/build/contract_interop/python.jsonl'
+$env:IDR_CONTRACT_PYTHON_JSONL_1_1 = Join-Path $PWD 'mobile/app/build/contract_interop/python-1_1.jsonl'
 Push-Location mobile
 # Use the repository's configured SDK/JDK; this workstation uses Android Studio's JBR.
 $env:GRADLE_USER_HOME = Join-Path $PWD '.gradle-user-home'
 .\gradlew.bat testDebugUnitTest lintDebug assembleDebug --offline --console=plain --rerun-tasks
 Pop-Location
 .venv\Scripts\python.exe -B -m contracts.v1.interop verify mobile/app/build/contract_interop/kotlin.jsonl
+.venv\Scripts\python.exe -B -m contracts.v1.interop verify mobile/app/build/contract_interop/kotlin_1_1.jsonl --corpus 1.1.0
 ```
 
 Offline Gradle requires the existing cached dependencies; on first setup install

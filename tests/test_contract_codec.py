@@ -167,7 +167,9 @@ class ContractCodecTest(unittest.TestCase):
             r = next(r for r in self.records if r.event.data.TYPE == kind)
             d = json.loads(encode_json(r))
             for key, rule in rules.items():
-                if rule.endswith("?"):
+                # localization_mode is absent — not null — in 1.0.0 wire; see the version
+                # boundary test below.
+                if rule.endswith("?") and key in d["event"]["data"]:
                     d["event"]["data"][key] = None
             if kind == "calibration": d["event"]["data"]["status"] = "pending"
             if kind == "navigation": d["event"]["data"]["status"] = "uninitialized"
@@ -183,6 +185,42 @@ class ContractCodecTest(unittest.TestCase):
             for r in edge:
                 changed = replace(r, header=replace(r.header, source=source))
                 self.assertEqual(decode_json(encode_json(changed)), changed)
+
+    def test_localization_mode_is_a_1_1_0_field_with_explicit_null_semantics(self):
+        edge11 = list(read_jsonl(io.BytesIO((ROOT / "edge_records_1_1.jsonl").read_bytes())))
+        self.assertEqual(len(edge11), 7)
+        nav = [r for r in edge11 if r.event.data.TYPE == "navigation"]
+        self.assertEqual([r.event.data.localization_mode for r in nav],
+                         [LocalizationMode.GNSS, LocalizationMode.FUSED, LocalizationMode.DR,
+                          LocalizationMode.RECOVERY, None])
+        for r in edge11:
+            self.assertEqual(r.header.contract_version, "1.1.0")
+            self.assertEqual(decode_json(encode_json(r)), r)
+        # Explicit null survives as a present key, exactly like every other nullable field.
+        raw = json.loads(encode_json(nav[-1]))
+        self.assertIn("localization_mode", raw["event"]["data"])
+        self.assertIsNone(raw["event"]["data"]["localization_mode"])
+
+    def test_localization_mode_cannot_cross_the_version_boundary(self):
+        edge11 = list(read_jsonl(io.BytesIO((ROOT / "edge_records_1_1.jsonl").read_bytes())))
+        fused = next(r for r in edge11
+                     if getattr(r.event.data, "localization_mode", None) is LocalizationMode.FUSED)
+        # A typed 1.0.0 caller cannot smuggle the field through: the write is refused whole
+        # rather than silently dropping the mode.
+        downgraded = replace(fused, header=replace(fused.header, contract_version="1.0.0"))
+        with self.assertRaises(ContractError) as raised:
+            encode_json(downgraded)
+        self.assertEqual(raised.exception.code, "INVALID_MODEL")
+        # A decoded 1.0.0 navigation record carries None, never an invented mode.
+        plain = next(r for r in self.records if r.event.data.TYPE == "navigation")
+        self.assertIsNone(plain.event.data.localization_mode)
+        self.assertNotIn("localization_mode", json.loads(encode_json(plain))["event"]["data"])
+        # One stream speaks one contract version: even the same session identity cannot mix.
+        mixed = encode_json(plain) + b"\n" + encode_json(
+            replace(fused, header=replace(fused.header, session_id=plain.header.session_id)))
+        with self.assertRaises(ContractError) as raised:
+            list(read_jsonl(io.BytesIO(mixed)))
+        self.assertEqual(raised.exception.code, "SESSION_MISMATCH")
 
     def test_imports_do_not_perform_application_io(self):
         script = '''

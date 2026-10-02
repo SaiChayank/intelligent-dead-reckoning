@@ -233,5 +233,35 @@
     "name": "integer_decimal",
     "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"7\",\"type\":\"diagnostic\",\"t_ns\":\"9007199324740993\",\"received_ns\":\"9007199329740993\",\"data\":{\"severity\":\"warning\",\"code\":\"SIMULATED_INPUT\",\"message\":\"Synthetic contract fixture; not live sensor data.\",\"dropped_count\":1.0}}}",
     "code": "INVALID_TYPE"
+  },
+  {
+    "name": "1_1_navigation_missing_localization_mode",
+    "input": "{\"contract_version\":\"1.1.0\",\"session_id\":\"golden-1-1-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"navigation\",\"t_ns\":\"1\",\"received_ns\":\"2\",\"data\":{\"status\":\"degraded\",\"initialization_mode\":\"deployable\",\"origin_wgs84_deg_m\":[12.9716,77.5946,0],\"position_enu_m\":[1.25,-2.5,0],\"velocity_enu_m_s\":null,\"q_enu_from_vehicle_wxyz\":null,\"heading_deg\":null,\"calibration_id\":null,\"gnss_used_after_initialization\":false}}}",
+    "code": "INVALID_KEYS"
+  },
+  {
+    "name": "1_1_navigation_mode_without_position",
+    "input": "{\"contract_version\":\"1.1.0\",\"session_id\":\"golden-1-1-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"navigation\",\"t_ns\":\"1\",\"received_ns\":\"2\",\"data\":{\"status\":\"degraded\",\"initialization_mode\":\"deployable\",\"origin_wgs84_deg_m\":[12.9716,77.5946,0],\"position_enu_m\":null,\"velocity_enu_m_s\":null,\"q_enu_from_vehicle_wxyz\":null,\"heading_deg\":null,\"calibration_id\":null,\"gnss_used_after_initialization\":true,\"localization_mode\":\"dr\"}}}",
+    "code": "INVARIANT"
+  },
+  {
+    "name": "1_1_navigation_position_without_mode",
+    "input": "{\"contract_version\":\"1.1.0\",\"session_id\":\"golden-1-1-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"navigation\",\"t_ns\":\"1\",\"received_ns\":\"2\",\"data\":{\"status\":\"degraded\",\"initialization_mode\":\"deployable\",\"origin_wgs84_deg_m\":[12.9716,77.5946,0],\"position_enu_m\":[1.25,-2.5,0],\"velocity_enu_m_s\":null,\"q_enu_from_vehicle_wxyz\":null,\"heading_deg\":null,\"calibration_id\":null,\"gnss_used_after_initialization\":false,\"localization_mode\":null}}}",
+    "code": "INVARIANT"
+  },
+  {
+    "name": "1_1_navigation_fused_without_gnss_use",
+    "input": "{\"contract_version\":\"1.1.0\",\"session_id\":\"golden-1-1-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"navigation\",\"t_ns\":\"1\",\"received_ns\":\"2\",\"data\":{\"status\":\"tracking\",\"initialization_mode\":\"deployable\",\"origin_wgs84_deg_m\":[12.9716,77.5946,0],\"position_enu_m\":[1.25,-2.5,0],\"velocity_enu_m_s\":[0,10,0],\"q_enu_from_vehicle_wxyz\":[0.7071067811865476,0,0,0.7071067811865476],\"heading_deg\":0,\"calibration_id\":\"fixture-cal\",\"gnss_used_after_initialization\":false,\"localization_mode\":\"fused\"}}}",
+    "code": "INVARIANT"
+  },
+  {
+    "name": "1_1_navigation_unknown_localization_mode",
+    "input": "{\"contract_version\":\"1.1.0\",\"session_id\":\"golden-1-1-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"navigation\",\"t_ns\":\"1\",\"received_ns\":\"2\",\"data\":{\"status\":\"tracking\",\"initialization_mode\":\"deployable\",\"origin_wgs84_deg_m\":[12.9716,77.5946,0],\"position_enu_m\":[1.25,-2.5,0],\"velocity_enu_m_s\":[0,10,0],\"q_enu_from_vehicle_wxyz\":[0.7071067811865476,0,0,0.7071067811865476],\"heading_deg\":0,\"calibration_id\":\"fixture-cal\",\"gnss_used_after_initialization\":true,\"localization_mode\":\"teleport\"}}}",
+    "code": "INVALID_ENUM"
+  },
+  {
+    "name": "1_0_navigation_carries_localization_mode",
+    "input": "{\"contract_version\":\"1.0.0\",\"session_id\":\"golden-sim\",\"source\":\"simulation\",\"event\":{\"event_id\":\"0\",\"type\":\"navigation\",\"t_ns\":\"1\",\"received_ns\":\"2\",\"data\":{\"status\":\"tracking\",\"initialization_mode\":\"deployable\",\"origin_wgs84_deg_m\":[12.9716,77.5946,0],\"position_enu_m\":[1.25,-2.5,0],\"velocity_enu_m_s\":[0,10,0],\"q_enu_from_vehicle_wxyz\":[0.7071067811865476,0,0,0.7071067811865476],\"heading_deg\":0,\"calibration_id\":\"fixture-cal\",\"gnss_used_after_initialization\":true,\"localization_mode\":\"fused\"}}}",
+    "code": "INVALID_KEYS"
   }
 ]

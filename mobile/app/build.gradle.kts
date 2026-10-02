@@ -28,11 +28,13 @@ android {
     sourceSets.getByName("test").resources.srcDirs(
         rootProject.file("../contracts/v1"),
         rootProject.file("../contracts/recording/v1"),
+        rootProject.file("../contracts/evaluation/v1"),
     )
 
     sourceSets.getByName("main").kotlin.srcDirs(
         rootProject.file("../contracts/v1/kotlin"),
         rootProject.file("../contracts/recording/v1/kotlin"),
+        rootProject.file("../contracts/evaluation/v1/kotlin"),
     )
     lint { abortOnError = true }
 }

@@ -119,6 +119,7 @@ def navigation_record(event_id, t_ns, mode, *, session="acq-1", source=Source.RE
                 heading_deg=None,
                 calibration_id=None,
                 gnss_used_after_initialization=False,
+                localization_mode=None,
             ),
         ),
     )

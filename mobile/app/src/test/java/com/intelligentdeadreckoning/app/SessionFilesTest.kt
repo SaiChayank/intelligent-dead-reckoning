@@ -1,6 +1,8 @@
 package com.intelligentdeadreckoning.app
 
 import com.intelligentdeadreckoning.app.sessions.*
+import com.intelligentdeadreckoning.app.security.PrivateAssetPaths
+import com.intelligentdeadreckoning.app.security.SafeSecurityMessages
 import com.intelligentdeadreckoning.contracts.recording.v1.*
 import com.intelligentdeadreckoning.contracts.v1.*
 import kotlinx.coroutines.*
@@ -10,6 +12,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.*
+import java.nio.file.Files
 import java.util.zip.ZipInputStream
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -52,6 +55,46 @@ class SessionFilesTest {
         assertFalse(files.inspect("../session").exportable)
         assertEquals(1,files.list().sessions.size)
     }
+    @Test fun symlinkedRootsSessionsAndArtifactsAreRejectedWithoutFollowingThem() {
+        val files = fixture()
+        val outside = File(temp.root, "outside")
+        val outsideSession = File(outside, "session").apply { mkdirs() }
+        File(outsideSession, "metadata.json").writeBytes(File(temp.root, "session/metadata.json").readBytes())
+        File(outsideSession, "measurements.jsonl").writeBytes(byteArrayOf())
+        try {
+            val linkedRoot = File(temp.root, "linked-root")
+            Files.createSymbolicLink(linkedRoot.toPath(), temp.root.toPath())
+            assertEquals("UNSAFE_RECORDING_ROOT", SessionFiles { linkedRoot }.inspect("session").error)
+
+            val linkedSession = File(temp.root, "linked-session")
+            Files.createSymbolicLink(linkedSession.toPath(), outsideSession.toPath())
+            assertEquals("UNSAFE_SESSION_PATH", files.inspect("linked-session").error)
+
+            val linkedArtifact = File(temp.root, "session/measurements.jsonl")
+            linkedArtifact.delete()
+            Files.createSymbolicLink(linkedArtifact.toPath(), File(outsideSession, "measurements.jsonl").toPath())
+            assertEquals("UNSAFE_SESSION_ARTIFACT", files.inspect("session").error)
+        } catch (_: UnsupportedOperationException) {
+            // Symlink creation requires host support; regular traversal tests still run everywhere.
+        } catch (_: java.io.IOException) {
+            // Some Windows configurations disable symlink creation for unprivileged test users.
+        } catch (_: SecurityException) {
+            // Same policy limitation as above.
+        }
+    }
+
+    @Test fun sessionIdsAreOpaqueNamesAndNeverCreateOrOpenTraversalTargets() {
+        fixture()
+        for (id in listOf("../outside", "..", "/tmp/session", "a\\\\b", "")) {
+            var opened = false
+            try {
+                SessionFiles { temp.root }.export(id, { opened = true; ByteArrayOutputStream() })
+                fail("unsafe ID accepted: $id")
+            } catch (_: IllegalArgumentException) { }
+            assertFalse(opened)
+        }
+    }
+
     @Test fun missingSessionDoesNotOpenDestination() {
         var opened = false
         try { SessionFiles { temp.root }.export("missing", { opened = true; ByteArrayOutputStream() }); fail() }
@@ -94,6 +137,36 @@ class SessionFilesTest {
         controller.onBackground(); advanceUntilIdle()
         assertFalse(opened); assertEquals(ExportPhase.CANCELLED,controller.state.value.phase)
     }
+    @Test fun privateAssetPathsRejectTraversalAndSymlinks() {
+        val base = temp.newFolder("private-base")
+        assertEquals(File(base, "safe/nested").absolutePath,
+            PrivateAssetPaths.directory(base, "safe/nested").absolutePath)
+        for (path in listOf("../escape", "/absolute", "C:/escape", "a\\\\b", "a//b", "a/./b")) {
+            assertEquals(path, "UNSAFE_PRIVATE_PATH", runCatching {
+                PrivateAssetPaths.file(base, path)
+            }.exceptionOrNull()?.message)
+        }
+        val outside = temp.newFolder("outside-assets")
+        val linked = File(base, "linked")
+        try {
+            Files.createSymbolicLink(linked.toPath(), outside.toPath())
+        } catch (_: Exception) {
+            return
+        }
+        assertEquals("UNSAFE_PRIVATE_ROOT", runCatching {
+            PrivateAssetPaths.file(linked, "secret.bin")
+        }.exceptionOrNull()?.message)
+    }
+
+    @Test fun userFacingSecurityErrorsNeverIncludePathsOrProviderText() {
+        assertEquals("INVALID_KEYS", SafeSecurityMessages.code(
+            IllegalArgumentException("INVALID_KEYS at $.metadata.secret"), "SESSION_INVALID"))
+        assertEquals("IO_ERROR", SafeSecurityMessages.code(
+            IOException("failed opening C:\\Users\\person\\trip.json"), "SESSION_IO_ERROR"))
+        assertEquals("SESSION_INVALID", SafeSecurityMessages.code(
+            IllegalArgumentException("provider supplied private location"), "SESSION_INVALID"))
+    }
+
     @Test fun openAndOversizedMetadataCannotExport() {
         val files = fixture()
         val path = File(temp.root,"session/metadata.json")
@@ -102,7 +175,7 @@ class SessionFilesTest {
             endedUtcMs = null, clock = m.clock.copy(endedNs = null), recordCount = null, channelCounts = null)))
         assertFalse(files.inspect("session").exportable)
         path.writeBytes(ByteArray(262145))
-        assertTrue(files.inspect("session").error!!.contains("limit"))
+        assertEquals("METADATA_LIMIT", files.inspect("session").error)
     }
     @Test fun bytesAreStableAcrossTimezonesAndCancellationClosesOutput() {
         val files = fixture()

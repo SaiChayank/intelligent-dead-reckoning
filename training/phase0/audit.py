@@ -39,9 +39,24 @@ def sha256(path):
 
 
 def snapshot(root):
-    return [{"path": p.relative_to(root).as_posix(), "size_bytes": p.stat().st_size,
-             "mtime_ns": p.stat().st_mtime_ns, "sha256": sha256(p)}
-            for p in sorted(root.rglob("*")) if p.is_file()]
+    """Hash every regular file beneath the dataset, refusing symlink traversal.
+
+    The manifest is a commitment to this concrete tree, never to an external target that
+    happens to be reachable through a symlink. The configured root itself must be a real
+    directory too.
+    """
+    root = Path(root).absolute()
+    if any(ancestor.is_symlink() for ancestor in (root, *root.parents)) or not root.is_dir():
+        raise ValueError("Dataset root must be a real directory, not a symlink")
+    files = []
+    for path in sorted(root.rglob("*")):
+        if path.is_symlink():
+            raise ValueError(f"Dataset contains a symbolic link: {path.relative_to(root).as_posix()}")
+        if path.is_file():
+            stat = path.stat(follow_symlinks=False)
+            files.append({"path": path.relative_to(root).as_posix(), "size_bytes": stat.st_size,
+                          "mtime_ns": stat.st_mtime_ns, "sha256": sha256(path)})
+    return files
 
 
 def metadata(path, root):

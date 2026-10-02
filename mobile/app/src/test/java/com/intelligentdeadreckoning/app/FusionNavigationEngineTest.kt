@@ -26,6 +26,7 @@ import com.intelligentdeadreckoning.contracts.v1.GnssMeasurement
 import com.intelligentdeadreckoning.contracts.v1.Header
 import com.intelligentdeadreckoning.contracts.v1.ImuMeasurement
 import com.intelligentdeadreckoning.contracts.v1.ImuUnit
+import com.intelligentdeadreckoning.contracts.v1.LocalizationMode
 import com.intelligentdeadreckoning.contracts.v1.InitializationMode
 import com.intelligentdeadreckoning.contracts.v1.NavigationState
 import com.intelligentdeadreckoning.contracts.v1.NavigationStatus
@@ -41,6 +42,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -58,7 +60,7 @@ import org.junit.Test
  */
 class FusionNavigationEngineTest {
 
-    private val header = Header("synthetic-drive", Source.REAL)
+    private val header = Header("synthetic-drive", Source.REAL, "1.1.0")
     private val session = EngineSession(header, "boot", 1_000_000_000L)
     private val calibration = CalibrationResult(
         id = "cal-1",
@@ -236,6 +238,32 @@ class FusionNavigationEngineTest {
             assertNull(confidence.horizontal_accuracy_95_m)
             assertNull(confidence.speed_std_m_s)
         }
+    }
+
+    @Test
+    fun finiteNumericalOverflowIsContainedAsNamedEngineFailureWithoutPartialPosition() {
+        val fusion = engine()
+        fusion.initialize(session, calRecord(calibration), InitializationMode.EVALUATION)
+        val drive = Drive(fusion, session.origin_ns)
+        drive.second()
+        fusion.acceptGnss(drive.fixHere())
+        drive.second()
+        fusion.acceptGnss(drive.fixHere())
+        assertEquals(NavigationStatus.TRACKING, states(drain(fusion)).last().status)
+        val stable = fusion.solution.positionEnuM
+        val tNs = drive.tNs + 10_000_000L
+        val (accel, gyro) = imu(tNs, Vector3(Double.MAX_VALUE, -Double.MAX_VALUE, Double.MAX_VALUE), Vector3(0.0, 0.0, 0.0))
+        fusion.acceptImu(accel)
+        fusion.acceptImu(gyro)
+        val records = drain(fusion)
+        assertEquals(FusionStatus.FAILED, fusion.solution.status)
+        assertEquals(FusionFailure.NUMERICAL_INVALIDITY, fusion.solution.failure)
+        assertEquals("numerical failure rolls back to last finite state", stable, fusion.solution.positionEnuM)
+        assertTrue(codes(records).contains("ENGINE_FAILURE"))
+        val failed = states(records).last()
+        assertEquals(NavigationStatus.FAILED, failed.status)
+        assertNull(failed.position_enu_m)
+        assertNull(failed.origin_wgs84_deg_m)
     }
 
     @Test
@@ -549,6 +577,52 @@ class FusionNavigationEngineTest {
         )
     }
 
+    // ------------------------------------------------- localization mode (contract 1.1.0)
+
+    @Test
+    fun localizationModeNamesTheRegimeHoldingUpThePosition() {
+        val fusion = engine()
+        fusion.initialize(session, calRecord(calibration), InitializationMode.EVALUATION)
+        val drive = Drive(fusion, session.origin_ns)
+        // The anchor fix: nothing has propagated or updated the state yet, so the presented
+        // position is the fix itself.
+        fusion.acceptGnss(drive.fixHere())
+        assertEquals(LocalizationMode.GNSS, states(drain(fusion)).last().localization_mode)
+        // Physics moves the state and aiding is fresh: the integrated filter, fused.
+        drive.second()
+        fusion.acceptGnss(drive.fixHere())
+        assertEquals(LocalizationMode.FUSED, states(drain(fusion)).last().localization_mode)
+        // Fixes stop. Past the provider's stale bound the position is prediction-only dead
+        // reckoning — the engine says so instead of letting the marker look measured.
+        repeat(8) { drive.second() }
+        assertEquals(LocalizationMode.DR, states(drain(fusion)).last().localization_mode)
+        // Fixes return: the first accepted updates are the declared convergence over several
+        // fixes, not a teleport, and the mode says recovery until they have landed.
+        fusion.acceptGnss(drive.fixHere())
+        assertEquals(LocalizationMode.RECOVERY, states(drain(fusion)).last().localization_mode)
+        fusion.acceptGnss(drive.fixHere())
+        fusion.acceptGnss(drive.fixHere())
+        assertEquals(LocalizationMode.RECOVERY, states(drain(fusion)).last().localization_mode)
+        fusion.acceptGnss(drive.fixHere())
+        assertEquals(LocalizationMode.FUSED, states(drain(fusion)).last().localization_mode)
+        fusion.stop()
+    }
+
+    @Test
+    fun noPublishedPositionCarriesNoModeAndBothSurviveTheFrozenCodec() {
+        val fusion = engine()
+        fusion.initialize(session, calRecord(calibration), InitializationMode.EVALUATION)
+        val records = drain(fusion)
+        assertTrue("the engine published nothing", records.isNotEmpty())
+        for (record in records) {
+            val state = record.event.data as? NavigationState ?: continue
+            // A mode names the regime of a presented position: uninitialized publishes none.
+            assertNull(state.localization_mode)
+            assertEquals(record, Codec.decodeJson(Codec.encodeJson(record)))
+        }
+        fusion.stop()
+    }
+
     // ------------------------------------------------------------- confidence honesty
 
     @Test
@@ -574,6 +648,48 @@ class FusionNavigationEngineTest {
                 solution.positionSigmaM.y * solution.positionSigmaM.y) / 2.0,
         )
         assertEquals(Math.sqrt(5.991) * sigma, confidence.horizontal_accuracy_95_m!!, 1e-9)
+    }
+
+    @Test
+    fun theProviderAccuracyIsNeverThePublishedFusedAccuracy() {
+        val fusion = engine()
+        fusion.initialize(session, calRecord(calibration), InitializationMode.EVALUATION)
+        val drive = Drive(fusion, session.origin_ns)
+        drive.second()
+        // A distinctive provider figure: if any path copied the measurement input into the fused
+        // output, this test would find 7.5 where the filter's own covariance belongs. The platform
+        // accuracy is the variance of a measurement the filter consumes — it is not, and must
+        // never become, the uncertainty the filter publishes about its own solution.
+        fusion.acceptGnss(drive.fixHere(accuracyM = 7.5))
+        drive.second()
+        fusion.acceptGnss(drive.fixHere(accuracyM = 7.5))
+        val confidence = confidences(drain(fusion)).last()
+        assertNotEquals(
+            "the provider's accuracy is an input, never the fused figure",
+            7.5, confidence.horizontal_accuracy_95_m!!, 1e-12,
+        )
+        val solution = fusion.solution
+        val sigma = Math.sqrt(
+            (solution.positionSigmaM.x * solution.positionSigmaM.x +
+                solution.positionSigmaM.y * solution.positionSigmaM.y) / 2.0,
+        )
+        assertEquals(Math.sqrt(5.991) * sigma, confidence.horizontal_accuracy_95_m!!, 1e-9)
+    }
+
+    @Test
+    fun anExcellentProviderAccuracyCannotBuyACalibratedConfidence() {
+        val fusion = engine()
+        fusion.initialize(session, calRecord(calibration), InitializationMode.EVALUATION)
+        val drive = Drive(fusion, session.origin_ns)
+        drive.second()
+        // Sub-metre provider claims on every fix. The state still cannot be CALIBRATED: that
+        // statement is about error validated against a reference, not a function of how good the
+        // provider says it is, and `probability` is forbidden unless the state is calibrated.
+        repeat(10) { drive.second(); fusion.acceptGnss(drive.fixHere(accuracyM = 0.5)) }
+        val confidence = confidences(drain(fusion)).last()
+        assertEquals(ConfidenceState.UNVALIDATED, confidence.state)
+        assertNull(confidence.probability)
+        assertNotNull(confidence.horizontal_accuracy_95_m)
     }
 
     // ------------------------------------------------------------- mode stability

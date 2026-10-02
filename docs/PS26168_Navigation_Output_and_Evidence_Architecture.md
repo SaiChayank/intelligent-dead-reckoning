@@ -128,6 +128,8 @@ Android GNSS/location accuracy fields and the navigation contract's `horizontal_
 
 The current project is **not yet entitled to mark production DR confidence as calibrated**, because the real INS/EKF/AI navigation engine has not been completed and validated.
 
+**Status 2026-10-01:** the fusion engine now publishes its covariance as `unvalidated` (with `probability` null), the display path carries it in its own field, draws it as a dashed ring and labels it as a model claim, and the validation of §3.3 was built and run against a scripted truth — 692 published samples over a drive with a 20 s outage: 97.9% coverage fused, 100% DR and **64.5% recovery**, so the correction needed is regime-dependent (opposite signs in the fused and recovery regimes). The states are therefore `unavailable` (no solution) and `unvalidated` (a real covariance); `calibrated` stays unused until a reference-bearing experiment exists. See [mobile/CONFIDENCE.md](../mobile/CONFIDENCE.md) and [reports/confidence_evaluation_2026_10_01.md](../reports/confidence_evaluation_2026_10_01.md).
+
 ### 3.3 Recommended validation before `calibrated`
 
 For each relevant operating regime:
@@ -370,7 +372,7 @@ and:
 
 ---
 
-## 9. Proposed Future Contract Extension — NOT YET FROZEN
+## 9. Contract Extension 1.1.0 — IMPLEMENTED 2026-10-01
 
 The live map requirement benefits from an explicit localization-mode field, but adding one changes contract meaning and therefore must not be slipped into v1.0.0.
 
@@ -389,7 +391,16 @@ or a similarly precise enum **only after**:
 5. golden/invalid fixtures and interoperability tests are added,
 6. replay/source semantics remain exact.
 
-Until then, the synthetic map's `GNSS/DR/recovery` labels remain explicitly scripted presentation labels and must not be interpreted as production engine output.
+**Resolution, 2026-10-01 — contract 1.1.0.** `navigation.localization_mode`
+(`gnss` | `dr` | `fused` | `recovery`) is now part of the exchange, and all six conditions
+are met: the regime rules were defined with the engine before the field existed (1–3, see
+[mobile/FUSION.md](../mobile/FUSION.md)); Python and Kotlin codecs were versioned together (4);
+a shared 1.1.0 corpus, six cross-version invalid cases and a bidirectional interoperability run
+in both languages cover it (5); and 1.0.0 keeps its exact source/session/timestamp semantics — a
+1.0.0 envelope cannot carry the field at all, and `NavigationRuntime` refuses any session header
+that is not 1.1.0 (6). The synthetic map's `GNSS/DR/recovery` labels remain explicitly scripted
+presentation labels; the engine view's mode comes only from the engine's published records
+([mobile/MAP_ENGINE_VIEW.md](../mobile/MAP_ENGINE_VIEW.md)).
 
 ---
 
@@ -402,17 +413,18 @@ Until then, the synthetic map's `GNSS/DR/recovery` labels remain explicitly scri
 | real Android IMU/GNSS acquisition | **IMPLEMENTED + DEVICE VERIFIED** |
 | local recording/recovery/export | **IMPLEMENTED + DEVICE VERIFIED** |
 | Kotlin replay with replay-source remapping | **IMPLEMENTED + DEVICE VERIFIED** |
-| ENU→WGS84 `NavigationPresentation` adapter | **IMPLEMENTED + TESTED** |
+| ENU→WGS84 `NavigationPresentation` adapter | **IMPLEMENTED + TESTED, DRIVEN BY ENGINE OUTPUT** |
 | offline MapLibre/Hyderabad renderer | **IMPLEMENTED + DEVICE VERIFIED** |
 | synthetic GNSS/DR/recovery visualization | **IMPLEMENTED + DEVICE VERIFIED AS SYNTHETIC** |
-| real `NavigationEngine` implementation | **NOT IMPLEMENTED** |
+| real `NavigationEngine` implementation | **IMPLEMENTED (fusion engine, host-verified; engine map view not yet device-run)** |
 | deployable calibration output | **NOT IMPLEMENTED** |
 | corrected classical INS | **NOT IMPLEMENTED / historical baseline invalid for deployment** |
 | AI correction inference | **NOT IMPLEMENTED** |
-| EKF/UKF fusion | **NOT IMPLEMENTED** |
-| real GNSS→DR→recovery state machine | **NOT IMPLEMENTED** |
-| map matching | **NOT IMPLEMENTED** |
-| explicit live `GNSS/DR/FUSED` contract field | **NOT PRESENT IN v1** |
+| EKF/UKF fusion | **IMPLEMENTED — 15-state error-state EKF, host-verified; no ground-truthed accuracy claim** |
+| confidence states | **`unavailable` / `unvalidated` SHIPPING (covariance split out, labelled unvalidated and drawn dashed); `calibrated` NOT CLAIMED — scripted-truth coverage is 97.9% fused / 100% DR / 64.5% recovery, and no reference-bearing experiment exists** |
+| real GNSS→DR→recovery state machine | **IMPLEMENTED AS `localization_mode` (gnss -> fused -> dr -> recovery), host-verified** |
+| map matching | **IMPLEMENTED AS AN OPT-IN EVALUATION OVERLAY (host-verified; no ground-truthed real drive)** |
+| explicit live `GNSS/DR/FUSED` contract field | **PRESENT IN CONTRACT 1.1.0 (`navigation.localization_mode`); 1.0.0 unchanged and still cannot carry it** |
 | offline routing / rerouting / turn-by-turn | **NOT IMPLEMENTED** |
 | edge ~200 Hz engine | **NOT IMPLEMENTED** |
 
@@ -420,7 +432,7 @@ Until then, the synthetic map's `GNSS/DR/recovery` labels remain explicitly scri
 
 ## 11. Decision Summary
 
-1. Keep the existing v1 contract frozen until a real navigation state machine requires a justified version change.
+1. Keep the existing v1 contract frozen until a real navigation state machine requires a justified version change. *(Triggered 2026-10-01: 1.0.0 is frozen and unchanged; 1.1.0 adds only `localization_mode`.)*
 2. Keep navigation status, GNSS quality, localization mode, and confidence semantically separate.
 3. Never turn Android provider accuracy into calibrated fused-navigation confidence by renaming it.
 4. Preserve exact timestamps/source/session provenance through recording and replay.
@@ -429,8 +441,8 @@ Until then, the synthetic map's `GNSS/DR/recovery` labels remain explicitly scri
 7. Synthetic map demonstrations remain clearly labelled and cannot be used as evidence of actual drift performance.
 8. The <10% outage-drift target and ~10 Hz/~200 Hz targets are acceptance metrics that require measured evidence, not schema fields.
 9. Model/filter/map-match provenance becomes required once those modules actually produce navigation output.
-10. Any explicit `GNSS/DR/FUSED/RECOVERY` field requires a versioned contract revision, not an ad-hoc UI-only invention.
+10. Any explicit `GNSS/DR/FUSED/RECOVERY` field requires a versioned contract revision, not an ad-hoc UI-only invention. *(Satisfied 2026-10-01 by contract 1.1.0: enum, codecs, shared corpus, cross-version invalid cases, interop run and a runtime seam that refuses headers which cannot carry it.)*
 
 ---
 
-**This document defines the navigation-output and evidence architecture only.** It does not claim that the real navigation engine, AI correction, EKF/UKF, map matching, routing, or recovery logic already exists.
+**This document defines the navigation-output and evidence architecture only.** The engine, its error-state EKF, the localization-mode state machine and the matcher now exist and are host-tested (see §10), but nothing here claims validated accuracy: there is no ground-truthed real drive, no device run of the engine map view, and no AI correction, routing or deployable calibration.

@@ -29,9 +29,9 @@ class StrictContractTest {
         assertEquals(records, Codec.readJsonl(ByteArrayInputStream(out.toByteArray())).toList())
     }
 
-    @Test fun sharedNegativeCorpusRejectsAll47CasesWithMatchingDiagnostics() {
+    @Test fun sharedNegativeCorpusRejectsAll53CasesWithMatchingDiagnostics() {
         val cases = JsonParser.parseString(fixture("invalid_records.json").toString(Charsets.UTF_8)).asJsonArray
-        assertEquals(47, cases.size())
+        assertEquals(53, cases.size())
         cases.forEach {
             val c = it.asJsonObject
             try { failure(c["code"].asString) { Codec.decodeJson(c["input"].asString.toByteArray(Charsets.UTF_8)) } }
@@ -148,6 +148,45 @@ class StrictContractTest {
         val input = if (external == null) canonical else File(external).inputStream().use { Codec.readJsonl(it).toList() }
         assertEquals(canonical, input)
         val output = File("build/contract_interop/kotlin.jsonl")
+        output.parentFile?.mkdirs()
+        output.outputStream().use { Codec.writeJsonl(input.asSequence(), it) }
+        assertEquals(canonical, output.inputStream().use { Codec.readJsonl(it).toList() })
+    }
+
+    @Test fun localizationModeIsA110FieldWithExplicitNullAndVersionBoundary() {
+        val records = Codec.readJsonl(ByteArrayInputStream(fixture("edge_records_1_1.jsonl"))).toList()
+        assertEquals(7, records.size)
+        val nav = records.filter { it.event.data is NavigationState }.map { it.event.data as NavigationState }
+        assertEquals(listOf(LocalizationMode.GNSS, LocalizationMode.FUSED, LocalizationMode.DR,
+            LocalizationMode.RECOVERY, null), nav.map { it.localization_mode })
+        for (r in records) {
+            assertEquals("1.1.0", r.header.contract_version)
+            assertEquals(r, Codec.decodeJson(Codec.encodeJson(r)))
+        }
+        // Explicit null survives as a present key, exactly like every other nullable field.
+        val raw = JsonParser.parseString(Codec.encodeJson(records[5]).toString(Charsets.UTF_8))
+        assertTrue(raw.asJsonObject.getAsJsonObject("event").getAsJsonObject("data")["localization_mode"].isJsonNull)
+        val fused = records.first { (it.event.data as? NavigationState)?.localization_mode == LocalizationMode.FUSED }
+        // A typed 1.0.0 caller cannot smuggle the field through: the write is refused whole.
+        failure("INVALID_MODEL") { Codec.encodeJson(fused.copy(header = fused.header.copy(contract_version = "1.0.0"))) }
+        // A decoded 1.0.0 navigation record carries null and no key, never an invented mode.
+        val plain = records()[4]
+        assertNull((plain.event.data as NavigationState).localization_mode)
+        val plainRaw = JsonParser.parseString(Codec.encodeJson(plain).toString(Charsets.UTF_8))
+        assertFalse(plainRaw.asJsonObject.getAsJsonObject("event").getAsJsonObject("data").has("localization_mode"))
+        // One stream speaks one contract version: the same session identity cannot mix either.
+        failure("SESSION_MISMATCH") {
+            Codec.readJsonl(ByteArrayInputStream(Codec.encodeJson(plain) + byteArrayOf(10) +
+                Codec.encodeJson(fused.copy(header = fused.header.copy(session_id = plain.header.session_id))))).toList()
+        }
+    }
+
+    @Test fun kotlinConsumesPythonOutputAndEmitsTypedOutputForPython11() {
+        val canonical = Codec.readJsonl(ByteArrayInputStream(fixture("edge_records_1_1.jsonl"))).toList()
+        val external = System.getenv("IDR_CONTRACT_PYTHON_JSONL_1_1")
+        val input = if (external == null) canonical else File(external).inputStream().use { Codec.readJsonl(it).toList() }
+        assertEquals(canonical, input)
+        val output = File("build/contract_interop/kotlin_1_1.jsonl")
         output.parentFile?.mkdirs()
         output.outputStream().use { Codec.writeJsonl(input.asSequence(), it) }
         assertEquals(canonical, output.inputStream().use { Codec.readJsonl(it).toList() })

@@ -200,6 +200,34 @@ not a validated error bound; `probability` stays `null` because the covariance i
 that has not been validated against an independent truth, and the contract forbids a probability
 unless the state is `CALIBRATED`.
 
+The whole confidence story — what each field means, where it is allowed to travel, the measured
+coverage per regime and what would license a calibrated claim — is
+[mobile/CONFIDENCE.md](CONFIDENCE.md). In the map and the engine panel the unvalidated radius is
+carried in its own field, drawn as a dashed ring and labelled as a model claim; a `CALIBRATED`
+radius is the only thing that may fill the calibrated field or draw the solid ring. As of
+2026-10-01 the measured coverage (scripted truth, 692 samples) is 97.9% fused, 100% DR and 64.5%
+recovery, which supports publishing the covariance as `UNVALIDATED` and does not support a
+calibrated claim in any regime.
+
+The engine session speaks contract **1.1.0**, and each published position names its regime in
+`localization_mode` — the field that version added:
+
+- `gnss` — the solution is standing on an anchor fix: no accepted update or propagation step has
+  moved it off that fix yet;
+- `fused` — the integrated solution with current GNSS aiding;
+- `dr` — no fix has been accepted inside the provider's own stale bound, so the position is
+  inertial dead reckoning alone (the same per-provider bound the status machine uses, so a slow
+  network channel is not called an outage);
+- `recovery` — GNSS aiding resumed after a DR stretch and the solution is still converging: the
+  first `localizationRecoveryFixes` (3) accepted fixes after a stale interval stay `recovery`,
+  then the mode returns to `fused`.
+
+The mode is `null` exactly when the state carries no position, and `fused`/`recovery` cannot be
+published without `gnss_used_after_initialization = true`; both are contract invariants checked by
+the codec in both languages. `NavigationRuntime` creates an engine session only for a 1.1.0 header
+(`ENGINE_OUTPUT_CONTRACT_VERSION`), so an output stream that cannot carry the mode is refused at
+the seam instead of being published as something it is not.
+
 ## Diagnostics
 
 | Code | Severity | When |
@@ -268,6 +296,10 @@ unless the state is `CALIBRATED`.
   this out loud rather than imply otherwise; the guard bounds the damage, it does not remove it.
 - **Yaw is unobserved** without a supplied heading, GNSS course or motion alignment, and the
   reported heading is only as good as its covariance says it is.
+- **No heading on a device yet.** `heading_deg` requires a valid calibration — the vehicle
+  attitude — and no screen collects or composes a calibration record, so the engine publishes
+  position, speed and localization mode while `heading_deg` stays null. The map shows `—` rather
+  than approximating course as heading.
 - **One device, one mount, one operator** for everything upstream of this filter.
 
 ## Reproduce
@@ -281,3 +313,8 @@ covariance growth, bias convergence, repeated timestamps, time gaps, long-drive 
 `FusionNavigationEngineTest` covers the engine boundary (canonical output through the frozen
 codec, refusal policy, calibration gating, outage status, the lying stream); `GeodesyTest` pins
 the gravity, radii, Earth-rate and transport-rate values against the Python baseline to the digit.
+The localization-mode sequence (gnss -> fused -> dr -> recovery -> fused), the null-mode states and
+both modes through the frozen codec are pinned by
+`FusionNavigationEngineTest.localizationModeNamesTheRegimeHoldingUpThePosition` and
+`noPublishedPositionCarriesNoModeAndBothSurviveTheFrozenCodec`, and the version seam by
+`NavigationRuntimeTest.engineSessionRefusesAContractVersionThatCannotCarryEngineOutput`.

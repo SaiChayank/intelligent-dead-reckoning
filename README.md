@@ -65,7 +65,8 @@ corrected INS remains a missing gate.
 ### IMPLEMENTED — code exists in the tree
 
 - **Contracts** — versioned measurement (`contracts/v1`), recording
-  (`contracts/recording/v1`) and experiment (`contracts/experiment/v1`) schemas
+  (`contracts/recording/v1`), experiment (`contracts/experiment/v1`) and
+  evaluation-report (`contracts/evaluation/v1`) schemas
   with strict Python and Kotlin codecs, golden/invalid fixtures, and
   cross-language parity tests. These are the only data contracts; nothing else may
   define a parallel schema, and the experiment layer composes the other two by
@@ -128,10 +129,42 @@ corrected INS remains a missing gate.
   loader is strictly read-only: masking withholds GNSS records at read time and no
   recording is ever altered. See the
   [collection protocol](docs/PS26168_Experiment_Data_Collection_Protocol.md).
-- **Map** — bundled offline Hyderabad vector tiles with three never-blended
-  sources (synthetic fixture, recorded session, live phone GNSS), coverage
-  refusal, gap-split trails and a GNSS loss timeline.
-  See [mobile/OFFLINE_MAP.md](mobile/OFFLINE_MAP.md).
+- **Map** — bundled offline Hyderabad vector tiles with four never-blended
+  sources (synthetic fixture, recorded session, live phone GNSS and the real
+  navigation engine's published output), coverage refusal, gap-split trails and a
+  GNSS loss timeline. The engine source runs
+  NavigationEngine → NavigationState → NavigationPresentation → MapOverlay →
+  MapLibreRenderer, shows position, speed, trail, acquisition GNSS quality,
+  runtime status and confidence radius, names the contract 1.1.0 localization
+  mode, and offers an opt-in raw-versus-map-matched evaluation overlay.
+  See [mobile/OFFLINE_MAP.md](mobile/OFFLINE_MAP.md) and
+  [mobile/MAP_ENGINE_VIEW.md](mobile/MAP_ENGINE_VIEW.md).
+- **Offline map matching** — a separate offline road-graph package derived
+  from OSM for the same bounded Hyderabad region (`assets/roadgraph/`,
+  ODbL-licensed, version/checksum/licensing manifest — deliberately not the
+  rendering-only MBTiles) and a causal MVP matcher: nearby candidate search,
+  distance to road, heading compatibility, previous-edge continuity and
+  uncertainty gating, covering parallel roads, intersections, service roads,
+  no-candidate, low-confidence and outside-coverage refusals. It reports the
+  map-matched position beside the raw fused position and never overwrites
+  navigation truth. Host-validated on synthetic fixtures and the real
+  packaged graph, and reachable from the engine map view as an opt-in evaluation
+  overlay; nothing downstream consumes it and it is not navigation.
+  See [mobile/MAP_MATCHING.md](mobile/MAP_MATCHING.md) and the
+  [validation report](reports/map_matching_2026_10_01.md).
+- **Evaluation surface** — a versioned evaluation report
+  (`contracts/evaluation/v1`) that an actual run produces: the evaluated session,
+  the platform, the declared reference and whether it is independent, the GNSS
+  segments, and per arm an implementation identity, a status and the measured
+  accuracy / timing groups. The strict codec refuses a consumed reference, an
+  all-null group, a convergence time without its bound and any metric for an arm
+  that never ran. The app's Evaluation tab renders the checked-in report —
+  classical INS, classical fusion, + constraints, + AI correction and + map
+  matching — and states every absence (`not measured`, `not implemented`) rather
+  than filling it. The harness regenerates that document from the production
+  pipeline and the suite requires the two to match, so the screen shows the
+  evidence the tests enforce. See [mobile/EVALUATION.md](mobile/EVALUATION.md) and
+  the [report](reports/evaluation_surface_2026_10_01.md).
 - **Offline research pipeline** — Phase 0 inventory/schema/unit/sampling/
   synchronization audit, schema registry and streaming diagnostics in `training/`.
 
@@ -151,9 +184,19 @@ corrected INS remains a missing gate.
   explained by the sensor's own 0.0119 m/s² magnitude residual. It consumes no
   GNSS at runtime, and the report names every limitation
   ([baseline report](reports/ins_baseline_2026_09_30.md)).
-- **Host-verified**: 282 Kotlin unit tests, 238 Python tests (1 skip),
-  `lintDebug` clean. Host tests are not device evidence and are labelled
-  where they are all that exists (see audit section 2).
+- **Host-verified**: 348 Kotlin unit tests, 272 Python tests (1 skip),
+  `lintDebug` clean (0 errors, 1 pre-existing target-SDK warning). Host tests are
+  not device evidence and are labelled where they are all that exists (see audit
+  section 2).
+- **Navigation confidence semantics** — the engine's covariance is published as
+  `UNVALIDATED`, split into its own display field, drawn as a dashed ring and
+  labelled as a model claim; the Android provider accuracy can never become fused
+  confidence. The first measured comparison of predicted uncertainty against actual
+  error (scripted truth, 692 samples) gives 97.9% coverage fused, 100% dead
+  reckoning and 64.5% recovery, which supports the unvalidated exposure and does
+  **not** support a calibrated claim. See
+  [mobile/CONFIDENCE.md](mobile/CONFIDENCE.md) and the
+  [evaluation report](reports/confidence_evaluation_2026_10_01.md).
 
 ### EXPERIMENTAL — research scripts; outputs are not product claims
 
@@ -169,14 +212,23 @@ corrected INS remains a missing gate.
 
 ### PLANNED — not implemented
 
-- `NavigationEngine` implementations beyond calibration: propagation, INS
-  mechanization, EKF fusion, map matching. The calibration engine is the only
-  engine in the tree, it reports no position, velocity or heading, and sessions
-  recorded before it existed still carry `calibration: not_applied`.
-- AI error-correction training, EKF fusion, map matching, on-device inference,
-  the shared navigation core (`core/`), and the edge runtime (`edge/`).
-- A real GNSS-loss/recovery corpus (41 of 44 sessions have no GNSS at all) and
-  an in-coverage multi-point recording for device trail verification.
+- `NavigationEngine` implementations beyond calibration and fusion:
+  standalone propagation / INS-mechanization engines. The fusion engine is the
+  session the map's engine view draws —
+  [mobile/MAP_ENGINE_VIEW.md](mobile/MAP_ENGINE_VIEW.md). Calibration still reports
+  no position, velocity or heading, and sessions recorded before it existed still
+  carry `calibration: not_applied`.
+- A calibration collection/composition flow in the UI, without which a device shows
+  `—` for heading while position, speed and localization mode publish.
+- AI error-correction training, on-device inference, offline routing, the shared
+  navigation core (`core/`), and the edge runtime (`edge/`). The map matcher is
+  reachable only as the engine view's opt-in evaluation overlay: it is not part of
+  the runtime, and its output stays separate from navigation truth.
+- A real GNSS-loss/recovery corpus (41 of 44 sessions have no GNSS at all), an
+  in-coverage multi-point recording for device trail verification, and a sealed
+  reference-bearing evaluation experiment, without which the fusion covariance stays
+  `UNVALIDATED` and no calibrated 95% accuracy can be published
+  ([what would license it](mobile/CONFIDENCE.md)).
 
 ### OPTIONAL — enabled at user discretion; no claim depends on them
 

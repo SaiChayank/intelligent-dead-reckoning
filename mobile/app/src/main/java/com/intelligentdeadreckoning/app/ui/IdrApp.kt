@@ -78,8 +78,12 @@ import com.intelligentdeadreckoning.app.ui.design.IdrSize
 import com.intelligentdeadreckoning.app.ui.design.IdrSpace
 import com.intelligentdeadreckoning.app.ui.design.KeyValueRow
 import com.intelligentdeadreckoning.app.ui.design.StatusDot
+import com.intelligentdeadreckoning.app.evaluation.EvaluationLibrary
 import com.intelligentdeadreckoning.app.map.LiveGnssView
+import com.intelligentdeadreckoning.app.map.MapPresentation
+import com.intelligentdeadreckoning.app.map.NO_ENGINE_VIEW
 import com.intelligentdeadreckoning.app.map.NO_LIVE_GNSS
+import com.intelligentdeadreckoning.app.navigation.NavigationRuntimeState
 import com.intelligentdeadreckoning.app.ui.design.IdrStateTone
 import com.intelligentdeadreckoning.app.ui.design.IdrTone
 import com.intelligentdeadreckoning.app.ui.design.IdrType
@@ -97,15 +101,24 @@ private enum class Screen(val id: String, val title: String, val glyph: IdrGlyph
     DASHBOARD("dashboard", "Home", IdrGlyph.HOME, "tab_DASHBOARD"),
     MAP("map", "Map", IdrGlyph.NAVIGATE, "tab_MAP"),
     DIAGNOSTICS("diagnostics", "Signals", IdrGlyph.PULSE, "tab_DIAGNOSTICS"),
+    // Engineering evidence lives here, one tap away from the driver's flow and never inside it.
+    EVALUATION("evaluation", "Evaluation", IdrGlyph.LAYERS, "tab_EVALUATION"),
     ABOUT("about", "About", IdrGlyph.INFO, "tab_ABOUT"),
 }
 
 private val dockItems = Screen.entries.map { DockItem(it.id, it.title, it.glyph, it.testTag) }
 
+/** Pages that own their whole screen: the recording and replay consoles stay off them. */
+private val consoleFreeScreens = setOf(Screen.MAP, Screen.EVALUATION, Screen.ABOUT)
+
 @Composable
 fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
            source: InputSource = InputSource.SIMULATION, capture: CaptureState = CaptureState(),
            liveGnss: LiveGnssView = NO_LIVE_GNSS,
+           engineMap: MapPresentation = NO_ENGINE_VIEW,
+           navigation: NavigationRuntimeState = NavigationRuntimeState(),
+           evaluation: Boolean = false, onEvaluation: (Boolean) -> Unit = {},
+           evaluationLibrary: EvaluationLibrary = EvaluationLibrary(), onReloadEvaluation: () -> Unit = {},
            onSource: (InputSource) -> Unit = {}, onPermission: () -> Unit = {}, onSettings: () -> Unit = {},
            recording: RecorderState = RecorderState(), onStartRecording: () -> Unit = {},
            onStopRecording: () -> Unit = {}, library: SessionPage = SessionPage(), libraryError: String? = null,
@@ -146,13 +159,13 @@ fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
                             .padding(top = IdrSpace.sm, bottom = IdrSpace.xxl),
                         verticalArrangement = Arrangement.spacedBy(IdrSpace.xl),
                     ) {
-                        if (selected != Screen.ABOUT && selected != Screen.MAP) {
+                        if (selected !in consoleFreeScreens) {
                             RecordingPanel(recording, capture, source, replayVisible, replay.busy,
                                 onStartRecording, onStopRecording, detailsOpen, { detailsOpen = !detailsOpen },
                                 currentSession, elapsedNs, export,
                                 { sessionsOpen = true; onRefreshSessions(null) })
                         }
-                        if (replayVisible && selected != Screen.ABOUT && selected != Screen.MAP) {
+                        if (replayVisible && selected !in consoleFreeScreens) {
                             EntranceFade { ReplayPanel(replay, onPauseReplay, onResumeReplay, onStopReplay) }
                         } else {
                             when (selected) {
@@ -176,6 +189,10 @@ fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
                                         source = source,
                                         capture = capture,
                                         liveGnss = liveGnss,
+                                        engineMap = engineMap,
+                                        navigation = navigation,
+                                        evaluation = evaluation,
+                                        onEvaluation = onEvaluation,
                                         // A live position cannot come from the synthetic source, so
                                         // this selects phone sensors first rather than silently
                                         // starting the scripted demo the user asked to leave.
@@ -185,6 +202,9 @@ fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
                                         },
                                         onPermission = onPermission,
                                     )
+                                }
+                                Screen.EVALUATION -> EntranceFade {
+                                    EvaluationScreen(evaluationLibrary, onReloadEvaluation)
                                 }
                                 Screen.ABOUT -> EntranceFade { About() }
                             }

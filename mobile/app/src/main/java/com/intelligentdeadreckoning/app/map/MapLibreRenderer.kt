@@ -51,6 +51,11 @@ internal class MapLibreRenderer(private val map: MapLibreMap) : MapRenderer {
                 .withFilter(eq(get("kind"),literal("outage"))).withProperties(lineColor(IdrPalette.mapOutage.css()),lineWidth(7f),lineOpacity(0.6f)))
             style.addLayer(FillLayer("display-accuracy","navigation-display")
                 .withFilter(eq(get("kind"),literal("accuracy"))).withProperties(fillColor(IdrPalette.mapAccuracy.css()),fillOpacity(0.18f)))
+            // The engine's covariance while its confidence is UNVALIDATED: an outline only, dashed,
+            // so it reads as a provisional claim rather than the filled area a calibrated radius
+            // or a platform fix radius draws.
+            style.addLayer(LineLayer("display-uncertainty","navigation-display")
+                .withFilter(eq(get("kind"),literal("uncertainty"))).withProperties(lineColor(IdrPalette.mapAccuracy.css()),lineWidth(2f),lineDasharray(arrayOf(3f,2f)),lineOpacity(0.9f)))
             style.addLayer(LineLayer("display-trail","navigation-display")
                 .withFilter(eq(get("kind"),literal("trail"))).withProperties(lineColor(IdrPalette.mapTrail.css()),lineWidth(4f)))
             // A recorded fix with no neighbour is still a fix: drawn as a dot, never joined up.
@@ -60,6 +65,12 @@ internal class MapLibreRenderer(private val map: MapLibreMap) : MapRenderer {
                 .withFilter(eq(get("kind"),literal("comparison-trail"))).withProperties(lineColor(IdrPalette.mapComparison.css()),lineWidth(3f),lineDasharray(arrayOf(2f,1f))))
             style.addLayer(CircleLayer("display-comparison","navigation-display")
                 .withFilter(eq(get("kind"),literal("comparison"))).withProperties(circleColor(IdrPalette.mapComparison.css()),circleRadius(7f),circleStrokeColor("#ffffff"),circleStrokeWidth(2f)))
+            // The evaluation-only map-matched claim, styled as a comparison to the raw
+            // position marker and trail below — separate outputs, never blended.
+            style.addLayer(LineLayer("display-matched-trail","navigation-display")
+                .withFilter(eq(get("kind"),literal("matched-trail"))).withProperties(lineColor(IdrPalette.mapComparison.css()),lineWidth(3f),lineDasharray(arrayOf(2f,1f))))
+            style.addLayer(CircleLayer("display-matched","navigation-display")
+                .withFilter(eq(get("kind"),literal("matched"))).withProperties(circleColor(IdrPalette.mapComparison.css()),circleRadius(7f),circleStrokeColor("#ffffff"),circleStrokeWidth(2f)))
             style.addLayer(CircleLayer("display-position","navigation-display")
                 .withFilter(eq(get("kind"),literal("position"))).withProperties(circleColor(IdrPalette.mapTrail.css()),circleRadius(6f),circleStrokeColor("#ffffff"),circleStrokeWidth(2f)))
             style.addLayer(FillLayer("display-heading","navigation-display")

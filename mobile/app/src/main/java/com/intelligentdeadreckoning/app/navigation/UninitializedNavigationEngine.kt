@@ -44,11 +44,10 @@ class UninitializedNavigationEngine : NavigationEngine {
         this.mode = mode
         calibrationId = (calibration.event.data as? CalibrationResult)?.id
         pending.clear()
-        emit(
-            NavigationState(
-                NavigationStatus.UNINITIALIZED, mode, null, null, null, null, null,
-                calibrationId, false,
-            ),
+        emit(                NavigationState(
+                    NavigationStatus.UNINITIALIZED, mode, null, null, null, null, null,
+                    calibrationId, false, null,
+                ),
         )
         emit(Confidence(ConfidenceState.UNAVAILABLE, null, null, null))
         emit(

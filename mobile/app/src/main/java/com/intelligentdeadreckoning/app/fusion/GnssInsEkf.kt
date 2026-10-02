@@ -11,6 +11,7 @@ import com.intelligentdeadreckoning.app.calibration.times
 import com.intelligentdeadreckoning.app.calibration.toRotationMatrix
 import com.intelligentdeadreckoning.contracts.v1.Quaternion
 import com.intelligentdeadreckoning.contracts.v1.Vector3
+import kotlin.math.abs
 import kotlin.math.sqrt
 
 /**
@@ -98,6 +99,36 @@ class GnssInsEkf(val config: FusionConfig = FusionConfig()) {
     private var lastMeasurementAttemptNs: Long? = null
     private var rejectionSpanS = 0.0
 
+    /** Last validated nominal/covariance state, for atomic rejection of numerical failures. */
+    private data class NumericalCheckpoint(
+        val tNs: Long,
+        val positionEnu: Vector3,
+        val velocityEnu: Vector3,
+        val qEnuFromDevice: Quaternion,
+        val gyroBias: Vector3,
+        val accelBias: Vector3,
+        val covariance: DoubleArray,
+        val previousAccelerationEnu: Vector3,
+        val havePreviousAcceleration: Boolean,
+    )
+
+    private fun checkpoint() = NumericalCheckpoint(
+        tNs, positionEnu, velocityEnu, qEnuFromDevice, gyroBias, accelBias,
+        covariance, previousAccelerationEnu, havePreviousAcceleration,
+    )
+
+    private fun restore(checkpoint: NumericalCheckpoint) {
+        tNs = checkpoint.tNs
+        positionEnu = checkpoint.positionEnu
+        velocityEnu = checkpoint.velocityEnu
+        qEnuFromDevice = checkpoint.qEnuFromDevice
+        gyroBias = checkpoint.gyroBias
+        accelBias = checkpoint.accelBias
+        covariance = checkpoint.covariance
+        previousAccelerationEnu = checkpoint.previousAccelerationEnu
+        havePreviousAcceleration = checkpoint.havePreviousAcceleration
+    }
+
     /** True once an anchor and a state exist. Before that there is nothing to propagate. */
     val aligned: Boolean get() = anchor != null && status != FusionStatus.UNINITIALIZED
 
@@ -114,7 +145,7 @@ class GnssInsEkf(val config: FusionConfig = FusionConfig()) {
      * outage goes through — and that one never overwrites the state.
      */
     fun align(initial: FusionInitialState, tNs: Long): Boolean {
-        if (!isFiniteQuaternion(initial.qEnuFromDevice) || !isFinite(initial.velocityEnuM_S) ||
+        if (tNs < 0L || !isFiniteQuaternion(initial.qEnuFromDevice) || !isFinite(initial.velocityEnuM_S) ||
             !isFinite(initial.gyroBiasDeviceRad_S) || !isFinite(initial.accelBiasDeviceM_S2) ||
             !isPositive(initial.positionVarianceM2) || !isPositive(initial.velocityVarianceM2) ||
             !isPositive(initial.attitudeVarianceRad2) ||
@@ -194,15 +225,20 @@ class GnssInsEkf(val config: FusionConfig = FusionConfig()) {
     fun propagate(accelDeviceM_S2: Vector3, gyroDeviceRad_S: Vector3, tNs: Long): PropagationOutcome {
         if (!aligned) return PropagationOutcome.NOT_ALIGNED
         if (status == FusionStatus.FAILED) return PropagationOutcome.FAILED
+        if (tNs < 0L || !stateIsNumericallyUsable()) {
+            fail(FusionFailure.NUMERICAL_INVALIDITY)
+            return PropagationOutcome.FAILED_NUMERICAL
+        }
         if (!isFinite(accelDeviceM_S2) || !isFinite(gyroDeviceRad_S)) {
             fail(FusionFailure.NON_FINITE_SAMPLE)
             return PropagationOutcome.FAILED_NON_FINITE
         }
-        val dt = (tNs - this.tNs) / NANOS_PER_SECOND
-        if (dt < 0.0) {
+        if (tNs < this.tNs) {
             backwardsTimestamps += 1
             return PropagationOutcome.BACKWARDS_TIMESTAMP
         }
+        // Both timestamps are nonnegative and ordered, so subtraction cannot overflow.
+        val dt = (tNs - this.tNs) / NANOS_PER_SECOND
         if (dt < config.minStepS) {
             // No time passed, so nothing propagated and no gap opened. The sample is counted
             // rather than silently absorbed, because a stream full of duplicates is a defect.
@@ -217,12 +253,39 @@ class GnssInsEkf(val config: FusionConfig = FusionConfig()) {
             // No sample inside the interval, so there is nothing to integrate. The state is held
             // and the covariance is inflated by the same process model, so the unobserved motion
             // becomes uncertainty the next measurement will have to overcome.
+            val previousCovariance = covariance
             covariance = symmetrize(add(covariance, processNoise(dt)), DIM)
+            if (!covarianceIsNumericallyUsable()) {
+                covariance = previousCovariance
+                fail(FusionFailure.NUMERICAL_INVALIDITY)
+                return PropagationOutcome.FAILED_NUMERICAL
+            }
             heldGaps += 1
             this.tNs = tNs
             return PropagationOutcome.HELD_GAP
         }
 
+        val checkpoint = checkpoint()
+        return try {
+            val outcome = propagateFinite(accelDeviceM_S2, gyroDeviceRad_S, tNs, dt)
+            if (outcome == PropagationOutcome.FAILED_NUMERICAL) restore(checkpoint)
+            outcome
+        } catch (_: RuntimeException) {
+            // Finite but extreme inputs can overflow a norm, frame-rate term, or quaternion
+            // normalization. Roll back the partially computed state, then expose a named terminal
+            // failure rather than leaking a fabricated position or worker exception.
+            restore(checkpoint)
+            fail(FusionFailure.NUMERICAL_INVALIDITY)
+            PropagationOutcome.FAILED_NUMERICAL
+        }
+    }
+
+    private fun propagateFinite(
+        accelDeviceM_S2: Vector3,
+        gyroDeviceRad_S: Vector3,
+        tNs: Long,
+        dt: Double,
+    ): PropagationOutcome {
         val geodetic = Geodesy.geodeticFromEnu(anchor!!, positionEnu)
         val latitudeRad = Math.toRadians(geodetic.latitudeDeg)
 
@@ -263,6 +326,10 @@ class GnssInsEkf(val config: FusionConfig = FusionConfig()) {
             add(multiplyByTranspose(multiplyMatrix(phi, covariance, DIM), phi, DIM), processNoise(dt)),
             DIM,
         )
+        if (!stateIsNumericallyUsable()) {
+            fail(FusionFailure.NUMERICAL_INVALIDITY)
+            return PropagationOutcome.FAILED_NUMERICAL
+        }
         this.tNs = tNs
         return PropagationOutcome.PROPAGATED
     }
@@ -528,6 +595,10 @@ class GnssInsEkf(val config: FusionConfig = FusionConfig()) {
         countAsConstraint: Boolean,
     ): GnssUpdateOutcome {
         val dimension = rows.size
+        if (!isUsableCovariance(covariance, DIM)) {
+            fail(FusionFailure.NUMERICAL_INVALIDITY)
+            return GnssUpdateOutcome.refused(GnssUpdateResult.FAILED, dimension)
+        }
         for (variance in variances) {
             if (!variance.isFinite() || variance <= 0.0) {
                 return GnssUpdateOutcome.refused(GnssUpdateResult.REJECTED_INVALID, dimension)
@@ -550,6 +621,9 @@ class GnssInsEkf(val config: FusionConfig = FusionConfig()) {
         }
         val solved = choleskySolve(innovationCovariance, dimension, residuals)
             ?: return GnssUpdateOutcome.refused(GnssUpdateResult.REJECTED_ILL_CONDITIONED, dimension)
+        if (solved.any { !it.isFinite() }) {
+            return GnssUpdateOutcome.refused(GnssUpdateResult.REJECTED_ILL_CONDITIONED, dimension)
+        }
         // Solved is the solution buffer, whose length is the state dimension, not the measurement
         // one: the statistic must sum over exactly the rows this measurement built.
         var nis = 0.0
@@ -580,22 +654,43 @@ class GnssInsEkf(val config: FusionConfig = FusionConfig()) {
         if (!countAsConstraint && resetsRejectionSpan) rejectionSpanS = 0.0
 
         val correction = DoubleArray(DIM)
-        for (i in 0 until dimension) {
-            val row = rows[i]
-            val projectedRow = multiplyVector(covariance, row, DIM)
-            val rowVariance = dot(row, projectedRow) + variances[i]
-            if (!(rowVariance > 0.0) || !rowVariance.isFinite()) {
-                return GnssUpdateOutcome.refused(GnssUpdateResult.REJECTED_ILL_CONDITIONED, dimension)
+        val updateCheckpoint = checkpoint()
+        try {
+            for (i in 0 until dimension) {
+                val row = rows[i]
+                val projectedRow = multiplyVector(covariance, row, DIM)
+                val rowVariance = dot(row, projectedRow) + variances[i]
+                if (!(rowVariance > 0.0) || !rowVariance.isFinite()) {
+                    restore(updateCheckpoint)
+                    fail(FusionFailure.NUMERICAL_INVALIDITY)
+                    return GnssUpdateOutcome.refused(GnssUpdateResult.FAILED, dimension)
+                }
+                val gain = DoubleArray(DIM) { projectedRow[it] / rowVariance }
+                if (gain.any { !it.isFinite() }) {
+                    restore(updateCheckpoint)
+                    fail(FusionFailure.NUMERICAL_INVALIDITY)
+                    return GnssUpdateOutcome.refused(GnssUpdateResult.FAILED, dimension)
+                }
+                // The error state is relative to the current nominal, so the innovation of this row
+                // is what the earlier rows of the same measurement have not already applied.
+                val innovation = residuals[i] - dot(row, correction)
+                for (k in 0 until DIM) correction[k] += gain[k] * innovation
+                covariance = josephUpdate(covariance, row, gain, variances[i])
             }
-            val gain = DoubleArray(DIM) { projectedRow[it] / rowVariance }
-            // The error state is relative to the current nominal, so the innovation of this row
-            // is what the earlier rows of the same measurement have not already applied.
-            val innovation = residuals[i] - dot(row, correction)
-            for (k in 0 until DIM) correction[k] += gain[k] * innovation
-            covariance = josephUpdate(covariance, row, gain, variances[i])
+            covariance = symmetrize(covariance, DIM)
+            inject(correction)
+            if (!stateIsNumericallyUsable()) {
+                restore(updateCheckpoint)
+                fail(FusionFailure.NUMERICAL_INVALIDITY)
+                return GnssUpdateOutcome.refused(GnssUpdateResult.FAILED, dimension)
+            }
+        } catch (_: RuntimeException) {
+            // A finite input can overflow inside the correction/Joseph update. Roll back the
+            // complete measurement so no prefix of its rows changes the published state.
+            restore(updateCheckpoint)
+            fail(FusionFailure.NUMERICAL_INVALIDITY)
+            return GnssUpdateOutcome.refused(GnssUpdateResult.FAILED, dimension)
         }
-        covariance = symmetrize(covariance, DIM)
-        inject(correction)
         if (countAsConstraint) {
             constraintAccepted += 1
         } else {
@@ -662,6 +757,19 @@ class GnssInsEkf(val config: FusionConfig = FusionConfig()) {
         gyroBias = gyroBias + Vector3(correction[IDX_GBIAS], correction[IDX_GBIAS + 1], correction[IDX_GBIAS + 2])
         accelBias = accelBias + Vector3(correction[IDX_ABIAS], correction[IDX_ABIAS + 1], correction[IDX_ABIAS + 2])
     }
+
+    /**
+     * A finite input can still overflow intermediate arithmetic. Do not let a NaN state or a
+     * non-positive covariance escape as a confidence radius or as the next update's prior.
+     */
+    private fun covarianceIsNumericallyUsable(): Boolean {
+        return isUsableCovariance(covariance, DIM)
+    }
+
+    private fun stateIsNumericallyUsable(): Boolean =
+        isFinite(positionEnu) && isFinite(velocityEnu) &&
+            isFiniteQuaternion(qEnuFromDevice) && isFinite(gyroBias) && isFinite(accelBias) &&
+            covarianceIsNumericallyUsable()
 
     private fun fail(failure: FusionFailure) {
         status = FusionStatus.FAILED

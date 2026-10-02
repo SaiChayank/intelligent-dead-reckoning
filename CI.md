@@ -7,8 +7,8 @@ network. No Docker, no hosted services, no emulator.
 
 | Job | Gates (all verified locally before landing) |
 |---|---|
-| `python` | Python 3.12, `pip install -r requirements.txt` + `pip check`, contract tests (28), Python session-reader tests (34 + 8), experiment contract/loader/tooling tests (57), strapdown INS physics tests (31), GNSS threshold-tool tests (10), full suite (238 tests, 1 environment-dependent skip), AST compile of 58 files across `training/ tests/ contracts/ tools/`, import checks |
-| `android` | JDK 25 (matches the verified Android Studio JBR), Android SDK platform 37 + build-tools 36.0.0, `bash gradlew testDebugUnitTest` (282 JVM tests incl. Kotlin/Python session-reader parity, the analytic calibration suite, the GNSS quality state machine, the GNSS+INS fusion filter with its geodesy parity and the vehicle-motion constraint suite), `lintDebug`, `assembleDebug`, `assembleDebugAndroidTest` |
+| `python` | Python 3.12, `pip install -r requirements.txt` + `pip check`, isolated pinned `pip-audit==2.10.1` advisory scan of `requirements.txt`, contract tests, Python session-reader tests, experiment contract/loader/tooling tests, strapdown INS physics tests, GNSS threshold-tool tests, road-graph builder/asset tests, full suite, AST compile across `training/ tests/ contracts/ tools/`, import checks |
+| `android` | JDK 25 (matches the verified Android Studio JBR), Android SDK platform 37 + build-tools 36.0.0, `bash gradlew testDebugUnitTest` (348 JVM tests incl. Kotlin/Python session-reader parity, the analytic calibration suite, the GNSS quality state machine, the GNSS+INS fusion filter with its geodesy parity, the vehicle-motion constraint suite, the offline road-graph / map-matching suite, the engine-map fold plus marker-easing suite, the scripted-truth confidence-coverage evaluation with its provider-accuracy substitution guards, and the evaluation harness that regenerates the arm-comparison golden report plus the surface rules that render it), `lintDebug`, `assembleDebug`, `assembleDebugAndroidTest` |
 | `quality` | `git diff --check` over the pushed range (with `cr-at-eol` for the repo's CRLF files), `tools/check_repo_hygiene.py` (forbidden tracked files, secret-pattern scan, map-manifest and contract-fixture validation) |
 
 Notes on deliberate choices:
@@ -18,8 +18,8 @@ Notes on deliberate choices:
 - The whitespace gate is scoped to the pushed range on purpose: historical
   evidence files and shipped map licences contain deliberate trailing
   whitespace and must never be reformatted to satisfy a linter.
-- `tools/check_repo_hygiene.py` validates the map manifest's existence, sizes
-  and parseability; byte-exact SHA-256 verification stays in `OfflineMapTest`
+- `tools/check_repo_hygiene.py` validates tracked-file policy, common secret patterns,
+  the map manifest's existence, sizes and parseability; byte-exact SHA-256 verification stays in `OfflineMapTest`
   (JVM suite) so the check exists in exactly one place.
 - `gradlew` is tracked without its executable bit, so CI invokes it as
   `bash gradlew`; the wrapper is pinned by SHA-256 in
@@ -38,6 +38,7 @@ Notes on deliberate choices:
 3. `quality` green — no whitespace errors in the change, no forbidden tracked
    files, no secret patterns, artifacts parse.
 4. No `FINDING:` line from the hygiene gate (it exits 1 on any finding).
+5. The Python dependency audit exits clean against the current advisory database; review any finding rather than suppressing it.
 
 A change that touches contracts, the recording format or replay semantics must
 also keep `PythonParityTest` green — it is inside the `android` JVM gate, so a
@@ -56,10 +57,14 @@ green `android` job covers it.
   come from a phone, not CI. CI sees only synthetic fixtures.
 - **Export/import round-trips on a device**, permission flows, and behaviour
   under real background/foreground transitions.
+- **Field-reference accuracy.** The evaluation harness is a deterministic host
+  replay against scripted truth; it proves the report is reproducible, not that
+  the engine is accurate on a road. No recorded session carries an independent
+  reference yet, so no job can produce a field-accuracy number.
 - **Performance and endurance** (bounded queues under load, no monotonic memory
   growth) — measured by the manual acceptance procedure, not CI.
-- **The instrumented suite.** `assembleDebugAndroidTest` proves it compiles;
-  running the 26 device tests requires the manual gate below.
+- **The instrumented suite.**  `assembleDebugAndroidTest` proves it compiles;
+  running the 43 device tests requires the manual gate below.
 
 ## Manual physical-device gates (OnePlus CPH2585 / Android 16)
 
@@ -68,16 +73,18 @@ These are acceptance gates, run by a human on the target phone; they are
 `mobile/MAP_DEVICE_VERIFICATION.md` and `reports/` is device-specific.
 
 1. **Instrumented suite** — `bash gradlew connectedDebugAndroidTest` with one
-   authorized device (`ANDROID_SERIAL` if several). Expected: 26 tests,
-   0 failures. Note: the runner may uninstall the app afterwards; reinstall
+   authorized device (`ANDROID_SERIAL` if several). Expected: 43 tests,
+   0 failures. (The 2026-09-29 run reported 26: `DesignSystemUiTest`'s 12 tests, the
+   engine map view's 3 and the evaluation surface's 2 landed afterwards.) Note: the runner may uninstall the app afterwards; reinstall
    with `installDebug` and re-seed any session you need.
 2. **Acquisition acceptance** — the 30-minute stationary endurance procedure in
    [mobile/ACQUISITION.md](mobile/ACQUISITION.md): queue stays bounded, memory
    stabilizes, measured rates match the manifest.
 3. **Map verification** — the pixel-measured procedure in
    [mobile/MAP_DEVICE_VERIFICATION.md](mobile/MAP_DEVICE_VERIFICATION.md):
-   synthetic fixture, recorded session and live GNSS sources, camera controls,
-   loss timeline geometry, coverage refusal.
+   synthetic fixture, recorded session, live GNSS and navigation-engine sources,
+   camera controls, loss timeline geometry, coverage refusal, and the engine view's
+   staleness/expiry and evaluation-overlay behaviour.
 4. **Recording/export/replay** — record, recover an interrupted session, export
    a local ZIP, replay it; validate the pulled bytes with
    `python tools/validate_phone_recording.py --local <session-dir>` (expected

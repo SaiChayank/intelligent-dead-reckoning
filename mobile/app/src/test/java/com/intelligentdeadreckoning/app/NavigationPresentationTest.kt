@@ -52,10 +52,42 @@ class NavigationPresentationTest {
         assertNull(adapter().accept(nav(record()) { it.copy(position_enu_m = Vector3(Double.NaN,0.0,0.0)) },epoch).point)
         assertNull(adapter().accept(nav(record()) { it.copy(q_enu_from_vehicle_wxyz = Quaternion(2.0,0.0,0.0,0.0)) },epoch).point)
     }
-    @Test fun unavailableAndOutsideCoverageHidePosition() {
-        val unavailable = NavigationState(NavigationStatus.UNINITIALIZED,InitializationMode.DEPLOYABLE,null,null,null,null,null,null,false)
+    @Test fun unavailableFailedAndOutsideCoverageHidePosition() {
+        val unavailable = NavigationState(NavigationStatus.UNINITIALIZED,InitializationMode.DEPLOYABLE,null,null,null,null,null,null,false,null)
         assertNull(adapter().accept(record().let { it.copy(event = it.event.copy(data = unavailable)) },epoch).point)
         assertNull(adapter().accept(nav(record()) { it.copy(origin_wgs84_deg_m = GeoOrigin(0.0,0.0,0.0)) },epoch).point)
+        val failedAdapter = adapter()
+        val active = record()
+        assertNotNull(failedAdapter.accept(active,epoch).point)
+        val failed = nav(record(100)) {
+            it.copy(
+                status = NavigationStatus.FAILED,
+                origin_wgs84_deg_m = null,
+                position_enu_m = null,
+                velocity_enu_m_s = null,
+                q_enu_from_vehicle_wxyz = null,
+                heading_deg = null,
+                calibration_id = null,
+                localization_mode = null,
+            )
+        }
+        val hidden = failedAdapter.accept(failed,failed.event.t_ns)
+        assertNull("a failed engine must not leave the last point looking live",hidden.point)
+        assertTrue(hidden.status.contains("failed"))
+    }
+
+    @Test fun geographicOverflowFromFiniteEnuIsRefusedNotPublished() {
+        val r = nav(record()) { it.copy(position_enu_m = Vector3(Double.MAX_VALUE, Double.MAX_VALUE, 0.0)) }
+        val state = adapter().accept(r,epoch)
+        assertNull(state.point)
+        assertTrue(state.status.contains("geographic") || state.status.contains("coverage"))
+    }
+
+    @Test fun finiteCoordinatesOutsideTheEarthDomainAreNotPresented() {
+        val r = nav(record()) { it.copy(position_enu_m = Vector3(0.0, 20_000_000.0, 0.0)) }
+        val state = adapter().accept(r,epoch)
+        assertNull(state.point)
+        assertTrue(state.status.contains("geographic") || state.status.contains("coverage"))
     }
     @Test fun boundedTrailDoesNotAccumulateAnEntireTrip() {
         val a = adapter(3)
@@ -67,13 +99,44 @@ class NavigationPresentationTest {
         val state = adapter().accept(r,epoch)
         assertNotNull(state.point); assertNull(state.headingDegrees); assertNull(state.speedMetresPerSecond)
     }
-    @Test fun confidenceRequiresCalibratedSameSessionSameTime() {
+    @Test fun confidenceRequiresSameSessionSameTimeAndItsStatePicksTheField() {
         val r = record()
-        val c = r.copy(event = r.event.copy(event_id = "100",data = Confidence(ConfidenceState.CALIBRATED,null,12.0,null)))
-        assertEquals(12.0,adapter().accept(r,epoch,c).accuracy95Metres!!,0.0)
+        val c = r.copy(event = r.event.copy(event_id = "100",data = Confidence(ConfidenceState.CALIBRATED,null,12.0,0.3)))
+        val calibrated = adapter().accept(r,epoch,c)
+        assertEquals(12.0,calibrated.accuracy95Metres!!,0.0)
+        assertEquals(0.3,calibrated.speedStdMetresPerSecond!!,0.0)
+        assertEquals("calibrated",calibrated.confidenceState)
+        assertNull("a calibrated radius never lands in the unvalidated field",calibrated.unvalidatedAccuracy95Metres)
         assertNull(adapter().accept(r,epoch,c.copy(header = c.header.copy(source = Source.REAL))).accuracy95Metres)
         assertNull(adapter().accept(r,epoch,c.copy(event = c.event.copy(t_ns = epoch-1))).accuracy95Metres)
-        assertNull(adapter().accept(r,epoch,c.copy(event = c.event.copy(data = Confidence(ConfidenceState.UNVALIDATED,null,12.0,null)))).accuracy95Metres)
+        // An UNVALIDATED covariance is carried, in its own field: it is the filter's model claim
+        // about itself and it must never be readable as a calibrated 95% accuracy.
+        val u = c.copy(event = c.event.copy(event_id = "101",data = Confidence(ConfidenceState.UNVALIDATED,null,12.0,0.4)))
+        val unvalidated = adapter().accept(r,epoch,u)
+        assertEquals(12.0,unvalidated.unvalidatedAccuracy95Metres!!,0.0)
+        assertEquals(0.4,unvalidated.speedStdMetresPerSecond!!,0.0)
+        assertEquals("unvalidated",unvalidated.confidenceState)
+        assertNull(unvalidated.accuracy95Metres)
+        // A state that has validated nothing is not trusted with a radius at all.
+        val none = c.copy(event = c.event.copy(event_id = "102",data = Confidence(ConfidenceState.UNAVAILABLE,null,12.0,null)))
+        val ignored = adapter().accept(r,epoch,none)
+        assertNull(ignored.accuracy95Metres); assertNull(ignored.unvalidatedAccuracy95Metres)
+        assertNull(ignored.speedStdMetresPerSecond)
+    }
+    @Test fun theUnvalidatedRingIsItsOwnFeatureAndNeverTheProviderRadius() {
+        val base = adapter().accept(record(),epoch)
+        fun kinds(s: MapPresentation) = JsonParser.parseString(MapOverlay.json(s)).asJsonObject["features"].asJsonArray
+            .map { it.asJsonObject["properties"].asJsonObject["kind"].asString }
+        // The engine's own covariance while UNVALIDATED: its own dashed feature, and never the
+        // filled area a calibrated radius or a platform fix radius draws.
+        assertTrue(kinds(base.copy(unvalidatedAccuracy95Metres = 21.5)).contains("uncertainty"))
+        assertFalse(kinds(base.copy(unvalidatedAccuracy95Metres = 21.5)).contains("accuracy"))
+        assertTrue(kinds(base.copy(accuracy95Metres = 8.0)).contains("accuracy"))
+        assertFalse(kinds(base.copy(accuracy95Metres = 8.0)).contains("uncertainty"))
+        // The platform's fix radius is a provider figure on a different record: it can only ever
+        // draw the fix ring, never the engine's unvalidated covariance.
+        assertTrue(kinds(base.copy(fixRadiusMetres = 6.0)).contains("accuracy"))
+        assertFalse(kinds(base.copy(fixRadiusMetres = 6.0)).contains("uncertainty"))
     }
     @Test fun fixtureTransitionsAreContinuousAndRemainSynthetic() {
         for(boundary in listOf(10_000L,20_000L)) {

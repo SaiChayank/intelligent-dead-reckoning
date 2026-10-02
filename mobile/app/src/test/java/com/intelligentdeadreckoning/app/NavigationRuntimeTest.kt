@@ -1,5 +1,6 @@
 package com.intelligentdeadreckoning.app
 
+import com.intelligentdeadreckoning.app.navigation.ENGINE_OUTPUT_CONTRACT_VERSION
 import com.intelligentdeadreckoning.app.navigation.NavigationPhase
 import com.intelligentdeadreckoning.app.navigation.NavigationRuntime
 import com.intelligentdeadreckoning.app.navigation.UninitializedNavigationEngine
@@ -58,11 +59,14 @@ class NavigationRuntimeTest {
         var stops = 0
         var resets = 0
         var throwOnAccept = false
+        var throwOnInitialize = false
+        var failReset = false
         private val queued = ArrayDeque<Record>()
 
         fun queue(vararg records: Record) = queued.addAll(records)
 
         override fun initialize(session: EngineSession, calibration: Record, mode: InitializationMode) {
+            if (throwOnInitialize) throw IllegalStateException("init exploded")
             sessions += session
             modes += mode
         }
@@ -84,7 +88,7 @@ class NavigationRuntimeTest {
         }
 
         override fun stop() { stops++ }
-        override fun reset() { resets++ }
+        override fun reset() { resets++; if (failReset) throw IllegalStateException("reset exploded") }
     }
 
     // The scope is the TestScope itself (same pattern as ReplayTest): backgroundScope work
@@ -113,7 +117,7 @@ class NavigationRuntimeTest {
     fun startStopAndResetOwnExactlyOneEngineSession() = runTest {
         val engine = FakeEngine()
         val runtime = runtime(engine)
-        val live = Header("session-a", Source.REAL)
+        val live = Header("session-a", Source.REAL, "1.1.0")
 
         assertTrue(runtime.start(live, 42L))
         advanceUntilIdle()
@@ -153,7 +157,7 @@ class NavigationRuntimeTest {
     fun stopRequestedBeforeInitializationCompletesNeverReportsRunning() = runTest {
         val engine = FakeEngine()
         val runtime = runtime(engine)
-        val live = Header("session-a", Source.REAL)
+        val live = Header("session-a", Source.REAL, "1.1.0")
 
         val phases = mutableListOf<NavigationPhase>()
         val collector = launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -182,10 +186,10 @@ class NavigationRuntimeTest {
     fun duplicateStartIsRejectedWithoutTouchingTheSession() = runTest {
         val engine = FakeEngine()
         val runtime = runtime(engine)
-        assertTrue(runtime.start(Header("session-a", Source.REAL), 0L))
+        assertTrue(runtime.start(Header("session-a", Source.REAL, "1.1.0"), 0L))
         advanceUntilIdle()
 
-        assertFalse(runtime.start(Header("session-b", Source.REAL), 99L))
+        assertFalse(runtime.start(Header("session-b", Source.REAL, "1.1.0"), 99L))
         advanceUntilIdle()
         assertEquals(1, engine.sessions.size)
         assertEquals("session-a", runtime.state.value.sessionId)
@@ -195,17 +199,35 @@ class NavigationRuntimeTest {
     }
 
     @Test
+    fun engineSessionRefusesAContractVersionThatCannotCarryEngineOutput() = runTest {
+        val engine = FakeEngine()
+        val runtime = runtime(engine)
+        // The engine output stream speaks the navigation exchange contract; a session bound to
+        // 1.0.0 could not encode a localization_mode and is refused without side effects.
+        assertFalse(runtime.start(Header("session-a", Source.REAL), 0L))
+        advanceUntilIdle()
+        assertTrue(engine.sessions.isEmpty())
+        assertEquals(NavigationPhase.IDLE, runtime.state.value.phase)
+        assertEquals(Header("session-a", Source.REAL, "1.1.0"), Header("session-a", Source.REAL, ENGINE_OUTPUT_CONTRACT_VERSION))
+        assertTrue(runtime.start(Header("session-a", Source.REAL, ENGINE_OUTPUT_CONTRACT_VERSION), 0L))
+        advanceUntilIdle()
+        assertEquals(1, engine.sessions.size)
+        runtime.close()
+        advanceUntilIdle()
+    }
+
+    @Test
     fun recordsOfAnotherSourceOrSessionNeverReachTheEngine() = runTest {
         val engine = FakeEngine()
         val runtime = runtime(engine)
-        val live = Header("session-a", Source.REAL)
+        val live = Header("session-a", Source.REAL, "1.1.0")
         assertTrue(runtime.start(live, 0L))
         advanceUntilIdle()
 
         // Right session, wrong source.
-        assertFalse(runtime.offer(imu(Header("session-a", Source.SIMULATION), 1)))
+        assertFalse(runtime.offer(imu(Header("session-a", Source.SIMULATION, "1.1.0"), 1)))
         // Right source, wrong session.
-        assertFalse(runtime.offer(imu(Header("session-b", Source.REAL), 2)))
+        assertFalse(runtime.offer(imu(Header("session-b", Source.REAL, "1.1.0"), 2)))
         // Right header, wrong payload type for the engine.
         assertFalse(runtime.offer(Record(live, Event("3", 1_003L, 1_003L, DiagnosticEvent(
             Severity.INFO, "NOTE", "not routable", 0,
@@ -221,19 +243,19 @@ class NavigationRuntimeTest {
     fun replayRowsAreIsolatedFromLiveSessionsAndViceVersa() = runTest {
         val engine = FakeEngine()
         val runtime = runtime(engine)
-        val live = Header("session-a", Source.REAL)
+        val live = Header("session-a", Source.REAL, "1.1.0")
         assertTrue(runtime.start(live, 0L))
         advanceUntilIdle()
 
         // A replayed row of the same recorded session id must not enter the live session.
-        val replayed = Header("session-a", Source.REPLAY_REAL)
+        val replayed = Header("session-a", Source.REPLAY_REAL, "1.1.0")
         assertFalse(runtime.offer(imu(replayed, 1)))
         assertEquals(1, runtime.state.value.rejected)
 
         // The mirror case: a replay session rejects live rows and routes replayed ones.
         assertTrue(runtime.stop())
         advanceUntilIdle()
-        val replaySession = Header("recording-1", Source.REPLAY_SIMULATION)
+        val replaySession = Header("recording-1", Source.REPLAY_SIMULATION, "1.1.0")
         assertTrue(runtime.start(replaySession, 0L))
         advanceUntilIdle()
         assertFalse(runtime.offer(imu(live, 2)))
@@ -250,7 +272,7 @@ class NavigationRuntimeTest {
     fun backgroundStopRoutesAcceptedRowsThenStopsOnceWithoutAutoRestart() = runTest {
         val engine = FakeEngine()
         val runtime = runtime(engine)
-        val live = Header("session-a", Source.REAL)
+        val live = Header("session-a", Source.REAL, "1.1.0")
         assertTrue(runtime.start(live, 0L))
         advanceUntilIdle()
 
@@ -275,15 +297,15 @@ class NavigationRuntimeTest {
     fun switchingSourceStopsTheOldSessionBeforeTheNewOneBinds() = runTest {
         val engine = FakeEngine()
         val runtime = runtime(engine)
-        val live = Header("session-a", Source.REAL)
+        val live = Header("session-a", Source.REAL, "1.1.0")
         assertTrue(runtime.start(live, 0L))
         advanceUntilIdle()
 
         // A source change must stop first; a second session while one runs is refused.
-        assertFalse(runtime.start(Header("session-b", Source.SIMULATION), 7L))
+        assertFalse(runtime.start(Header("session-b", Source.SIMULATION, "1.1.0"), 7L))
         assertTrue(runtime.stop())
         advanceUntilIdle()
-        val simulation = Header("session-b", Source.SIMULATION)
+        val simulation = Header("session-b", Source.SIMULATION, "1.1.0")
         assertTrue(runtime.start(simulation, 7L))
         advanceUntilIdle()
 
@@ -300,7 +322,7 @@ class NavigationRuntimeTest {
     fun ingressIsBoundedAndDropsAreCounted() = runTest {
         val engine = FakeEngine()
         val runtime = runtime(engine, ingress = 8)
-        val live = Header("session-a", Source.REAL)
+        val live = Header("session-a", Source.REAL, "1.1.0")
         assertTrue(runtime.start(live, 0L))
         // Deliberately no advanceUntilIdle before the flood: while the worker has not started
         // consuming, the bound is exact — nothing can be hand-delivered to a waiting receiver.
@@ -324,7 +346,7 @@ class NavigationRuntimeTest {
         val runtime = runtime(engine)
         val outputs = mutableListOf<Record>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { runtime.output.collect { outputs += it } }
-        val live = Header("session-a", Source.REAL)
+        val live = Header("session-a", Source.REAL, "1.1.0")
         assertTrue(runtime.start(live, 0L))
         advanceUntilIdle()
 
@@ -346,11 +368,41 @@ class NavigationRuntimeTest {
     }
 
     @Test
+    fun initializationFailureIsContainedAndNoSpatialOutputEscapes() = runTest {
+        val engine = FakeEngine().apply { throwOnInitialize = true }
+        val runtime = runtime(engine)
+        val outputs = mutableListOf<Record>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { runtime.output.collect { outputs += it } }
+        assertTrue(runtime.start(Header("session-init-failure", Source.REAL, "1.1.0"), 0L))
+        advanceUntilIdle()
+        assertEquals(NavigationPhase.FAILED, runtime.state.value.phase)
+        assertTrue(runtime.state.value.message.contains("acquisition and recording are unaffected"))
+        assertEquals(1, outputs.map { it.event.data }.filterIsInstance<DiagnosticEvent>().count { it.code == "ENGINE_FAILURE" })
+        assertTrue(outputs.none { it.event.data is NavigationState })
+        assertFalse(runtime.offer(imu(Header("session-init-failure", Source.REAL, "1.1.0"), 1)))
+        runtime.close(); advanceUntilIdle()
+    }
+
+    @Test
+    fun resetFailureRemainsContainedAndKeepsTheRuntimeFailed() = runTest {
+        val engine = FakeEngine()
+        val runtime = runtime(engine)
+        engine.failReset = true
+        assertFalse(runtime.reset())
+        assertEquals(NavigationPhase.FAILED, runtime.state.value.phase)
+        assertTrue(runtime.state.value.message.contains("failed to reset"))
+        engine.failReset = false
+        assertTrue(runtime.reset())
+        assertEquals(NavigationPhase.IDLE, runtime.state.value.phase)
+        runtime.close(); advanceUntilIdle()
+    }
+
+    @Test
     fun failureIsTerminalUntilAnExplicitReset() = runTest {
         val engine = FakeEngine()
         engine.throwOnAccept = true
         val runtime = runtime(engine)
-        val live = Header("session-a", Source.REAL)
+        val live = Header("session-a", Source.REAL, "1.1.0")
         assertTrue(runtime.start(live, 0L))
         advanceUntilIdle()
         assertTrue(runtime.offer(imu(live, 1)))
@@ -360,10 +412,10 @@ class NavigationRuntimeTest {
         // No automatic restart, and a new session needs the failure cleared first.
         repeat(3) { advanceUntilIdle() }
         assertEquals(1, engine.sessions.size)
-        assertFalse(runtime.start(Header("session-b", Source.REAL), 0L))
+        assertFalse(runtime.start(Header("session-b", Source.REAL, "1.1.0"), 0L))
         assertTrue(runtime.reset())
         assertEquals(1, engine.resets)
-        assertTrue(runtime.start(Header("session-b", Source.REAL), 0L))
+        assertTrue(runtime.start(Header("session-b", Source.REAL, "1.1.0"), 0L))
         advanceUntilIdle()
         assertEquals(2, engine.sessions.size)
         runtime.close()
@@ -374,7 +426,7 @@ class NavigationRuntimeTest {
     fun resetIsRejectedWhileARunningSessionExists() = runTest {
         val engine = FakeEngine()
         val runtime = runtime(engine)
-        assertTrue(runtime.start(Header("session-a", Source.REAL), 0L))
+        assertTrue(runtime.start(Header("session-a", Source.REAL, "1.1.0"), 0L))
         advanceUntilIdle()
         assertFalse(runtime.reset())
         advanceUntilIdle()
@@ -390,14 +442,14 @@ class NavigationRuntimeTest {
         val runtime = runtime(engine)
         val outputs = mutableListOf<Record>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { runtime.output.collect { outputs += it } }
-        val live = Header("session-a", Source.REAL)
+        val live = Header("session-a", Source.REAL, "1.1.0")
         assertTrue(runtime.start(live, 0L))
         advanceUntilIdle()
 
         engine.queue(
             Record(live, Event("1", 1L, 1L, NavigationState(
                 NavigationStatus.CALIBRATING, InitializationMode.EVALUATION,
-                null, null, null, null, null, null, false,
+                null, null, null, null, null, null, false, null,
             ))),
             Record(live, Event("2", 2L, 2L, GnssQualityState(GnssState.ACQUIRING, null, null, listOf("NO_FIX")))),
             Record(live, Event("3", 3L, 3L, Confidence(ConfidenceState.UNAVAILABLE, null, null, null))),
@@ -421,7 +473,7 @@ class NavigationRuntimeTest {
     @Test
     fun placeholderEngineEstimatesNothingAndSaysSo() {
         val engine = UninitializedNavigationEngine()
-        val header = Header("session-a", Source.REAL)
+        val header = Header("session-a", Source.REAL, "1.1.0")
         engine.initialize(
             EngineSession(header, "boot", 0L),
             Record(header, Event("0", 0L, 0L, CalibrationResult("none", CalibrationStatus.PENDING, null, null, null, null))),

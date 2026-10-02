@@ -2,6 +2,7 @@ package com.intelligentdeadreckoning.app.recording
 
 import com.intelligentdeadreckoning.contracts.recording.v1.*
 import com.intelligentdeadreckoning.contracts.v1.Record
+import com.intelligentdeadreckoning.app.security.SafeSecurityMessages
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
@@ -66,7 +67,7 @@ class LocalRecorder(
         mutable.value = RecorderState(RecorderPhase.STARTING, message = "Checking interrupted recordings…")
         scope.launch {
             val result = try { storage.recover() } catch (e: Exception) {
-                RecoverySummary(failed = 1, message = "Recovery failed: ${e.javaClass.simpleName}: ${e.message}")
+                RecoverySummary(failed = 1, message = "Recovery failed (${SafeSecurityMessages.code(e, "RECOVERY_FAILED")}); session data was preserved.")
             }
             synchronized(lock) {
                 loading = false
@@ -74,7 +75,7 @@ class LocalRecorder(
                     result.failed > 0 -> RecorderPhase.FAILED
                     result.recovered > 0 -> RecorderPhase.RECOVERED
                     else -> RecorderPhase.IDLE
-                }, message = result.message)
+                }, message = "${result.message} ${result.failed.takeIf { it > 0 }?.let { "Data was preserved; inspect the session before exporting." } ?: ""}".trim())
                 if (closed) scope.cancel()
             }
         }
@@ -103,8 +104,11 @@ class LocalRecorder(
                     }
                 }
                 synchronized(lock) { if (active.accepting) endAdmission(active, "Acquisition stream ended.") }
-            } catch (e: CancellationException) { throw e }
-            catch (e: Exception) { synchronized(lock) { failAdmission(active, "STREAM_FAILURE: ${e.message}", 0) } }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                synchronized(lock) { failAdmission(active, "STREAM_FAILURE", 0) }
+            }
         }
         scope.launch { write(active) }
         true
@@ -159,7 +163,7 @@ class LocalRecorder(
             output.sync()
         } catch (e: Exception) {
             synchronized(lock) {
-                failAdmission(active, "WRITE_FAILURE: ${e.javaClass.simpleName}: ${e.message}", if (pending) 1 else 0)
+                failAdmission(active, "WRITE_FAILURE_${SafeSecurityMessages.code(e, "UNSPECIFIED")}", if (pending) 1 else 0)
                 var remaining = 0L
                 while (active.queue.tryReceive().isSuccess) remaining++
                 mutable.value = mutable.value.copy(dropped = mutable.value.dropped + remaining, writeErrors = mutable.value.writeErrors + 1)
@@ -167,7 +171,7 @@ class LocalRecorder(
         } finally {
             try { output?.close() } catch (e: Exception) {
                 synchronized(lock) {
-                    active.failure = active.failure ?: "CLOSE_FAILURE: ${e.message}"
+                    active.failure = active.failure ?: "CLOSE_FAILURE"
                     mutable.value = mutable.value.copy(writeErrors = mutable.value.writeErrors + 1)
                 }
             }
@@ -184,7 +188,7 @@ class LocalRecorder(
         // create() may have failed because the ID already exists. Never overwrite that session.
         try { if (output != null) storage.finalize(finalized) } catch (e: Exception) {
             synchronized(lock) {
-                active.failure = "FINALIZATION_FAILURE: ${e.javaClass.simpleName}: ${e.message}; previous metadata preserved for recovery."
+                active.failure = "FINALIZATION_FAILURE; previous metadata preserved for recovery."
                 mutable.value = mutable.value.copy(writeErrors = mutable.value.writeErrors + 1)
             }
         }

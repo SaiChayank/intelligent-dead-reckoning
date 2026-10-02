@@ -1,16 +1,18 @@
 # IDR Android foundation
 
 The native Android application is the main product of Intelligent Dead Reckoning
-(SIH #26168). This is a simulation and foreground acquisition app; navigation
-is still planned. It is a standalone Gradle project inside the existing repository.
+(SIH #26168). Simulation, foreground acquisition, local recording/replay and a
+GNSS+INS navigation engine that drives the map are implemented; routing and AI are
+not. It is a standalone Gradle project inside the existing repository.
 
 ## What works
 
-- Optional central Hyderabad offline map preview: bundled tiles, camera controls, attribution and an explicitly started synthetic marker/heading/trail demo. A v1 navigation presentation adapter is tested but not connected to a real engine. Live phone GNSS, recorded sessions and the synthetic fixture are three separate, never-blended map sources; no fusion, DR or routing exists yet. See [map scope, build results and device gate](OFFLINE_MAP.md).
+- Optional central Hyderabad offline map preview: bundled tiles, camera controls, attribution and an explicitly started synthetic marker/heading/trail demo. Four never-blended map sources: the synthetic fixture, a recorded session, live raw phone GNSS, and the real navigation engine's published output (position, heading once a calibration exists, speed, trail, acquisition GNSS quality, runtime status, a confidence radius labelled with its state — `CALIBRATED` only when the engine says so, otherwise the engine's covariance drawn as a dashed ring and labelled `UNVALIDATED`, never the platform's own fix radius — and the contract 1.1.0 localization mode, plus an opt-in raw-vs-map-matched evaluation overlay). No routing exists yet. See [map scope and device gate](OFFLINE_MAP.md), [the engine view](MAP_ENGINE_VIEW.md) and [confidence semantics](CONFIDENCE.md).
 - Recording details, paged local sessions and explicit local ZIP export through Android's document picker are implemented. See [export workflow and device-validation gate](EXPORT.md).
 - Read-only local replay supports start/pause/resume/stop with explicit `replay_real` / `replay_simulation` labels. See [replay policy and verification](REPLAY.md).
 
-- Kotlin + Jetpack Compose / Material 3 UI: Dashboard, Diagnostics and About.
+- **Evaluation tab** — renders the checked-in `contracts/evaluation/v1` arm-comparison report (classical INS, classical fusion, + constraints, + AI correction, + map matching) with every absent value stated as `not measured` / `not implemented`, never filled; the JVM harness regenerates the report from the production pipeline and requires it to match the shipped bytes, so the screen shows the evidence the tests enforce. It is a console-free engineering page: the driver's Home and Signals pages gained no metric. See [EVALUATION.md](EVALUATION.md).
+- Kotlin + Jetpack Compose / Material 3 UI: Dashboard, Map, Diagnostics, Evaluation and About.
 - A visible `SIMULATION` or `REAL PHONE` banner on every screen and an explicit
   source selector. Simulation values remain scripted demo data.
 - Phone sensors mode collects accelerometer, gyroscope, magnetometer and optional
@@ -30,10 +32,12 @@ explicit Start/Stop, bounded writing and interrupted-session recovery. See
 [recording architecture and device acceptance](RECORDING.md). Its new physical
 device gate is separate from the frozen acquisition verification.
 
-Not implemented: ZIP import, replay seek/speed controls, rotation-vector events, propagation/routing, INS, AI,
-fusion or shared-core implementation. Phone-to-vehicle calibration is implemented and reached only
-through the navigation runtime — see [CALIBRATION.md](CALIBRATION.md). Host tests/build pass;
-connected-device acquisition acceptance still requires the procedure linked above.
+Not implemented: ZIP import, replay seek/speed controls, rotation-vector events,
+routing, AI correction, deployable calibration output, or a calibration collection flow in
+the UI. The navigation engine (a 15-state error-state EKF) and the phone-to-vehicle
+calibration/constraint engines are implemented and reached only through the navigation
+runtime — see [CALIBRATION.md](CALIBRATION.md) and [FUSION.md](FUSION.md). Host
+tests/build pass; connected-device acceptance still requires the procedures linked above.
 
 ## Interface and design system
 
@@ -68,7 +72,8 @@ instead of covering page content, so scrolled controls stay reachable and clicka
 
 This is a presentation change only. Acquisition, recording, export, replay, contracts, the map
 renderer and the frozen device procedures are unchanged, and no instrumented test tag, control
-label or user-visible status string was altered. Verified here: **195 JVM tests pass**, both APKs
+label or user-visible status string was altered. Verified here at the time: **195 JVM tests
+passed**, both APKs
 build, `assembleDebugAndroidTest` still compiles the device suite, and lint reports **0 errors**
 with no source warnings. Physical-device verification of the new surface (layout on the target
 phone, gesture ergonomics, sunlight contrast and the full instrumented suite) is **not** performed
@@ -201,7 +206,15 @@ not the repository's historical Phase 0 reports.
 Manual acceptance: Start on Dashboard; verify changing demo values; switch to
 Diagnostics; Stop and verify values freeze; start a new demo; press Home and
 return, verifying it stays stopped. Read About for scope/privacy boundaries.
+The host suites currently stand at **348 Kotlin JVM tests** and **272 Python
+tests** (1 environment-dependent skip), lint reports **0 errors** (one
+pre-existing target-SDK warning), and `assembleDebugAndroidTest` compiles the
+43-method device suite without running it.
 Never test the UI while driving.
+
+## Security and privacy verification
+
+The local/offline boundary, automated gates, and hands-on device checklist are documented in [SECURITY_VERIFICATION.md](SECURITY_VERIFICATION.md). It covers the effective permission set, no-backup private recordings, user-initiated local export, safe paths, strict codecs, offline asset and experiment integrity, the dependency audit, and the fact that no model is currently deployed. Host tests/builds do not substitute for the documented physical-device checks.
 
 ## Privacy and research boundaries
 

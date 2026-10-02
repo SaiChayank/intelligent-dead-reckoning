@@ -59,7 +59,8 @@ class ReplayReader(private val input: InputStream, private val metadata: Recordi
             channels.merge(record.event.data.type, 1L, Long::plus)
             return record.copy(header = record.header.copy(source = replaySource(metadata.source)))
         } catch (e: Exception) {
-            throw IOException("Replay line ${count + 1}: ${e.message}", e)
+            val code = com.intelligentdeadreckoning.app.security.SafeSecurityMessages.code(e, "REPLAY_RECORD_REJECTED")
+            throw IOException("Replay line ${count + 1}: $code", e)
         }
     }
 }

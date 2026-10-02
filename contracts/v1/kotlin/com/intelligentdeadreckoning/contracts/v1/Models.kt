@@ -51,6 +51,18 @@ enum class InitializationMode(override val wire: String) : WireEnum {
     EVALUATION("evaluation"),
     DEPLOYABLE("deployable")
 }
+/** Which regime is responsible for the currently presented position (contract 1.1.0).
+ * GNSS: the presented position is a GNSS fix the solution is standing on (an anchor), not an
+ * inertial or filter estimate. DR: inertial dead reckoning alone; no GNSS update has been
+ * accepted within the stale bound. FUSED: the integrated filter solution with current GNSS
+ * aiding. RECOVERY: GNSS aiding resumed after a DR stretch and the filter is still converging
+ * toward the fixes. Null exactly when no position is presented. */
+enum class LocalizationMode(override val wire: String) : WireEnum {
+    GNSS("gnss"),
+    DR("dr"),
+    FUSED("fused"),
+    RECOVERY("recovery")
+}
 enum class GnssState(override val wire: String) : WireEnum {
     UNAVAILABLE("unavailable"),
     ACQUIRING("acquiring"),
@@ -110,7 +122,9 @@ data class NavigationState(
     val q_enu_from_vehicle_wxyz: Quaternion?,
     val heading_deg: Double?,
     val calibration_id: String?,
-    val gnss_used_after_initialization: Boolean
+    val gnss_used_after_initialization: Boolean,
+    // 1.1.0 addition: absent (not null) in 1.0.0 records, which cannot represent it.
+    val localization_mode: LocalizationMode?
 ) : Payload { override val type = "navigation" }
 data class GnssQualityState(
     val state: GnssState,

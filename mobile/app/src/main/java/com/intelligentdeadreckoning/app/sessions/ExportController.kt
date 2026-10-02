@@ -1,6 +1,7 @@
 package com.intelligentdeadreckoning.app.sessions
 
 import java.io.OutputStream
+import com.intelligentdeadreckoning.app.security.SafeSecurityMessages
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,6 +12,11 @@ data class ExportState(val phase: ExportPhase = ExportPhase.IDLE, val id: String
 }
 class ExportController(private val files: SessionFiles, private val scope: CoroutineScope,
                        private val io: CoroutineDispatcher = Dispatchers.IO) {
+    private fun safeFailure(error: Exception): String = when (error) {
+        is SecurityException -> SafeSecurityMessages.code(error, "EXPORT_ACCESS_DENIED")
+        is java.io.IOException -> SafeSecurityMessages.code(error, "EXPORT_IO_ERROR")
+        else -> SafeSecurityMessages.code(error, "EXPORT_REJECTED")
+    }
     private val mutable = MutableStateFlow(ExportState())
     val state = mutable.asStateFlow()
     private var job: Job? = null
@@ -37,7 +43,7 @@ class ExportController(private val files: SessionFiles, private val scope: Corou
             } catch (e: CancellationException) {
                 mutable.value = current.copy(phase = ExportPhase.CANCELLED, message = "Export interrupted; partial destination may remain. Original unchanged.")
             } catch (e: Exception) {
-                mutable.value = current.copy(phase = ExportPhase.FAILED, message = "Export failed: ${e.message}. Partial destination may remain; original unchanged.")
+                mutable.value = current.copy(phase = ExportPhase.FAILED, message = "Export failed (${safeFailure(e)}). Partial destination may remain; original unchanged.")
             }
         }
     }

@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -55,10 +56,13 @@ UNSEALED = "0" * 64
 
 def seal(directory: Path, dry_run: bool = False) -> dict:
     """Fill in session digests, then write the integrity manifest. Returns a report."""
-    root = Path(directory)
-    if root.is_symlink() or not root.is_dir():
-        raise ExperimentError("MISSING_EXPERIMENT", root.name)
+    root = Path(directory).absolute()
+    if any(path.is_symlink() for path in (root, *root.parents)) or not root.is_dir():
+        raise ExperimentError("UNSAFE_PATH", root.name)
+    root = root.resolve()
     manifest_path = root / MANIFEST_NAME
+    if manifest_path.is_symlink():
+        raise ExperimentError("UNSAFE_PATH", MANIFEST_NAME)
     try:
         manifest = decode_manifest(manifest_path.read_bytes())
     except OSError:
@@ -72,7 +76,12 @@ def seal(directory: Path, dry_run: bool = False) -> dict:
     for entry in manifest.sessions:
         relative = f"{SESSIONS_DIRNAME}/{entry.session_id}/{MEASUREMENTS_NAME}"
         target = root / relative
-        if target.is_symlink() or not target.is_file():
+        current = root
+        for segment in relative.split("/"):
+            current = current / segment
+            if current.is_symlink():
+                raise ExperimentError("UNSAFE_PATH", relative)
+        if not target.is_file():
             raise ExperimentError("MISSING_ARTIFACT", relative)
         digest = sha256_file(target)
         computed.append({
@@ -102,8 +111,28 @@ def seal(directory: Path, dry_run: bool = False) -> dict:
     manifest_bytes = encode_manifest(resealed)
     manifest_changed = manifest_bytes != manifest_path.read_bytes()
     if not dry_run:
-        manifest_path.write_bytes(manifest_bytes)
-        (root / INTEGRITY_NAME).write_bytes(build_integrity(root))
+        integrity_path = root / INTEGRITY_NAME
+        manifest_temporary: Path | None = None
+        integrity_temporary: Path | None = None
+        try:
+            with tempfile.NamedTemporaryFile(prefix=".experiment-", suffix=".tmp", dir=root,
+                                             delete=False) as handle:
+                manifest_temporary = Path(handle.name)
+                handle.write(manifest_bytes)
+            manifest_temporary.replace(manifest_path)
+            # Hash the final experiment tree before creating the in-directory temp file,
+            # so the temp can never become an artifact in its own integrity manifest.
+            integrity_bytes = build_integrity(root)
+            with tempfile.NamedTemporaryFile(prefix=".integrity-", suffix=".tmp", dir=root,
+                                             delete=False) as handle:
+                integrity_temporary = Path(handle.name)
+                handle.write(integrity_bytes)
+            integrity_temporary.replace(integrity_path)
+        finally:
+            if manifest_temporary is not None:
+                manifest_temporary.unlink(missing_ok=True)
+            if integrity_temporary is not None:
+                integrity_temporary.unlink(missing_ok=True)
         # Verify with the reader, not with the writer's own reasoning.
         open_experiment(root)
     return {

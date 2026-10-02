@@ -152,24 +152,35 @@ def _field(v, rule, path):
     return n
 
 
+# Versions this codec speaks. A reader opts into versions explicitly: records declaring any
+# other contract_version are rejected whole, including patch differences. 1.1.0 adds the
+# navigation field localization_mode; 1.0.0 navigation records cannot carry it at all.
+CONTRACT_VERSIONS = ("1.0.0", "1.1.0")
+
 # Per-event declarations are intentionally explicit and mirrored in the Kotlin codec.
 SPECS = {
     "imu": (ImuMeasurement, {"sensor":"Sensor","frame":"DeviceFrame","unit":"ImuUnit","xyz":"vec","accuracy":"SensorAccuracy"}),
     "gnss": (GnssMeasurement, {"latitude_deg":"lat","longitude_deg":"lon","altitude_m":"num?","altitude_reference":"AltitudeReference?","speed_m_s":"nonneg?","bearing_deg":"heading?","horizontal_accuracy_m":"nonneg?","vertical_accuracy_m":"nonneg?","satellites_used":"int?","provider":"str","utc_ms":"int?"}),
     "calibration": (CalibrationResult, {"id":"str","status":"CalibrationStatus","q_vehicle_from_device_wxyz":"quat?","gyro_bias_rad_s":"vec?","accelerometer_bias_m_s2":"vec?","confidence":"prob?"}),
-    "navigation": (NavigationState, {"status":"NavigationStatus","initialization_mode":"InitializationMode","origin_wgs84_deg_m":"origin?","position_enu_m":"vec?","velocity_enu_m_s":"vec?","q_enu_from_vehicle_wxyz":"quat?","heading_deg":"heading?","calibration_id":"str?","gnss_used_after_initialization":"bool"}),
+    "navigation": (NavigationState, {"status":"NavigationStatus","initialization_mode":"InitializationMode","origin_wgs84_deg_m":"origin?","position_enu_m":"vec?","velocity_enu_m_s":"vec?","q_enu_from_vehicle_wxyz":"quat?","heading_deg":"heading?","calibration_id":"str?","gnss_used_after_initialization":"bool","localization_mode":"LocalizationMode?"}),
     "gnss_quality": (GnssQualityState, {"state":"GnssState","fix_age_s":"nonneg?","satellites_used":"int?","reasons":"strings"}),
     "confidence": (Confidence, {"state":"ConfidenceState","probability":"prob?","horizontal_accuracy_95_m":"nonneg?","speed_std_m_s":"nonneg?"}),
     "diagnostic": (DiagnosticEvent, {"severity":"Severity","code":"code","message":"str","dropped_count":"int"}),
 }
 
 
-def _payload(kind, raw):
+def _payload(kind, raw, version):
     if type(kind) is not str or kind not in SPECS:
         _fail("INVALID_ENUM", "$.event.type")
     model, rules = SPECS[kind]
+    # 1.0.0 navigation predates localization_mode: the key is forbidden there (absent,
+    # never null) and decodes to None. 1.1.0 requires the key with an explicit value or null.
+    if kind == "navigation" and version == "1.0.0":
+        rules = {k: r for k, r in rules.items() if k != "localization_mode"}
     _keys(raw, rules, "$.event.data")
     values = {k: _field(raw[k], rule, "$.event.data."+k) for k, rule in rules.items()}
+    if kind == "navigation" and version == "1.0.0":
+        values["localization_mode"] = None
     p = "$.event.data"
     if kind == "imu":
         expected = {Sensor.ACCELEROMETER: ImuUnit.METRES_PER_SECOND_SQUARED,
@@ -192,6 +203,15 @@ def _payload(kind, raw):
         if values["status"] in (NavigationStatus.UNINITIALIZED, NavigationStatus.CALIBRATING, NavigationStatus.FAILED):
             if any(values[k] is not None for k in spatial + ("heading_deg",)):
                 _fail("INVARIANT", p)
+        if version == "1.1.0":
+            # A mode names the regime of a presented position: no position, no mode, and a
+            # presented position must name its regime. 1.0.0 records are exempt: they cannot
+            # represent the field at all.
+            if (values["localization_mode"] is None) != (values["position_enu_m"] is None):
+                _fail("INVARIANT", p+".localization_mode")
+            if values["localization_mode"] in (LocalizationMode.FUSED, LocalizationMode.RECOVERY) and \
+                    not values["gnss_used_after_initialization"]:
+                _fail("INVARIANT", p+".localization_mode")
     if kind == "confidence" and values["state"] != ConfidenceState.CALIBRATED and values["probability"] is not None:
         _fail("INVARIANT", p+".probability")
     return model(**values)
@@ -199,16 +219,17 @@ def _payload(kind, raw):
 
 def _record(raw):
     _keys(raw, ("contract_version", "session_id", "source", "event"), "$")
-    if raw["contract_version"] != "1.0.0":
+    version = raw["contract_version"]
+    if type(version) is not str or version not in CONTRACT_VERSIONS:
         _fail("INVALID_VERSION", "$.contract_version")
-    header = Header(_string(raw["session_id"], "$.session_id"), _field(raw["source"], "Source", "$.source"))
+    header = Header(_string(raw["session_id"], "$.session_id"), _field(raw["source"], "Source", "$.source"), version)
     e = raw["event"]
     _keys(e, ("event_id", "type", "t_ns", "received_ns", "data"), "$.event")
     _decimal(e["event_id"], "$.event.event_id")
     t, received = _decimal(e["t_ns"], "$.event.t_ns"), _decimal(e["received_ns"], "$.event.received_ns")
     if received < t:
         _fail("INVARIANT", "$.event.received_ns")
-    return Record(header, Event(e["event_id"], t, received, _payload(e["type"], e["data"])))
+    return Record(header, Event(e["event_id"], t, received, _payload(e["type"], e["data"], version)))
 
 
 def _pairs(pairs):
@@ -279,9 +300,16 @@ def encode_json(record: Record, limits: Limits = Limits()) -> bytes:
             _fail("INVALID_MODEL", "$.event.data."+key)
     _integer(e.t_ns, "$.event.t_ns")
     _integer(e.received_ns, "$.event.received_ns")
+    data = {f.name: _wire_value(getattr(e.data, f.name)) for f in fields(e.data)}
+    if e.data.TYPE == "navigation" and h.contract_version == "1.0.0":
+        # A 1.0.0 envelope cannot carry localization_mode. Dropping a non-null value would
+        # silently lose meaning, so a typed caller must declare a 1.1.0 header instead.
+        if data["localization_mode"] is not None:
+            _fail("INVALID_MODEL", "$.event.data.localization_mode")
+        del data["localization_mode"]
     raw = dict(contract_version=h.contract_version, session_id=h.session_id, source=h.source.value,
                event=dict(event_id=e.event_id, type=e.data.TYPE, t_ns=str(e.t_ns), received_ns=str(e.received_ns),
-                          data={f.name: _wire_value(getattr(e.data, f.name)) for f in fields(e.data)}))
+                          data=data))
     _record(raw)  # Identical constraints on read and write; never normalize a quaternion.
     try:
         out = json.dumps(raw, ensure_ascii=False, allow_nan=False, separators=(",", ":")).encode("utf-8")

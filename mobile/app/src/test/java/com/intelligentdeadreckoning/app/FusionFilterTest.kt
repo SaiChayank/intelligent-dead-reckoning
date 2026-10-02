@@ -17,6 +17,7 @@ import com.intelligentdeadreckoning.app.fusion.GnssInsEkf
 import com.intelligentdeadreckoning.app.fusion.GnssUpdateOutcome
 import com.intelligentdeadreckoning.app.fusion.GnssUpdateResult
 import com.intelligentdeadreckoning.app.fusion.PropagationOutcome
+import com.intelligentdeadreckoning.app.fusion.isUsableCovariance
 import com.intelligentdeadreckoning.contracts.v1.Quaternion
 import com.intelligentdeadreckoning.contracts.v1.Vector3
 import java.util.Random
@@ -878,6 +879,43 @@ class FusionFilterTest {
         assertEquals(1L, after.backwardsTimestamps)
         assertEquals(before.positionEnuM, after.positionEnuM)
         assertEquals(FusionStatus.RUNNING, after.status)
+    }
+
+    @Test
+    fun finiteButExtremeSamplesFailNumericallyWithoutLeakingNonFiniteState() {
+        val sim = FusionSim(movingScript())
+        assertTrue(sim.align())
+        repeat(5) { sim.step() }
+        val before = sim.filter.solution
+        val outcome = sim.filter.propagate(
+            Vector3(Double.MAX_VALUE, -Double.MAX_VALUE, Double.MAX_VALUE),
+            Vector3(0.0, 0.0, 0.0),
+            before.tNs + sim.dtNs,
+        )
+        assertEquals(PropagationOutcome.FAILED_NUMERICAL, outcome)
+        assertEquals(FusionStatus.FAILED, sim.filter.solution.status)
+        assertEquals(FusionFailure.NUMERICAL_INVALIDITY, sim.filter.solution.failure)
+        assertTrue(sim.filter.solution.covariance.all { it.isFinite() })
+        assertSaneCovariance(sim.filter.solution.covariance)
+        assertTrue(sim.filter.solution.positionEnuM.x.isFinite())
+        assertEquals(
+            PropagationOutcome.FAILED,
+            sim.filter.propagate(Vector3(0.0, 0.0, 9.8), Vector3(0.0, 0.0, 0.0), before.tNs + 2 * sim.dtNs),
+        )
+    }
+
+    @Test
+    fun covarianceMustBePositiveDefiniteNotJustHavePositiveDiagonal() {
+        // A symmetric matrix with positive diagonal can still have a negative eigenvalue.
+        val invalid = doubleArrayOf(1.0, 2.0, 0.0, 2.0, 1.0, 0.0, 0.0, 0.0, 1.0)
+        val valid = doubleArrayOf(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
+        val asymmetric = valid.copyOf().also { it[1] = 0.1 }
+        val nonFinite = valid.copyOf().also { it[4] = Double.NaN }
+        assertTrue(invalid[0] > 0.0 && invalid[4] > 0.0 && invalid[8] > 0.0)
+        assertFalse(isUsableCovariance(invalid, 3))
+        assertFalse(isUsableCovariance(asymmetric, 3))
+        assertFalse(isUsableCovariance(nonFinite, 3))
+        assertTrue(isUsableCovariance(valid, 3))
     }
 
     @Test

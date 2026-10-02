@@ -117,6 +117,23 @@ class AcquisitionTest {
         assertEquals(1L,p.dropped); assertTrue("PERMISSION_CHANGED" in codes())
     }
 
+    @Test fun deniedAndRevokedPermissionNeverRetainOrPublishLocation() {
+        val p = processor()
+        p.accept(imu())
+        p.accept(fix())
+        p.clearLocation()
+        p.discardForPermission(origin + 1)
+        val denied = p.snapshot(origin + 1, LocationAccess.DENIED, true, null)
+        assertEquals(GnssState.DENIED, denied.quality.state)
+        assertTrue("PERMISSION_DENIED" in denied.quality.reasons)
+        assertEquals(setOf("accelerometer"), denied.readings.keys)
+        p.clearLocation()
+        val revoked = p.snapshot(origin + 2, LocationAccess.REVOKED, true, null)
+        assertEquals(GnssState.DENIED, revoked.quality.state)
+        assertTrue("PERMISSION_REVOKED" in revoked.quality.reasons)
+        assertEquals(setOf("accelerometer"), revoked.readings.keys)
+    }
+
     @Test fun boundedInboxDropsNewestWithoutBlockingAndReportsOverflow() {
         val inbox = BoundedInbox<Int>(2)
         assertTrue(inbox.offer(1)); assertTrue(inbox.offer(2)); assertFalse(inbox.offer(3))
@@ -127,8 +144,11 @@ class AcquisitionTest {
     }
 
     @Test fun missingHardwareNeverRegistersOrInventsSamples() {
-        val missing = registerSensor(Sensor.GRAVITY,null,null) { error("Must not register absent hardware") }
-        assertFalse(missing.available)
+        for (sensor in listOf(Sensor.ACCELEROMETER, Sensor.GYROSCOPE, Sensor.MAGNETOMETER, Sensor.GRAVITY)) {
+            val missing = registerSensor(sensor, null, null) { error("Must not register absent $sensor") }
+            assertFalse("$sensor must be unavailable", missing.available)
+            assertEquals("Unavailable", missing.name)
+        }
         var calls = 0
         val refused = registerSensor(Sensor.GYROSCOPE,"gyro","vendor") { calls++; false }
         assertEquals(1,calls); assertFalse(refused.available)

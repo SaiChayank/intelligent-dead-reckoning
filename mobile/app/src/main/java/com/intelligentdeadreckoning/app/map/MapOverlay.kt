@@ -40,7 +40,7 @@ object MapOverlay {
                     add("trail","LineString",state.trail.map { listOf(it.longitude,it.latitude) })
                 }
             }
-            // Only one of these is ever set: a calibrated 95% confidence, or the radius a real
+            // Exactly one of these is ever set: a calibrated 95% confidence, or the radius a real
             // fix reported. They are drawn the same way but never averaged or conflated.
             (state.accuracy95Metres ?: state.fixRadiusMetres)?.takeIf { overlays.uncertainty && it > 0 }?.let { radius ->
                 // Avoid painting near-global circles; large uncertainty stays available as text.
@@ -48,6 +48,24 @@ object MapOverlay {
                     val ring = (0 until 64).map { offset(p,radius,it*360.0/64) }
                     add("accuracy","Polygon",listOf(ring + listOf(ring.first())))
                 }
+            }
+            // The engine's own covariance while its confidence is UNVALIDATED. It is drawn as its
+            // own dashed outline rather than as the filled accuracy area above, because it is a
+            // model claim about itself and not a validated error bound. Never merged with the
+            // calibrated radius, and never the platform fix radius.
+            state.unvalidatedAccuracy95Metres?.takeIf { overlays.uncertainty && it > 0 }?.let { radius ->
+                if(radius <= 10000) {
+                    val ring = (0 until 64).map { offset(p,radius,it*360.0/64) }
+                    add("uncertainty","Polygon",listOf(ring + listOf(ring.first())))
+                }
+            }
+            // The evaluation overlay: the map-matched claim, drawn beside the raw position
+            // above and never in place of it. It exists only when the evaluation toggle
+            // supplied a road graph and the matcher accepted a fix.
+            val matched = state.matchedPoint
+            if(matched != null) {
+                if(state.matchedTrail.size >= 2) add("matched-trail","LineString",state.matchedTrail.map { listOf(it.longitude,it.latitude) })
+                add("matched","Point",listOf(matched.longitude,matched.latitude))
             }
             add("position","Point",listOf(p.longitude,p.latitude))
             state.headingDegrees?.let { heading ->

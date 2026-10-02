@@ -39,6 +39,8 @@ data class Outage(val startNs: Long, val endNs: Long) {
 class RecordedSessionMap(
     private val maxTrail: Int = DEFAULT_MAX_TRAIL,
     private val gapThresholdNs: Long = DEFAULT_GAP_NS,
+    /** Provider-specific freshness from the acquisition policy; defaults to the legacy 5 s view. */
+    private val staleAfterForProvider: (String) -> Long = { gapThresholdNs },
     /** The claim the presentation makes about where these fixes came from. */
     private val source: Source = Source.REPLAY_REAL,
     private val maxOutages: Int = DEFAULT_MAX_OUTAGES,
@@ -75,6 +77,7 @@ class RecordedSessionMap(
     private val closed = ArrayList<List<MapPoint>>()
     private var drawnInSegments = 0
     private var previousFixNs: Long? = null
+    private var previousProvider: String? = null
     private var previousPoint: MapPoint? = null
     private var point: MapPoint? = null
     private var heading: Double? = null
@@ -104,19 +107,29 @@ class RecordedSessionMap(
             return snapshot()
         }
         val time = record.event.t_ns
+        val previousTime = previousFixNs
+        if (previousTime != null && time <= previousTime) {
+            // A malformed or out-of-order stream cannot move the marker backwards or reopen a
+            // path across already-presented time. The caller normally validates replay order;
+            // this defensive display gate protects the live fold and directly constructed data.
+            malformed++
+            status = "Out-of-order recorded fix — ignored"
+            return snapshot()
+        }
         if (firstNs == null) firstNs = time
         lastNs = time
         fixes++
         providers.add(fix.provider)
 
         val previous = previousFixNs
+        val previousStaleAfter = previousProvider?.let(staleAfterForProvider) ?: gapThresholdNs
         previousFixNs = time
-        if (previous != null && time > previous && time - previous > gapThresholdNs) {
+        previousProvider = fix.provider
+        if (previous != null && time > previous && time - previous > previousStaleAfter) {
             gaps++
             longestGap = maxOf(longestGap, time - previous)
-            // The loss began when the previous fix went stale — the same threshold the acquisition
-            // processor uses to call a fix stale — and ended with this one.
-            outages.add(Outage(previous + gapThresholdNs, time))
+            // The loss began when the previous provider's validated cadence made its fix stale.
+            outages.add(Outage(previous + previousStaleAfter, time))
             while (outages.size > maxOutages) outages.removeAt(0)
             closeSegment()
         }
@@ -145,19 +158,56 @@ class RecordedSessionMap(
         return snapshot()
     }
 
-    fun snapshot(): MapPresentation = MapPresentation(
-        source = source,
-        point = point,
-        headingDegrees = heading,
-        speedMetresPerSecond = speed,
-        // A recorded fix carries no calibrated 95% confidence, so that field stays empty and
-        // the reported platform radius is carried separately rather than relabelled.
-        accuracy95Metres = null,
-        fixRadiusMetres = radius,
-        trail = trail(),
-        trailSegments = trailSegments(),
-        status = status,
-    )
+    fun snapshot(nowNs: Long? = null): MapPresentation {
+        val staleAfter = previousProvider?.let(staleAfterForProvider) ?: gapThresholdNs
+        if (nowNs != null && previousFixNs?.let { nowNs < it || nowNs - it > staleAfter } == true) {
+            // A trail is history; its final fix is not current position after the channel's
+            // freshness bound. Keep the recorded segments, but hide point, heading and live speed.
+            return MapPresentation(
+                source = source,
+                trail = trail(),
+                trailSegments = trailSegments(),
+                status = "Stale fix — position hidden",
+            )
+        }
+        return MapPresentation(
+            source = source,
+            point = point,
+            headingDegrees = heading,
+            speedMetresPerSecond = speed,
+            // A recorded fix carries no calibrated 95% confidence, so that field stays empty and
+            // the reported platform radius is carried separately rather than relabelled.
+            accuracy95Metres = null,
+            fixRadiusMetres = radius,
+            trail = trail(),
+            trailSegments = trailSegments(),
+            status = status,
+        )
+    }
+
+    /** Clear session-owned state at a capture boundary or a permission loss. */
+    fun reset() {
+        open.clear()
+        closed.clear()
+        drawnInSegments = 0
+        previousFixNs = null
+        previousProvider = null
+        previousPoint = null
+        point = null
+        heading = null
+        speed = null
+        radius = null
+        status = "No recorded fix yet"
+        fixes = 0
+        outside = 0
+        malformed = 0
+        gaps = 0
+        longestGap = 0L
+        outages.clear()
+        firstNs = null
+        lastNs = null
+        providers.clear()
+    }
 
     fun stats(): Stats {
         // Counted from the retained geometry, not from the fixes accepted, so this states what the
