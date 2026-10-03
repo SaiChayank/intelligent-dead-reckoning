@@ -1,6 +1,6 @@
 # Production reliability pass — failure-mode matrix
 
-**Date:** 2026-10-02  
+**Date:** 2026-10-02
 **Scope:** Android acquisition, calibration, fusion/navigation, recording/replay, offline assets, map matching, and Activity/process lifecycle. This is a test-and-hardening record, not a claim of physical-device qualification.
 
 ## Outcome key

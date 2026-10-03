@@ -58,4 +58,3 @@ tasks.register<JavaExec>("runEdgeBenchmark") {
         providers.gradleProperty("reference").orElse("").get(),
     )
 }
-
