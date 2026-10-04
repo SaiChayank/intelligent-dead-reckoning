@@ -729,6 +729,48 @@ class CalibrationEngineTest {
     // Harness
     // -------------------------------------------------------------------------------------------
 
+    @Test
+    fun deployableCalibrationFeedsRealFusionFromObservedEvidence() {
+        val header = Header("composed-drive", Source.REAL, "1.1.0")
+        val engine = com.intelligentdeadreckoning.app.navigation.CalibratingFusionEngine()
+        val pending = Record(header, Event("0",0,0,
+            CalibrationResult("none",CalibrationStatus.PENDING,null,null,null,null)))
+        engine.initialize(com.intelligentdeadreckoning.contracts.v1.EngineSession(header,"boot",0),
+            pending,InitializationMode.DEPLOYABLE)
+        val vehicle = SyntheticVehicle(PORTRAIT_MOUNT)
+        val evidence = ArrayList<Evidence>()
+        evidence += vehicle.parked(3.0)
+        evidence += vehicle.driving(12.0,1.5,12.0,90.0)
+        evidence += vehicle.fix(0.0)
+        evidence += vehicle.parked(3.0)
+        evidence += vehicle.driving(12.0,1.5,12.0,90.0)
+        evidence += vehicle.fix(0.0)
+        evidence += vehicle.driving(6.0,0.0,12.0,90.0)
+        val outputs = mutableListOf<Record>()
+        outputs += engine.drain()
+        for (record in header.records(evidence)) {
+            when(record.event.data) {
+                is com.intelligentdeadreckoning.contracts.v1.ImuMeasurement -> engine.acceptImu(record)
+                is com.intelligentdeadreckoning.contracts.v1.GnssMeasurement -> engine.acceptGnss(
+                    record.copy(event = record.event.copy(data =
+                        (record.event.data as com.intelligentdeadreckoning.contracts.v1.GnssMeasurement).copy(satellites_used=8))))
+                else -> error("Unexpected evidence")
+            }
+            outputs += engine.drain()
+        }
+        engine.stop(); outputs += engine.drain()
+        val valid = outputs.firstOrNull { (it.event.data as? CalibrationResult)?.status == CalibrationStatus.VALID }
+        assertNotNull("No mount calibration: ${outputs.mapNotNull { (it.event.data as? DiagnosticEvent)?.code }}",valid)
+        val position = outputs.firstOrNull { (it.event.data as? NavigationState)?.position_enu_m != null }
+        assertNotNull("No fused position: ${outputs.mapNotNull { (it.event.data as? DiagnosticEvent)?.code }}",position)
+        assertTrue(position!!.event.t_ns > valid!!.event.t_ns)
+        assertEquals(InitializationMode.DEPLOYABLE,(position.event.data as NavigationState).initialization_mode)
+        assertEquals((valid.event.data as CalibrationResult).id,(position.event.data as NavigationState).calibration_id)
+        assertEquals(90.0,(position.event.data as NavigationState).heading_deg!!,1e-4)
+        assertEquals(outputs.size,outputs.map { it.event.event_id }.toSet().size)
+        outputs.forEach { assertEquals(it,Codec.decodeJson(Codec.encodeJson(it))) }
+    }
+
     private class CalibrationRun(
         mode: InitializationMode = InitializationMode.EVALUATION,
         thresholds: MountThresholds = MountThresholds(),

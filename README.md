@@ -2,8 +2,9 @@
 
 An offline Android prototype for exploring phone sensing, local recordings, replay,
 Hyderabad map display, and navigation research. **This is not a qualified dead-reckoning
-navigation product.** The ordinary app flow has no valid calibration hand-off into fusion;
-there is no approved field ground-truth package or trained model. See
+navigation product.** The app now estimates session-local calibration and hands it to fusion
+after motion/course gates pass; field acceptance is pending. There is no approved field
+ground-truth package or trained model. See [the demo procedure](mobile/DEMONSTRATION.md) and
 [known limitations](KNOWN_LIMITATIONS.md) and [final release readiness](FINAL_RELEASE_READINESS.md).
 
 No public hosting, cloud service, account system, or analytics are part of this package.
@@ -61,7 +62,7 @@ do not describe the procedure as device-verified here.
   recording/recovery, export, replay and user-confirmed deletion; offline Hyderabad vector
   tiles; synthetic map demo; strict Python/Kotlin contracts; experimental host-tested
   calibration/fusion/constraints and a parallel opt-in map-matching overlay.
-- **Not accepted as navigation:** no ordinary-flow calibration hand-off, no independent
+- **Not accepted as navigation:** calibration hand-off awaits moving-device acceptance; no independent
   moving-drive/outage reference qualification, and no current physical navigation
   acceptance. The map does not calculate positions.
 - **Not implemented:** trained model or inference, field ground-truth evaluation package,

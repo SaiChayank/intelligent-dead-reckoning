@@ -1,5 +1,12 @@
 # Phone-to-vehicle calibration
 
+The app's session-local handoff is now implemented by `CalibratingFusionEngine`;
+see [demonstration procedure](DEMONSTRATION.md). The estimator mathematics and
+thresholds remain unchanged except for a confirmed resting-window guard defect:
+recent moving-fix time is retained independently of the latest speed, so a later
+stopped fix cannot relabel a just-closed driven window as stationary gravity.
+The existing five-second motion-recency margin is unchanged.
+
 ## Scope and use
 
 The calibration engine estimates the rotation between the phone's Android device frame and the

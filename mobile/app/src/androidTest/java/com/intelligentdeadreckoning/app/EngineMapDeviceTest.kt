@@ -20,6 +20,11 @@ import java.io.File
 class EngineMapDeviceTest {
     @get:Rule val compose = createAndroidComposeRule<MainActivity>()
 
+    @Test fun bundledRoadGraphInstallsAndLoadsInPrivateStorage() {
+        assertNotNull(com.intelligentdeadreckoning.app.matching.RoadGraphPack(
+            compose.activity.applicationContext).install())
+    }
+
     private fun openMap() {
         compose.waitUntil(10_000) {
             compose.onAllNodesWithTag("tab_MAP").fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
@@ -51,6 +56,8 @@ class EngineMapDeviceTest {
         // With no engine session running there is no published position, and the view says exactly
         // that rather than drawing one: every value is the engine's or absent.
         compose.onNodeWithTag("engine_status").assertTextContains("No engine position", substring = true)
+        compose.onNodeWithTag("engine_calibration").assertTextContains("Mount calibration: waiting", substring = true)
+        compose.onNodeWithTag("engine_calibration").assertTextContains("two separate straight", substring = true)
         compose.onNodeWithTag("engine_values").assertTextContains("Position —", substring = true)
         compose.onNodeWithTag("engine_values").assertTextContains("heading —", substring = true)
         compose.onNodeWithTag("engine_confidence").assertTextContains("not published", substring = true)

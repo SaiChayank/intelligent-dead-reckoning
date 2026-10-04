@@ -3,6 +3,20 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+// AAPT treats .gz assets specially (decompresses and strips the suffix). Package
+// the unchanged compressed bytes under an opaque name; the private installed
+// filename and checked-in road-graph manifest remain canonical.
+val preparePackagedAssets = tasks.register<Sync>("preparePackagedAssets") {
+    from("src/main/assets") {
+        exclude("roadgraph/hyderabad-v1/road-graph.json.gz")
+    }
+    from("src/main/assets/roadgraph/hyderabad-v1/road-graph.json.gz") {
+        into("roadgraph/hyderabad-v1")
+        rename { "road-graph.bin" }
+    }
+    into(layout.buildDirectory.dir("generated/opaqueRoadGraph"))
+}
+
 android {
     namespace = "com.intelligentdeadreckoning.app"
     compileSdk = 37
@@ -10,11 +24,12 @@ android {
         applicationId = "com.intelligentdeadreckoning.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0-demo"
+        versionCode = 2
+        versionName = "0.1.1-demo"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }
+    sourceSets.getByName("main").assets.setSrcDirs(listOf(layout.buildDirectory.dir("generated/opaqueRoadGraph")))
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -40,6 +55,13 @@ android {
 }
 
 kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
+
+tasks.matching {
+    (it.name.startsWith("merge") && it.name.endsWith("Assets")) ||
+        it.name.contains("Lint") || it.name.startsWith("lint")
+}.configureEach {
+    dependsOn(preparePackagedAssets)
+}
 
 dependencies {
     implementation("org.maplibre.gl:android-sdk-opengl:13.6.1")

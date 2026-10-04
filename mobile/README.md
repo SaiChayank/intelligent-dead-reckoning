@@ -1,5 +1,9 @@
 # IDR Android foundation
 
+See [the demonstration procedure](DEMONSTRATION.md) for the new session-local
+calibration-to-fusion handoff and its device/field acceptance boundaries. Older
+no-handoff statements below describe the previous checkpoint.
+
 The native Android application is the main product of Intelligent Dead Reckoning
 (SIH #26168). Simulation, foreground acquisition, private recording/recovery,
 export, replay, map rendering and calibration/fusion engines are implemented.
