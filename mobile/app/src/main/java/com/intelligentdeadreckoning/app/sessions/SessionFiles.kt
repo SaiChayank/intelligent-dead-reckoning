@@ -6,6 +6,8 @@ import java.io.*
 import java.nio.file.Files
 import java.nio.file.LinkOption.NOFOLLOW_LINKS
 import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.attribute.BasicFileAttributes
 import java.util.zip.*
 
 data class SavedSession(val id: String, val metadata: RecordingMetadata?, val bytes: Long?, val error: String? = null) {
@@ -18,7 +20,7 @@ data class SavedSession(val id: String, val metadata: RecordingMetadata?, val by
 }
 data class SessionPage(val sessions: List<SavedSession> = emptyList(), val next: String? = null)
 
-/** Read-only private-session access. All methods must run on an I/O worker. */
+/** Secure private-session access; inspect/replay/export are read-only and delete is explicit. All methods run on an I/O worker. */
 class SessionFiles(rootProvider: () -> File) {
     private val root by lazy(rootProvider)
 
@@ -86,6 +88,36 @@ class SessionFiles(rootProvider: () -> File) {
         val summary = inspect(id)
         require(summary.replayable) { summary.error ?: "SESSION_NOT_REPLAYABLE" }
         return summary.metadata!! to file(directory(id), "measurements.jsonl").inputStream().buffered()
+    }
+
+    /**
+     * Permanently removes one private session directory without following symbolic links.
+     * The caller must prevent deletion while that session is recording, replaying, or exporting.
+     * Runs on an I/O worker; malformed session contents are still removable for privacy.
+     */
+    fun delete(id: String) {
+        val target = directory(id).toPath()
+        // Refuse deletion if the target itself changes into a symlink between validation and walk.
+        Files.walkFileTree(target, object : SimpleFileVisitor<Path>() {
+            override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): java.nio.file.FileVisitResult {
+                if (Files.isSymbolicLink(dir)) throw IOException("UNSAFE_SESSION_PATH")
+                return java.nio.file.FileVisitResult.CONTINUE
+            }
+
+            override fun visitFile(file: Path, attrs: BasicFileAttributes): java.nio.file.FileVisitResult {
+                Files.delete(file) // Symlinks are visited as files; their targets are never traversed.
+                return java.nio.file.FileVisitResult.CONTINUE
+            }
+
+            override fun postVisitDirectory(
+                dir: Path,
+                error: IOException?,
+            ): java.nio.file.FileVisitResult {
+                if (error != null) throw error
+                Files.delete(dir)
+                return java.nio.file.FileVisitResult.CONTINUE
+            }
+        })
     }
 
     /** Bounded 20-item pages, stable lexicographic ID order (not chronological). */

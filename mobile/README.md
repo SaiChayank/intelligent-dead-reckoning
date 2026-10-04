@@ -1,17 +1,20 @@
 # IDR Android foundation
 
 The native Android application is the main product of Intelligent Dead Reckoning
-(SIH #26168). Simulation, foreground acquisition, local recording/replay and a
-GNSS+INS navigation engine that drives the map are implemented; routing and AI are
-not. It is a standalone Gradle project inside the existing repository.
+(SIH #26168). Simulation, foreground acquisition, private recording/recovery,
+export, replay, map rendering and calibration/fusion engines are implemented.
+However, the normal app journey does not supply a valid calibration to fusion, so
+an aligned navigation solution is not yet available from ordinary app use. Routing
+and AI are not implemented. This is a standalone Gradle project inside the
+existing repository.
 
 ## What works
 
-- Optional central Hyderabad offline map preview: bundled tiles, camera controls, attribution and an explicitly started synthetic marker/heading/trail demo. Four never-blended map sources: the synthetic fixture, a recorded session, live raw phone GNSS, and the real navigation engine's published output (position, heading once a calibration exists, speed, trail, acquisition GNSS quality, runtime status, a confidence radius labelled with its state — `CALIBRATED` only when the engine says so, otherwise the engine's covariance drawn as a dashed ring and labelled `UNVALIDATED`, never the platform's own fix radius — and the contract 1.1.0 localization mode, plus an opt-in raw-vs-map-matched evaluation overlay). No routing exists yet. See [map scope and device gate](OFFLINE_MAP.md), [the engine view](MAP_ENGINE_VIEW.md) and [confidence semantics](CONFIDENCE.md).
+- Optional central Hyderabad offline map preview: bundled tiles, camera controls, attribution and an explicitly started synthetic marker/heading/trail demo. Four separate map sources are implemented: synthetic fixture, recorded session, live raw phone GNSS and navigation-engine output. However, the ordinary app journey supplies no valid calibration, so the fusion engine remains uninitialized and the engine source correctly displays no position. Engine covariance/presentation is host-tested only and is not validated navigation. The optional raw-vs-map-matched overlay is evaluation-only. No routing exists. See [map scope and device gate](OFFLINE_MAP.md), [the engine view](MAP_ENGINE_VIEW.md) and [confidence semantics](CONFIDENCE.md).
 - Recording details, paged local sessions and explicit local ZIP export through Android's document picker are implemented. See [export workflow and device-validation gate](EXPORT.md).
 - Read-only local replay supports start/pause/resume/stop with explicit `replay_real` / `replay_simulation` labels. See [replay policy and verification](REPLAY.md).
 
-- **Evaluation tab** — renders the checked-in `contracts/evaluation/v1` arm-comparison report (classical INS, classical fusion, + constraints, + AI correction, + map matching) with every absent value stated as `not measured` / `not implemented`, never filled; the JVM harness regenerates the report from the production pipeline and requires it to match the shipped bytes, so the screen shows the evidence the tests enforce. It is a console-free engineering page: the driver's Home and Signals pages gained no metric. See [EVALUATION.md](EVALUATION.md).
+- **Evaluation tab** — renders the checked-in `contracts/evaluation/v1` arm-comparison report (classical INS, classical fusion, + constraints, + AI correction, + map matching) with every absent value stated as `not measured` / `not implemented`, never filled; the JVM harness regenerates the report from the host evaluation pipeline and requires it to match the shipped bytes. It is a console-free engineering page, not device or field accuracy evidence. See [EVALUATION.md](EVALUATION.md).
 - Kotlin + Jetpack Compose / Material 3 UI: Dashboard, Map, Diagnostics, Evaluation and About.
 - A visible `SIMULATION` or `REAL PHONE` banner on every screen and an explicit
   source selector. Simulation values remain scripted demo data.
@@ -33,11 +36,13 @@ explicit Start/Stop, bounded writing and interrupted-session recovery. See
 device gate is separate from the frozen acquisition verification.
 
 Not implemented: ZIP import, replay seek/speed controls, rotation-vector events,
-routing, AI correction, deployable calibration output, or a calibration collection flow in
-the UI. The navigation engine (a 15-state error-state EKF) and the phone-to-vehicle
-calibration/constraint engines are implemented and reached only through the navigation
-runtime — see [CALIBRATION.md](CALIBRATION.md) and [FUSION.md](FUSION.md). Host
-tests/build pass; connected-device acceptance still requires the procedures linked above.
+routing, AI correction, and a user-facing calibration collection/composition flow.
+The 15-state EKF, phone-to-vehicle calibration, constraints and navigation runtime
+exist in source and have host coverage, but they are not integrated into a usable
+calibrated app journey and have no independent moving-drive acceptance. See
+[CALIBRATION.md](CALIBRATION.md), [FUSION.md](FUSION.md), and
+[FINAL_RELEASE_READINESS.md](../FINAL_RELEASE_READINESS.md). Device acceptance
+remains separately required.
 
 ## Interface and design system
 
@@ -70,14 +75,9 @@ The Map tab is map-first. The offline renderer fills a full-width hero with floa
 and limits disclosure sit in the scroll flow beneath it. The dock reserves its own inset space
 instead of covering page content, so scrolled controls stay reachable and clickable.
 
-This is a presentation change only. Acquisition, recording, export, replay, contracts, the map
-renderer and the frozen device procedures are unchanged, and no instrumented test tag, control
-label or user-visible status string was altered. Verified here at the time: **195 JVM tests
-passed**, both APKs
-build, `assembleDebugAndroidTest` still compiles the device suite, and lint reports **0 errors**
-with no source warnings. Physical-device verification of the new surface (layout on the target
-phone, gesture ergonomics, sunlight contrast and the full instrumented suite) is **not** performed
-by this change and still requires the connected-phone procedure below.
+This is a historical presentation checkpoint. Its **195 JVM test** count and source-change
+summary describe only that dated change, not the current checkout. Test counts and current
+verification are recorded in [FINAL_RELEASE_READINESS.md](../FINAL_RELEASE_READINESS.md).
 
 ## Open and run in Android Studio
 
@@ -206,10 +206,10 @@ not the repository's historical Phase 0 reports.
 Manual acceptance: Start on Dashboard; verify changing demo values; switch to
 Diagnostics; Stop and verify values freeze; start a new demo; press Home and
 return, verifying it stays stopped. Read About for scope/privacy boundaries.
-The host suites currently stand at **348 Kotlin JVM tests** and **272 Python
-tests** (1 environment-dependent skip), lint reports **0 errors** (one
-pre-existing target-SDK warning), and `assembleDebugAndroidTest` compiles the
-43-method device suite without running it.
+Test counts change as the suite evolves; use the dated results in
+[FINAL_RELEASE_READINESS.md](../FINAL_RELEASE_READINESS.md) and the current local
+Gradle/Python output rather than old count snapshots. Android instrumentation APK
+assembly is compile evidence only; it does not mean tests ran on a device.
 Never test the UI while driving.
 
 ## Security and privacy verification
@@ -221,16 +221,18 @@ The local/offline boundary, automated gates, and hands-on device checklist are d
 The manifest declares fine/coarse location. The app asks only after Allow location
 is tapped; IMU operation and simulation do not require a location grant. No
 background-location, foreground-service, notification or internet permission is
-requested. No location, sensor or trip data is recorded, persisted or uploaded.
-Android may retain ordinary installation/runtime diagnostics; that is not trip
-recording. Backup is disabled. No analytics or third-party network SDK is included.
+requested. When a user explicitly starts local recording, sensor and permitted
+location data is persisted in app-private, no-backup storage until the user deletes
+the session or clears app data; export is a separate explicit copy. The app has no
+upload path. Android may retain ordinary installation/runtime diagnostics. Backup
+is disabled. No analytics or third-party network SDK is included.
 
 The app does not read or modify `data/raw/`, Python code or historical reports.
 The Python pipeline remains offline research. The future navigation `core/` and
 secondary `edge/` deployment are not implemented here. Existing IO-VNBD frame
 uncertainties cannot be resolved simply by displaying this phone's future readings.
 
-Next action: complete connected-phone acquisition validation. A subsequent bounded
-task can add local recording/export/replay after acquisition is verified.
-Integrate navigation only after coordinate conventions and mechanization are
-reviewed and tested separately.
+Current release gates and scoped evidence are consolidated in
+[FINAL_RELEASE_READINESS.md](../FINAL_RELEASE_READINESS.md). Do not claim field
+navigation until calibration composition, independent reference drives and the
+physical performance/accuracy gates pass.

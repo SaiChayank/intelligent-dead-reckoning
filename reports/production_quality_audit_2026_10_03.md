@@ -1,0 +1,86 @@
+# Production-Quality Repository Audit — 2026-10-03
+
+## Verdict
+
+**PRODUCTION-LIKE LOCAL DEPLOYMENT READINESS: NOT READY** for the stated Intelligent Dead Reckoning product or an acceptance demonstration claiming navigation performance.
+
+The repository is a substantial, deliberately offline Android sensing/recording/replay/map prototype, with meaningful Kotlin/Python contract and synthetic navigation work. It is **not yet an accepted end-to-end navigation product**: an ordinary app session supplies no completed calibration to the fusion engine, no independent moving-drive reference result exists, and the official AI/data gates remain closed. A local debug APK can be built, but that is not equivalent to production-like navigation readiness.
+
+## Audit scope and evidence
+
+Reviewed repository architecture, Android lifecycle/permissions/UI/storage, calibration/fusion/constraints/GNSS quality/map matching/confidence, data and experiment tooling, ML admission/provenance, security/dependencies, host/device/field verification, and current setup/architecture/requirements/blueprint/plan/demo documentation. At audit start, the checkout was clean on `main` at `67b6d5010288118535652b84051addf4a83933b4`.
+
+Fresh checks on this checkout:
+
+- Python: **282 passed, 5 skipped**, `unittest discover -s tests`.
+- Repository hygiene: **327 tracked files checked**, no forbidden-file/secret-pattern/artifact-parse findings.
+- `pip check`: clean.
+- `git diff --check`: clean.
+- Android `lintDebug`, debug APK assembly, and instrumented APK assembly: **BUILD SUCCESSFUL**. The first Gradle invocation reported `testDebugUnitTest UP-TO-DATE`; it did not freshly execute JUnit.
+- A forced Android rerun (`testDebugUnitTest --rerun-tasks`) lost the Gradle daemon while compiling unit tests and produced a JVM crash log. Thus this audit does **not** claim a fresh Kotlin test pass. The latest tracked failure-mode report records 363 JVM tests passing on 2026-10-02; setup/CI docs give different counts (154/348), which need reconciliation.
+- Android device/instrumented tests were not run in this audit. Instrumented APK compilation is not a device pass. The latest fresh physical acquisition report is a <10-minute stationary spot-check with inconsistent UI counter snapshots; the older 30-minute acquisition report is historical evidence for its earlier build/run.
+- Python vulnerability audit was attempted; `tools/audit_dependencies.py` exited 2 because `pip-audit` is not installed locally. No Android dependency advisory scan was available in this audit.
+
+## Severity-ranked open findings
+
+### BLOCKER
+
+| ID | Finding | Evidence / exact consequence |
+|---|---|---|
+| B1 | **The shipped app flow cannot produce a calibrated navigation solution.** | `SessionViewModel` binds `FusionNavigationEngine` directly and `NavigationRuntime.start` supplies a `PENDING` calibration when none is passed. `CalibrationNavigationEngine` exists but is not wired into the app flow; there is no calibration collection/composition UI or verified hand-off of a valid calibration into fusion. The fusion engine consequently refuses alignment with `CALIBRATION_REQUIRED`; no calibrated vehicle heading/position is established by the normal user path. Host implementation/tests do not close this integration gap. |
+| B2 | **No independent field evidence demonstrates the defining outage-navigation result.** | No sealed experiment/reference-bearing moving Android drive or genuine moving GNSS-loss/recovery segment is present. The recorded corpus and reports say most sessions have no GNSS and none provides independent moving-drive truth. The measured real-session strapdown baseline is a stationary handset/reference run with extreme divergence (600.8 km after 27.7 minutes), not a passing vehicle-navigation benchmark. There is no passing `<10%` outage drift result, real-drive recovery result, or validated end-to-end position accuracy. |
+| B3 | **The required AI capability is not deployable, and the training gate approves no data.** | `training_admission.json` says `no-go` and has zero approved sequences. IO-VNBD physical frame semantics and IMU/label synchronization remain unresolved; no split manifest or executable leakage-safe preprocessing/train/serve equivalence pipeline is established. No trained model, model manifest/hash, TFLite/ONNX export-equivalence result, held-out ablation, or on-device inference latency exists. The current evaluation correctly labels its AI arm not implemented. |
+
+### HIGH
+
+| ID | Finding | Evidence / exact consequence |
+|---|---|---|
+| H1 | **Navigation quality and performance gates are not physically qualified.** | No current end-to-end physical-device run has measured navigation output rate, engine/input-to-output p50/p95 latency, sustained queue/drop behavior, memory, battery, or thermal response. The app configures a nominal 10 Hz presentation cadence, which is not a measured 10 Hz navigation result. Navigation-engine device verification is explicitly pending in `mobile/MAP_DEVICE_VERIFICATION.md`; recent acquisition-only evidence cannot qualify fusion. |
+| H2 | **Map matching is an evaluation overlay, not a navigation constraint.** | The local OSM road graph and causal matcher are implemented and host-tested, and the UI keeps matched output separate from raw navigation. The matcher is opt-in/evaluation-only and does not constrain the estimator; there is no accepted constraint interface or field evidence that road constraints improve accuracy. This leaves the intended road-constrained navigation capability unproven. |
+| H3 | **Device/system acceptance is incomplete.** | Android tests compile but were not run in this audit; current lifecycle, permission, export/replay, corrupt-asset, failure-injection, and engine-map behavior therefore lack a current full-device regression result. No end-to-end live acquisition → calibration → fusion → map acceptance was shown. No representative older Android, alternate OEM, tablet, landscape, TalkBack, or large-font device matrix is evidenced. |
+| H4 | **Release packaging is still debug/demo-only.** | `mobile/app/build.gradle.kts` sets `versionName = "0.1.0-demo"`; release minification is disabled and no distribution signing configuration is present. There is no verified release APK, signing/reproducible release procedure, or store/distribution readiness evidence. |
+| H5 | **Dependency vulnerability posture is unverified.** | The Python audit wrapper and CI isolated auditor exist, but this local audit could not run it. Android has pinned coordinates but no Gradle dependency lockfile and no Android vulnerability scanner/advisory result. A production dependency review/SBOM decision remains open. |
+| H6 | **Key status documentation contradicts the actual tree.** | `README.md` says both that navigation is “not yet connected” and later that calibration/fusion/map-matching are implemented. `docs/PS26168_Application_Architecture.md`, `docs/PS26168_Navigation_Output_and_Evidence_Architecture.md`, and `docs/PS26168_Final_SIH_Demonstration_Design.md` still describe navigation, calibration, fusion, or map matching as future/not implemented. These claims are stale against the current code, while the README also overstates what is executable in the app path. `CURRENT_STATE_AUDIT.md` and `foundation_readiness.md` are older checkpoints whose implementation-status sections predate major additions. This can cause unsafe or misleading demo/release claims. |
+
+### MEDIUM
+
+| ID | Finding | Evidence / exact consequence |
+|---|---|---|
+| M1 | **No per-session delete/retention control for sensitive location recordings.** | Sessions are app-private and excluded from backup, but the UI offers list/replay/export and no individual delete action. A user must clear app data/uninstall to remove retained trip history. This is a privacy/product-control gap. |
+| M2 | **Session-map loading is UI-owned and intentionally incomplete for large sessions.** | `OfflineMapScreen.kt` selects the largest replayable recording and parses it itself rather than using a ViewModel/session repository. It scans at most 200,000 rows, while the corpus includes a 494,895-record session; the screen discloses “first N records” but presents a partial map view. Reads are bounded and off-main-thread, but selection, I/O ownership, progress/cancellation, and partial-result semantics are coupled to a 1,000+ line composable file. |
+| M3 | **Architecture orchestration has accumulated coordination complexity.** | `SessionViewModel` coordinates acquisition, recorder, replay/export, navigation, and several presentation flows; `OfflineMapScreen` separately constructs `SessionFiles`/`ReplayReader` and chooses a session. This is not an immediate correctness defect, but responsibilities/policies are duplicated across UI and ViewModel boundaries and are harder to test/change independently. The repository's core package boundaries and “no database until measured need” choice are otherwise reasonable; Python/Kotlin contract twins are intentional, tested duplication. |
+| M4 | **Build/test documentation and current verification counts are stale/inconsistent.** | `DEVELOPER_SETUP.md` still gives 140 Python tests, 154 Android tests, and 26 device tests; `mobile/README.md` and `CI.md` cite 272/348 and 43, while the current Python run is 282/5 skipped and the 2026-10-02 failure matrix reports 363 Kotlin tests. `mobile/README.md` also still says no deployable calibration output while the code contains calibration/fusion engines. Update commands/counts/status only after a fresh green Android run. |
+| M5 | **Dependency reproducibility is partial.** | Python pins four direct requirements but has no full transitive/platform lock; Gradle versions are explicit but dependency locking/verification metadata for the complete graph is absent. This compounds H5 and can make exact rebuilds/advisory triage harder. |
+| M6 | **Accessibility and responsive-layout acceptance is incomplete.** | Components provide useful selected semantics, content descriptions, and 44 dp controls, but no current TalkBack/large-font/system-display-size/landscape/tablet acceptance is recorded. The visual design is fixed dark/English-only. This is a production deployment coverage gap, not a confirmed screen-reader defect. |
+| M7 | **Root product licensing is unresolved.** | The map/road-graph and bundled third-party assets carry attribution/license notices, but no repository-level `LICENSE` was found for the application/source. Clarify project code licensing and third-party distribution notices before external distribution. |
+| M8 | **Experiment integrity is implemented as tooling, not demonstrated on a real evaluation package.** | Experiment sealing/validation and hash checks exist, and map/road-graph assets are size/SHA-256 verified. `experiments/` contains only its README: there is no sealed reference-bearing experiment, frozen approved split, or end-to-end reproducibility/hash check against a real evaluation corpus. |
+
+### LOW
+
+| ID | Finding | Evidence / exact consequence |
+|---|---|---|
+| L1 | **Small maintenance/toolchain debt remains.** | A forced compile emitted a deprecation warning for `ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW`; Gradle also relies on a workstation-specific cache recipe. Neither prevents a successful debug build, but the warning and local setup friction should be revisited with the next toolchain update. |
+| L2 | **Optional scope is absent by design.** | Offline routing/rerouting/turn-by-turn, edge runtime, shared `core/`, multi-region maps, localization, cloud services, and background navigation are not shipped. Routing is explicitly optional and not required to prove dead reckoning; do not promote these omissions to release blockers unless product scope changes. |
+| L3 | **Some bounded UI efficiency limits remain.** | `ReplayReader` uses a fixed 16 MiB duplicate-ID table and scans records byte-by-byte; session-map preview caps at 200,000 rows. Memory is bounded, but large-session load time/partial preview behavior is not performance-qualified. |
+
+## Area-by-area audit summary
+
+- **Architecture:** Contracts and data-flow boundaries are generally explicit; map rendering is separate from localization; acquisition/recording/replay/navigation failures are designed to be isolated. Main debt is the large app composition root and UI-owned recorded-session I/O. There is no evident need for more services, databases, or abstractions.
+- **Android:** Foreground lifecycle and least-privilege permissions are strong in source; no network/background-location permission is requested, private recordings are excluded from backup, and controls expose explicit states. Production layout/accessibility/device diversity and a current full instrumented run remain unverified.
+- **Calibration/INS/fusion/GNSS:** There is meaningful calibration, 15-state EKF, gating, recovery, constraint, and scripted-truth host code. The calibration engine is not connected to the ordinary app journey, heading initialization is not grounded by a live user calibration flow, and the only real inertial baseline is not an accepted moving-navigation result. Scripted tests demonstrate implementation behavior, not operational accuracy.
+- **Map matching/confidence:** The offline graph is distinct from MBTiles, checksum-pinned, and the matcher does not overwrite raw state. It remains an evaluation overlay, not a validated estimator constraint. Confidence is honestly `UNVALIDATED`; scripted recovery coverage is only 64.5%, and no independent field reference licenses `CALIBRATED` confidence.
+- **ML/leakage:** Methodology explicitly rejects row splits, duplicate leakage, future/reference features, and test-set fitting. Those are sound rules, but no admitted dataset or executable split/train/serve pipeline exists; there is no model to audit for leakage or export equivalence.
+- **Data/reproducibility:** Contracts, strict readers, session hashes, experiment sealing, map/graph asset hashes, and raw-data preservation policies are strengths. No approved training/evaluation experiment or frozen split is present; historical source/report provenance is not a substitute for a current reproducible field run.
+- **Security/privacy:** Strong offline boundary, no broad storage/background service, strict path/codec checks, no-backup storage, safe diagnostic messaging, and user-initiated local export. Open issues are dependency advisory evidence, individual deletion/retention controls, release signing, and root licensing. No model integrity path is needed until a model exists.
+- **Testing:** Python unit/contract/data/tooling suites ran cleanly. Kotlin suites include substantial contract, calibration, fusion, GNSS, constraint, map, replay, recording, and failure-injection coverage, but were not freshly run here due to the Gradle daemon crash. Android instrumented tests were compile-only in this audit. No independent field, navigation endurance, p50/p95, or full failure-injection acceptance is available.
+- **Documentation:** Setup and subsystem guides are extensive, and the demo runbook appropriately says synthetic UI is not measured navigation. However, the architecture/readiness/blueprint/demo snapshots and test-count instructions conflict with current implementation. The linked “Current_State” PDFs were not semantically revalidated from their binary content in this pass; their status should be synchronized with the canonical Markdown and source tree before external use.
+
+## Exact remaining blockers for readiness
+
+1. Wire a real, user-accessible calibration flow and valid calibration lifecycle into the production navigation path; prove the app can initialize and publish a meaningful position/heading without synthetic inputs.
+2. Collect and seal independent reference-bearing moving Android drives with real GNSS denial/recovery; demonstrate the official `<10%` drift target and report regime-specific error, recovery, uncertainty, and failure behavior on untouched evaluation segments.
+3. Resolve the legacy IO-VNBD input-frame/alignment gate or explicitly use approved ground-truthed replacement data; produce a leakage-safe split and deployable preprocessing parity, then train/select an AI model and pass held-out ablation, export equivalence, hash/provenance, and on-device latency gates.
+4. Run the full Android instrumented suite and end-to-end live/replay navigation acceptance on the target phone; measure sustained navigation output rate, latency, queues/drops, memory, battery, and thermal behavior. Confirm the engine-map device suite rather than only compiling it.
+5. Complete a reviewed release configuration/signing path and dependency vulnerability review (Python plus Android); reconcile documentation/test-count contradictions and make sure claims match the current app behavior.
+
+**Final decision:** `NOT READY`. The debug APK builds, and the offline sensing/recording/map foundation is valuable, but core navigation, data/ML acceptance, and physical performance gates are not satisfied. No product code or data was changed during this audit; this report is the only audit artifact.

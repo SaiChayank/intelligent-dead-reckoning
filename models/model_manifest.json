@@ -1,0 +1,13 @@
+{
+  "manifest_version": "1.0.0",
+  "status": "no_model_artifacts",
+  "model_count": 0,
+  "artifacts": [],
+  "sha256_scope": "No model artifact exists; there are no model file hashes to report.",
+  "training_admission": {
+    "decision": "no-go",
+    "approved_sequences": 0,
+    "manifest": "../reports/training_admission.json"
+  },
+  "policy": "Do not train, add weights, or claim inference until the training admission gate is approved and an independent held-out evaluation is available."
+}

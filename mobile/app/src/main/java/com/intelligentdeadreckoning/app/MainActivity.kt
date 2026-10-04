@@ -43,6 +43,7 @@ class MainActivity : ComponentActivity() {
             val recording by session.recording.collectAsStateWithLifecycle()
             val library by session.library.collectAsStateWithLifecycle()
             val libraryError by session.libraryError.collectAsStateWithLifecycle()
+            val libraryOperationBusy by session.libraryOperationBusy.collectAsStateWithLifecycle()
             val current by session.currentSession.collectAsStateWithLifecycle()
             val elapsed by session.elapsedNs.collectAsStateWithLifecycle()
             val export by session.export.collectAsStateWithLifecycle()
@@ -61,6 +62,7 @@ class MainActivity : ComponentActivity() {
                 }, recording = recording, onStartRecording = session::startRecording,
                 onStopRecording = session::stopRecording, library = library, libraryError = libraryError,
                 currentSession = current, elapsedNs = elapsed, export = export, onRefreshSessions = session::refreshSessions,
+                libraryOperationBusy = libraryOperationBusy, onDeleteSession = session::deleteSession,
                 replay = replay, replayVisible = replayVisible, onReplay = session::startReplay,
                 onPauseReplay = session::pauseReplay, onResumeReplay = session::resumeReplay, onStopReplay = session::stopReplay,
                 onExport = { id -> if (session.chooseExport(id)) {

@@ -48,6 +48,18 @@ import kotlinx.coroutines.flow.stateIn
 /** Map-rate engine publications: fast enough for a smooth marker, slow enough to read. */
 private const val ENGINE_PUBLICATION_INTERVAL_NS = 100_000_000L
 
+/** Pure ownership gate shared with regression tests: never delete a session in use. */
+internal fun canDeleteSession(
+    id: String,
+    recording: RecorderState,
+    replay: ReplayState,
+    export: ExportState,
+    libraryBusy: Boolean,
+): Boolean = !libraryBusy &&
+    !(recording.busy && recording.recordingId == id) &&
+    !(replay.busy && replay.id == id) &&
+    !(export.busy && export.id == id)
+
 class SessionViewModel(application: Application, private val saved: SavedStateHandle) : AndroidViewModel(application) {
     private val simulation = SimulationController(viewModelScope, SystemClock::elapsedRealtime)
     private val real = AndroidAcquisition(application)
@@ -67,9 +79,8 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
      *  worker; touches no sensors, maps or files. Its output drives the map through the
      *  presentation pipeline and is never altered by it. Publications are capped at 10 Hz so
      *  the displayed state moves at a rate a person can follow; the filter itself runs at
-     *  sensor rate regardless. A session without a calibration record runs honestly
-     *  uncalibrated: position, speed and localization mode are published, the vehicle-frame
-     *  heading is null until calibration composition lands. */
+     *  sensor rate regardless. The current app flow supplies no valid calibration, so fusion
+     *  refuses alignment and must not be described as a usable navigation solution. */
     private val navigation = NavigationRuntime(
         FusionNavigationEngine(publicationIntervalNs = ENGINE_PUBLICATION_INTERVAL_NS),
         viewModelScope, SystemClock::elapsedRealtimeNanos,
@@ -102,7 +113,7 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
     val replayEvents = player.events
     val replayVisible = MutableStateFlow(false)
     fun startReplay(id: String) {
-        if (!foreground || recorder.state.value.busy || export.value.busy || player.state.value.busy) return
+        if (!foreground || libraryOperationBusy.value || recorder.state.value.busy || export.value.busy || player.state.value.busy) return
         coordinator.stop()
         // A replay is a different producer session: the live engine session ends first.
         releaseNavigation()
@@ -117,11 +128,14 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
     private val libraryMutable = MutableStateFlow(SessionPage())
     val library = libraryMutable.asStateFlow()
     val libraryError = MutableStateFlow<String?>(null)
+    val libraryOperationBusy = MutableStateFlow(false)
     val currentSession = MutableStateFlow<SavedSession?>(null)
     val elapsedNs = MutableStateFlow<Long?>(null)
     private var detailJob: Job? = null
     private var listJob: Job? = null
+    private var deleteJob: Job? = null
     fun refreshSessions(after: String? = null) {
+        if (libraryOperationBusy.value) return
         listJob?.cancel()
         listJob = viewModelScope.launch {
             try {
@@ -132,9 +146,38 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
         }
     }
     fun chooseExport(id: String): Boolean {
-        if (recorder.state.value.busy || player.state.value.busy || !exporter.choose(id)) return false
+        if (libraryOperationBusy.value || recorder.state.value.busy || player.state.value.busy || !exporter.choose(id)) return false
         saved["export_pending"] = id
         return true
+    }
+    /** Permanently removes one session after explicit confirmation in the session dialog. */
+    fun deleteSession(id: String) {
+        // Use the recorder's unsampled state: `recording` below is a 5 Hz presentation
+        // snapshot and may lag a just-started/finalizing writer by up to 200 ms.
+        val recording = recorder.state.value
+        val replaying = player.state.value
+        val exporting = export.value
+        if (!foreground || !canDeleteSession(
+                id, recording, replaying, exporting, libraryOperationBusy.value,
+            )
+        ) return
+        libraryOperationBusy.value = true
+        libraryError.value = null
+        listJob?.cancel()
+        deleteJob?.cancel()
+        deleteJob = viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) { files.delete(id) }
+                libraryError.value = null
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                libraryError.value = "Cannot delete session (${SafeSecurityMessages.code(e, "SESSION_DELETE_FAILED")})."
+            } finally {
+                libraryOperationBusy.value = false
+            }
+            refreshSessions()
+        }
     }
     fun exportResult(uri: Uri?) {
         val pending = saved.get<String>("export_pending")
@@ -322,7 +365,7 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
     fun resetNavigation() = navigation.reset()
     fun startRecording() {
         val snapshot = capture.value
-        if (foreground && !player.state.value.busy && !replayVisible.value && !export.value.busy && source.value == InputSource.REAL && snapshot.running && snapshot.sensors.isNotEmpty()) {
+        if (foreground && !libraryOperationBusy.value && !player.state.value.busy && !replayVisible.value && !export.value.busy && source.value == InputSource.REAL && snapshot.running && snapshot.sensors.isNotEmpty()) {
             recorder.start(recordingMetadata(getApplication(), snapshot), measurements)
         }
     }

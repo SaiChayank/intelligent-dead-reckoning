@@ -124,12 +124,14 @@ fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
            onStopRecording: () -> Unit = {}, library: SessionPage = SessionPage(), libraryError: String? = null,
            currentSession: SavedSession? = null, elapsedNs: Long? = null, export: ExportState = ExportState(),
            onRefreshSessions: (String?) -> Unit = {}, onExport: (String) -> Unit = {},
+           libraryOperationBusy: Boolean = false, onDeleteSession: (String) -> Unit = {},
            replay: ReplayState = ReplayState(), replayVisible: Boolean = false, onReplay: (String) -> Unit = {},
            onPauseReplay: () -> Unit = {}, onResumeReplay: () -> Unit = {}, onStopReplay: () -> Unit = {}) {
     var sessionsOpen by rememberSaveable { mutableStateOf(false) }
     var detailsOpen by rememberSaveable { mutableStateOf(false) }
-    if (sessionsOpen) SessionDialog(library, libraryError, recording.busy || export.busy || replay.busy, export.message,
-        onRefreshSessions, onExport, { sessionsOpen = false }, onReplay)
+    if (sessionsOpen) SessionDialog(library, libraryError,
+        recording.busy || export.busy || replay.busy || libraryOperationBusy, export.message,
+        onRefreshSessions, onExport, { sessionsOpen = false }, onReplay, onDeleteSession)
     var selected by rememberSaveable { mutableStateOf(Screen.DASHBOARD) }
     BackHandler(enabled = selected != Screen.DASHBOARD) { selected = Screen.DASHBOARD }
     Scaffold(
@@ -717,22 +719,22 @@ private fun About() {
                 "Kotlin + Jetpack Compose, screen navigation and an in-memory demo.", true)
             IdrDivider()
             Milestone("02", "Real-world acquisition", "Available now",
-                "Select Phone sensors for foreground IMU and location measurements. Recording remains planned.", true)
+                "Foreground IMU/location and optional local recording are available; recordings are private and user-deletable.", true)
             IdrDivider()
-            Milestone("03", "Navigation integration", "Future work",
-                "A validated shared navigation core, calibration and eventually map display.", false)
+            Milestone("03", "Navigation qualification", "Not accepted",
+                "Calibration engines and fusion code exist, but ordinary app use supplies no valid calibration; moving-drive and device qualification remain open.", false)
         }
         IdrCard(emphasis = IdrEmphasis.SECONDARY) {
             IdrSectionLabel("Private by design")
             Text(
-                "Simulation uses scripted values. Phone sensors mode reads IMU and permitted location while this app is visible. Data stays in bounded memory and is never recorded or uploaded. Leaving the app stops acquisition; returning requires Start.",
+                "Simulation uses scripted values. Phone sensors mode reads IMU and permitted location while this app is visible. Recording is a separate explicit action; it stores data privately until deleted or app data is cleared. No upload path exists. Leaving the app stops acquisition; returning requires Start.",
                 color = IdrPalette.textSecondary, style = IdrType.bodyMedium,
             )
         }
         IdrCard(emphasis = IdrEmphasis.SECONDARY) {
             IdrSectionLabel("Scientific boundary")
             Text(
-                "No INS, AI or fusion is running here. Dataset frame conventions are not automatically valid for this phone; real-device calibration and core validation remain separate work.",
+                "Calibration and fusion engines exist in the codebase, but no valid calibration is supplied by this app flow, so no aligned navigation solution is available. Dataset frame conventions are not automatically valid for this phone; physical navigation acceptance remains separate work.",
                 color = IdrPalette.textSecondary, style = IdrType.bodyMedium,
             )
         }
@@ -741,7 +743,7 @@ private fun About() {
                 "ANDROID IS THE MAIN PRODUCT\nPython supports offline research. Edge deployment is secondary.",
                 color = IdrPalette.textMuted, style = IdrType.monoSmall,
             )
-            Text("FOREGROUND ACQUISITION · NAVIGATION PLANNED", color = IdrPalette.accent, style = IdrType.label)
+            Text("FOREGROUND ACQUISITION · NAVIGATION NOT ACCEPTED", color = IdrPalette.accent, style = IdrType.label)
         }
     }
 }

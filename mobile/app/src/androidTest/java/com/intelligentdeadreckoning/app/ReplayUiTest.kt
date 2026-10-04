@@ -7,9 +7,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.test.platform.app.InstrumentationRegistry
 import com.intelligentdeadreckoning.app.acquisition.InputSource
 import com.intelligentdeadreckoning.app.replay.ReplayPhase
-import com.intelligentdeadreckoning.contracts.recording.v1.*
-import com.intelligentdeadreckoning.contracts.v1.*
-import com.intelligentdeadreckoning.contracts.v1.Record
 import org.junit.*
 import org.junit.Assert.*
 import java.io.File
@@ -19,24 +16,24 @@ class ReplayUiTest {
     @get:Rule val compose = createAndroidComposeRule<MainActivity>()
     private lateinit var dir: File
     private lateinit var id: String
-    private val ns = 9007199254740993L
     @Before fun fixture() {
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        id = "000-replay-test-${UUID.randomUUID()}"
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val context = instrumentation.targetContext
+        id = "000-demo-replay-test-${UUID.randomUUID()}"
         dir = File(context.noBackupFilesDir,"recordings/$id").apply { check(mkdirs()) }
-        val m = RecordingMetadata(id,"fixture",Source.SIMULATION,RecordingStartState.RECORDING,
-            RecordingEndState.STOPPED,CompletionState.COMPLETED,RecoveryState.NONE,null,null,null,
-            ClockIdentity(ClockDomain.ANDROID_ELAPSED_REALTIME_NS,null,"fixture",ns,ns,ns+30_000_000_000),
-            DeviceInfo(null,null,null,null,null),ApplicationInfo(null,null,null,null),emptyList(),
-            SourceConfiguration(LocationPermissionState.DENIED,null,null,null,null,true),
-            CalibrationInfo(CalibrationApplication.NOT_APPLIED,null),2,listOf(ChannelCount("diagnostic",2)))
-        File(dir,"metadata.json").writeBytes(RecordingCodec.encodeMetadata(m))
-        File(dir,"measurements.jsonl").outputStream().use { out ->
-            repeat(2) { i ->
-                val time = ns + i * 30_000_000_000L
-                out.write(RecordingCodec.encodeRecord(Record(Header("fixture",Source.SIMULATION),
-                    Event(i.toString(),time,time,DiagnosticEvent(Severity.INFO,"FIXTURE","Synthetic replay fixture",0))),m))
-                out.write(10)
+        for (name in listOf("metadata.json", "measurements.jsonl")) {
+            context.assets.open("demo-replay-v1/$name").use { input ->
+                File(dir, name).outputStream().use { output ->
+                    if (name == "metadata.json") {
+                        val template = input.readBytes().toString(Charsets.UTF_8)
+                        output.write(template.replace(
+                            "\"recording_id\": \"demo-replay-v1\"",
+                            "\"recording_id\": \"$id\"",
+                        ).toByteArray(Charsets.UTF_8))
+                    } else {
+                        input.copyTo(output)
+                    }
+                }
             }
         }
         compose.waitUntil(10_000) { compose.onAllNodesWithTag("saved_sessions").fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
@@ -50,13 +47,13 @@ class ReplayUiTest {
     }
     @Test fun selectPauseResumeStopAndExactSourceLabel() {
         compose.onNodeWithTag("saved_sessions").performScrollTo().performClick()
-        compose.waitUntil(10_000) { compose.onAllNodesWithText("Replay session").fetchSemanticsNodes().isNotEmpty() }
-        compose.onAllNodesWithText("Replay session")[0].performClick()
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("replay_$id").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("replay_$id").performClick()
         phase(ReplayPhase.PLAYING)
         compose.onNodeWithText("replay_simulation").assertExists()
         compose.onNodeWithTag("recording_start").assertIsNotEnabled()
         compose.onNodeWithTag("replay_pause").performScrollTo().performClick(); phase(ReplayPhase.PAUSED)
-        assertEquals(ns, model().replay.value.latest!!.event.t_ns)
+        assertEquals(9007199254740993L, model().replay.value.latest!!.event.t_ns)
         compose.onNodeWithTag("replay_resume").performClick(); phase(ReplayPhase.PLAYING)
         compose.onNodeWithTag("replay_stop").performClick(); phase(ReplayPhase.STOPPED)
         assertEquals(1L,model().replay.value.emitted)

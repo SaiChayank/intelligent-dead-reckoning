@@ -8,7 +8,7 @@ network. No Docker, no hosted services, no emulator.
 | Job | Gates (all verified locally before landing) |
 |---|---|
 | `python` | Python 3.12, `pip install -r requirements.txt` + `pip check`, isolated pinned `pip-audit==2.10.1` advisory scan of `requirements.txt`, contract tests, Python session-reader tests, experiment contract/loader/tooling tests, strapdown INS physics tests, GNSS threshold-tool tests, road-graph builder/asset tests, full suite, AST compile across `training/ tests/ contracts/ tools/`, import checks |
-| `android` | JDK 25 (matches the verified Android Studio JBR), Android SDK platform 37 + build-tools 36.0.0, `bash gradlew testDebugUnitTest` (348 JVM tests incl. Kotlin/Python session-reader parity, the analytic calibration suite, the GNSS quality state machine, the GNSS+INS fusion filter with its geodesy parity, the vehicle-motion constraint suite, the offline road-graph / map-matching suite, the engine-map fold plus marker-easing suite, the scripted-truth confidence-coverage evaluation with its provider-accuracy substitution guards, and the evaluation harness that regenerates the arm-comparison golden report plus the surface rules that render it), `lintDebug`, `assembleDebug`, `assembleDebugAndroidTest` |
+| `android` | JDK 25 (matches the verified Android Studio JBR), Android SDK platform 37 + build-tools 36.0.0, `bash gradlew testDebugUnitTest` (JVM regression suite incl. Kotlin/Python session-reader parity, the analytic calibration suite, the GNSS quality state machine, the GNSS+INS fusion filter with its geodesy parity, the vehicle-motion constraint suite, the offline road-graph / map-matching suite, the engine-map fold plus marker-easing suite, the scripted-truth confidence-coverage evaluation with its provider-accuracy substitution guards, and the evaluation harness that regenerates the arm-comparison golden report plus the surface rules that render it), `lintDebug`, `assembleDebug`, `assembleDebugAndroidTest` |
 | `quality` | `git diff --check` over the pushed range (with `cr-at-eol` for the repo's CRLF files), `tools/check_repo_hygiene.py` (forbidden tracked files, secret-pattern scan, map-manifest and contract-fixture validation) |
 
 Notes on deliberate choices:
@@ -63,8 +63,9 @@ green `android` job covers it.
   reference yet, so no job can produce a field-accuracy number.
 - **Performance and endurance** (bounded queues under load, no monotonic memory
   growth) — measured by the manual acceptance procedure, not CI.
-- **The instrumented suite.**  `assembleDebugAndroidTest` proves it compiles;
-  running the 43 device tests requires the manual gate below.
+- **The instrumented suite.** `assembleDebugAndroidTest` proves it compiles;
+  the connected test count/output at runtime is authoritative and a real device or
+  emulator is required.
 
 ## Manual physical-device gates (OnePlus CPH2585 / Android 16)
 
@@ -73,10 +74,10 @@ These are acceptance gates, run by a human on the target phone; they are
 `mobile/MAP_DEVICE_VERIFICATION.md` and `reports/` is device-specific.
 
 1. **Instrumented suite** — `bash gradlew connectedDebugAndroidTest` with one
-   authorized device (`ANDROID_SERIAL` if several). Expected: 43 tests,
-   0 failures. (The 2026-09-29 run reported 26: `DesignSystemUiTest`'s 12 tests, the
-   engine map view's 3 and the evaluation surface's 2 landed afterwards.) Note: the runner may uninstall the app afterwards; reinstall
-   with `installDebug` and re-seed any session you need.
+   authorized device (`ANDROID_SERIAL` if several). Record the actual runtime
+   count/results; compiling the APK alone is not a device pass. Note: the runner
+   may uninstall the app afterwards; reinstall with `installDebug` and re-seed any
+   session you need.
 2. **Acquisition acceptance** — the 30-minute stationary endurance procedure in
    [mobile/ACQUISITION.md](mobile/ACQUISITION.md): queue stays bounded, memory
    stabilizes, measured rates match the manifest.

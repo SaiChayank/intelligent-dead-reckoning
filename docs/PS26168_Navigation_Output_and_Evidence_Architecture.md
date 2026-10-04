@@ -1,8 +1,10 @@
 # PS26168 — Navigation Output, Confidence & Evidence Architecture
 
+> **Current release/evidence boundary:** this document is a detailed contract/design reference whose planned fields and examples can be historical. Read [FINAL_RELEASE_READINESS.md](../FINAL_RELEASE_READINESS.md) for current implementation, test, physical-device, ML and performance evidence; [PROTOTYPE_CAPABILITIES.md](PROTOTYPE_CAPABILITIES.md) for implemented/future status. Ordinary app use has no valid calibration-to-fusion hand-off, field ground-truth is unavailable, and AI is not implemented.
+
 **Scope:** The navigation engine output contract that downstream Android UI, offline map rendering, recording/replay, evaluation, and the future edge engine consume. This document defines output semantics, confidence/uncertainty, quality/status separation, evidence/provenance, ordering, stale-data behavior, and the exact boundary between the current v1 contract and future navigation-mode extensions. It does **not** redesign the INS/EKF/AI pipeline, implement map matching/routing, or define UI styling.
 
-**Project state used:** current repository baseline after verified Android acquisition, recording/export/replay, offline MapLibre rendering, and the synthetic GNSS/DR/recovery map presentation. The real `NavigationEngine` remains an interface; production INS/AI/EKF/map-matching outputs are not yet implemented.
+**Project state used:** this document began as a design/snapshot. Its old implementation-status claims are superseded by source and [FINAL_RELEASE_READINESS.md](../FINAL_RELEASE_READINESS.md). An Android `NavigationEngine` runtime, calibration engine and 15-state fusion EKF now exist with host coverage; the ordinary app flow does not provide a valid calibration, and no independent moving-drive evidence qualifies navigation performance. AI remains blocked and map matching is evaluation-only.
 
 ---
 
@@ -10,7 +12,7 @@
 
 ### OFFICIAL / PROBLEM-OUTCOME FIELDS
 
-The problem statement does not prescribe a complete wire schema like PS26145 did for alerts. It does, however, require a navigation result that can continue through GNSS denial and be benchmarked against the stated drift/update-rate targets. Therefore the fields below are the **minimum externally meaningful outputs implied by the problem outcome**, not a claim that the SIH listing names these JSON keys verbatim.
+The problem statement does not prescribe a complete wire schema like PS26145 did for alerts. It requires a navigation result that can continue through GNSS denial and be benchmarked against drift/update-rate targets. The fields below are the minimum externally meaningful outputs implied by that outcome, not a claim that the SIH listing names these exact JSON keys.
 
 | Output | Type | Meaning | Requirement basis |
 |---|---|---|---|
@@ -27,11 +29,11 @@ The problem statement does not prescribe a complete wire schema like PS26145 did
 
 ### CURRENT CONTRACT — REQUIRED NAVIGATION FIELDS
 
-The repository's existing **navigation exchange contract v1.0.0** is the current authoritative wire format. A navigation record is carried inside the common `Record` envelope.
+The common `Record` envelope carries navigation records. Measurement payloads and the frozen 1.0.0 contract remain unchanged; version 1.1.0 adds the required localization mode for engine output.
 
 | Field | Type | Meaning | Why required |
 |---|---|---|---|
-| `contract_version` | string (`1.0.0`) | Contract version | Prevents silent interpretation drift |
+| `contract_version` | string (`1.0.0` frozen or `1.1.0` navigation output) | Contract version | Prevents silent interpretation drift |
 | `session_id` | non-empty string | Acquisition/navigation session identity | Keeps records from different sessions separate |
 | `source` | enum (`real`, `simulation`, `replay_real`, `replay_simulation`) | Provenance of the stream | Prevents replay/simulation from masquerading as live data |
 | `event_id` | canonical decimal string | Session-unique event identity | Allows exact ordering/audit checks without floating-point conversion |
@@ -68,13 +70,13 @@ These are not all present as explicit v1 fields, but the final working system ne
 
 | Item | Type | Meaning | Current status |
 |---|---|---|---|
-| localization mode | enum concept (`GNSS`, `DR`, `FUSED`) | Which localization regime currently drives the presented position | **Missing as an explicit v1 field; requires versioned contract review before addition** |
+| localization mode | enum concept (`GNSS`, `DR`, `FUSED`, `RECOVERY`) | Which localization regime drives a presented position | **Present as `NavigationState.localization_mode` in contract 1.1.0; absent from frozen 1.0.0** |
 | outage start/end identity | event/diagnostic provenance | Delimits GNSS-denied intervals for evaluation and UI | Not yet formalized |
-| stale-state timeout policy | deterministic policy | Defines when old navigation output must stop being presented as current | Map adapter currently hides stale synthetic/navigation presentation after a bounded timeout; production engine policy not frozen |
+| stale-state timeout policy | deterministic policy | Defines when old navigation output must stop being presented as current | Engine-map presentation hides stale positions after 3 s; this is a presentation bound, not a validated operating threshold |
 | output latency metric | runtime telemetry | `received_ns - t_ns` or engine publication latency with clearly defined clock semantics | Not yet formalized as a dedicated telemetry stream |
 | model provenance | version/hash reference | Identifies AI model(s) that contributed to an estimate | Future; no production model is deployed yet |
-| map-match provenance | raw vs. matched position linkage | Distinguishes filter state from road-snapped presentation/correction | Future; map matching not implemented |
-| recovery convergence state | structured diagnostic/state | Shows that GNSS has returned but fusion has not yet fully reconverged | Future; recovery logic not implemented |
+| map-match provenance | raw vs. matched position linkage | Distinguishes filter state from road-snapped presentation/correction | Separate opt-in map evaluation overlay; never an estimator constraint |
+| recovery convergence state | structured diagnostic/state | Shows that GNSS has returned but fusion has not yet fully reconverged | Host-tested in fusion; not field-validated |
 
 ### OPTIONAL / ADVANCED OUTPUTS
 
@@ -105,7 +107,7 @@ A degraded GNSS input does **not** automatically imply a failed navigation solut
 
 Likewise, a tracking navigation state does not prove high confidence. A filter can still produce a numerical position while its uncertainty grows.
 
-**Current contract limitation:** v1.0.0 contains `NavigationStatus`, `GnssState`, confidence, and `gnss_used_after_initialization`, but it does **not** carry an explicit current `GNSS/DR/FUSED` mode field. Do not infer that mode in the final system from a single boolean or UI label. If the mode becomes a contract-level output, introduce it through an explicit versioned contract change with matching Python/Kotlin codecs and tests.
+**Version boundary:** frozen v1.0.0 does not carry an explicit localization mode. Contract 1.1.0 adds `NavigationState.localization_mode` with Python/Kotlin codec parity; the app's engine seam requires 1.1.0. A present field does not imply a usable app solution: without valid calibration the current fusion engine remains uninitialized and publishes no position/mode.
 
 ---
 
@@ -126,9 +128,9 @@ Android GNSS/location accuracy fields and the navigation contract's `horizontal_
 - **`unvalidated`** — a numeric uncertainty may exist internally, but its relationship to real error has not been calibrated/validated.
 - **`calibrated`** — the uncertainty estimate has been empirically checked against held-out/independent ground truth under the defined evaluation protocol.
 
-The current project is **not yet entitled to mark production DR confidence as calibrated**, because the real INS/EKF/AI navigation engine has not been completed and validated.
+The project is **not entitled to mark production DR confidence as calibrated**: the fusion engine exists and has host coverage, but the ordinary app provides no valid calibration, no independent moving-drive evidence exists, and AI remains unimplemented.
 
-**Status 2026-10-01:** the fusion engine now publishes its covariance as `unvalidated` (with `probability` null), the display path carries it in its own field, draws it as a dashed ring and labels it as a model claim, and the validation of §3.3 was built and run against a scripted truth — 692 published samples over a drive with a 20 s outage: 97.9% coverage fused, 100% DR and **64.5% recovery**, so the correction needed is regime-dependent (opposite signs in the fused and recovery regimes). The states are therefore `unavailable` (no solution) and `unvalidated` (a real covariance); `calibrated` stays unused until a reference-bearing experiment exists. See [mobile/CONFIDENCE.md](../mobile/CONFIDENCE.md) and [reports/confidence_evaluation_2026_10_01.md](../reports/confidence_evaluation_2026_10_01.md).
+**Status 2026-10-01:** the fusion engine now publishes its covariance as `unvalidated` (with `probability` null), the display path carries it in its own field, draws it as a dashed ring and labels it as a model claim, and the validation of §3.3 was built and run against a scripted truth — 692 published samples over a drive with a 20 s outage: 97.9% coverage fused, 100% DR and **64.5% recovery**, so the correction needed is regime-dependent (opposite signs in the fused and recovery regimes). The filter can produce `unvalidated` covariance after a valid calibration and alignment; ordinary app use currently cannot provide that calibration, so the runtime's normal path has no position and confidence is unavailable. `calibrated` stays unused until a reference-bearing experiment exists. See [mobile/CONFIDENCE.md](../mobile/CONFIDENCE.md) and [reports/confidence_evaluation_2026_10_01.md](../reports/confidence_evaluation_2026_10_01.md).
 
 ### 3.3 Recommended validation before `calibrated`
 
@@ -146,7 +148,7 @@ A confidence display is useful only if it is an uncertainty claim the evidence c
 
 ## 4. Navigation Quality and Mode Transition Policy
 
-The final implementation should use explicit, deterministic state transitions. The UI must reflect engine state; it must not invent its own localization mode.
+The fusion implementation uses explicit, deterministic transitions in host tests; physical app acceptance remains open. The UI reflects the engine's mode field and must not invent a localization mode. Ordinary app sessions currently cannot initialize fusion because valid calibration is not handed off.
 
 ### GNSS available
 
@@ -233,7 +235,7 @@ Navigation output is a time series, not an alert stream. It therefore should **n
 
 - Preserve exact event identity and Int64 timestamps.
 - Equal timestamps across different event types are valid.
-- The navigation engine may use its bounded reorder policy internally, but once a state has been emitted, consumers must not retroactively reorder historical output.
+- The navigation engine uses its bounded input policy internally; once a state is emitted, consumers must not retroactively reorder history. The app runtime bounds ingress/output, but no physical output-rate/latency result is claimed.
 - Replays preserve original measurement timestamps and use a separate playback clock.
 
 ### Duplicate handling
@@ -261,7 +263,7 @@ Measure effective navigation publication rate separately from IMU input rate.
 
 ## 7. Map / Routing Boundary
 
-The map is a consumer of navigation output.
+The map is a consumer of navigation output. The current app wires this path, but fusion emits no aligned position in ordinary app use until a valid calibration flow exists.
 
 ```
 Sensors / GNSS
@@ -416,14 +418,14 @@ presentation labels; the engine view's mode comes only from the engine's publish
 | ENU→WGS84 `NavigationPresentation` adapter | **IMPLEMENTED + TESTED, DRIVEN BY ENGINE OUTPUT** |
 | offline MapLibre/Hyderabad renderer | **IMPLEMENTED + DEVICE VERIFIED** |
 | synthetic GNSS/DR/recovery visualization | **IMPLEMENTED + DEVICE VERIFIED AS SYNTHETIC** |
-| real `NavigationEngine` implementation | **IMPLEMENTED (fusion engine, host-verified; engine map view not yet device-run)** |
-| deployable calibration output | **NOT IMPLEMENTED** |
-| corrected classical INS | **NOT IMPLEMENTED / historical baseline invalid for deployment** |
-| AI correction inference | **NOT IMPLEMENTED** |
-| EKF/UKF fusion | **IMPLEMENTED — 15-state error-state EKF, host-verified; no ground-truthed accuracy claim** |
-| confidence states | **`unavailable` / `unvalidated` SHIPPING (covariance split out, labelled unvalidated and drawn dashed); `calibrated` NOT CLAIMED — scripted-truth coverage is 97.9% fused / 100% DR / 64.5% recovery, and no reference-bearing experiment exists** |
-| real GNSS→DR→recovery state machine | **IMPLEMENTED AS `localization_mode` (gnss -> fused -> dr -> recovery), host-verified** |
-| map matching | **IMPLEMENTED AS AN OPT-IN EVALUATION OVERLAY (host-verified; no ground-truthed real drive)** |
+| Android navigation runtime / engine | **IMPLEMENTED AND HOST-TESTED; current app binds fusion without a valid calibration** |
+| phone-to-vehicle calibration engine | **IMPLEMENTED AND HOST-TESTED; no user-accessible collection/composition flow** |
+| calibrated app navigation journey | **NOT AVAILABLE in ordinary app use until calibration is integrated and obtained** |
+| 15-state EKF fusion | **IMPLEMENTED AND HOST-TESTED; no ground-truthed accuracy claim** |
+| AI correction inference / deployable model | **NOT IMPLEMENTED; admission gate approves 0 sequences** |
+| confidence states | **UNVALIDATED only; scripted recovery coverage 64.5%; no independent reference-bearing experiment** |
+| GNSS→DR→recovery state | **IMPLEMENTED in the host-tested engine; no moving-drive field acceptance** |
+| map matching | **OPT-IN EVALUATION OVERLAY; never an estimator constraint and not field-validated** |
 | explicit live `GNSS/DR/FUSED` contract field | **PRESENT IN CONTRACT 1.1.0 (`navigation.localization_mode`); 1.0.0 unchanged and still cannot carry it** |
 | offline routing / rerouting / turn-by-turn | **NOT IMPLEMENTED** |
 | edge ~200 Hz engine | **NOT IMPLEMENTED** |
@@ -445,4 +447,4 @@ presentation labels; the engine view's mode comes only from the engine's publish
 
 ---
 
-**This document defines the navigation-output and evidence architecture only.** The engine, its error-state EKF, the localization-mode state machine and the matcher now exist and are host-tested (see §10), but nothing here claims validated accuracy: there is no ground-truthed real drive, no device run of the engine map view, and no AI correction, routing or deployable calibration.
+**This is the navigation-output and evidence architecture.** The Android runtime, calibration/fusion engines, localization-mode field and evaluation-only map matcher exist and have host coverage. The ordinary app flow does not supply valid calibration and emits no aligned navigation position; there is no independent moving-drive evidence or engine-view device pass. Accuracy, update-rate, drift and confidence remain unqualified; AI and routing are deferred.

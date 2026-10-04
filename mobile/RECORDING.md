@@ -28,14 +28,25 @@ simulation sensor source or reinterpret UI snapshots as Android IMU measurements
 
 ## Storage and privacy
 
+Session deletion is available in the saved-session library. The user confirms the
+specific session before permanent removal. Active recording, replay, and export
+protect their own session from deletion; filesystem removal runs on the I/O worker,
+refuses path traversal and session symlinks, and does not follow nested symlinks.
+Malformed session data can still be deleted so invalid metadata cannot trap private
+bytes in the library. Host regression tests cover these rules; device execution is
+reported in [FINAL_RELEASE_READINESS.md](../FINAL_RELEASE_READINESS.md).
+
 Sessions live under `Context.noBackupFilesDir/recordings/<recording-id>/` with
 `metadata.json` and `measurements.jsonl`. The usual device location is
 `/data/user/0/com.intelligentdeadreckoning.app/no_backup/recordings/`.
 The Android-provided directory is resolved on the I/O worker, since accessing it
 can itself create a directory. No shared/external-storage permission or write is
-used. Existing backup exclusions remain intact. There is no upload, service,
-export, replay UI, or automatic deletion. Clearing app data/uninstalling removes
-private recordings; reinstalling during instrumentation may also remove them.
+used. Existing backup exclusions remain intact. There is no upload or background
+service. Export and replay are explicit separate operations. The saved-session
+library provides an explicit per-session delete with confirmation; deletion is
+permanent, remains app-private, and does not remove any independently exported
+copy. Clearing app data/uninstalling also removes private recordings; reinstalling
+during instrumentation may also remove them.
 
 IDs are generated UUIDs. Existing directories are never overwritten by Start.
 Metadata uses the frozen codec, exact decimal-string Int64 times/counts, explicit

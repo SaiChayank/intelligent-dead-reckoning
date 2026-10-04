@@ -1,0 +1,20 @@
+{
+  "manifest_version": "1.0.0",
+  "status": "blocked_no_field_ground_truth",
+  "field_ground_truth_artifacts": [],
+  "field_experiments": [],
+  "blockers": [
+    "No approved independent moving-drive reference dataset is present.",
+    "The experiments corpus is empty; no sealed ground-truth drive can be evaluated.",
+    "Calibration-to-fusion is not available through the ordinary app flow."
+  ],
+  "scripted_evaluation": {
+    "status": "available_host_fixture_only",
+    "report": "../contracts/evaluation/v1/golden_report.json",
+    "android_asset": "../mobile/app/src/main/assets/evaluation/golden_report.json",
+    "harness": "mobile/app/src/test/java/com/intelligentdeadreckoning/app/EvaluationHarnessTest.kt",
+    "reference_kind": "scripted_truth",
+    "field_performance_claim": false
+  },
+  "admission_policy": "Do not substitute scripted truth, map geometry, phone GNSS, or an unsealed recording for an independent field reference."
+}

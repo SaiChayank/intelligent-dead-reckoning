@@ -1,0 +1,55 @@
+{
+  "recording_contract_version": "1.0.0",
+  "measurement_contract_version": "1.0.0",
+  "recording_id": "demo-replay-v1",
+  "acquisition_session_id": "demo-replay-acquisition-v1",
+  "source": "simulation",
+  "start_state": "recording",
+  "end_state": "stopped",
+  "completion_state": "completed",
+  "recovery_state": "none",
+  "created_utc_ms": null,
+  "started_utc_ms": null,
+  "ended_utc_ms": null,
+  "clock": {
+    "domain": "android_elapsed_realtime_ns",
+    "boot_id": null,
+    "session_clock_id": "demo-replay-clock-v1",
+    "origin_ns": "9007199254740993",
+    "started_ns": "9007199254740993",
+    "ended_ns": "9007229254740993"
+  },
+  "device": {
+    "manufacturer": null,
+    "model": null,
+    "os_name": null,
+    "os_version": null,
+    "api_level": null
+  },
+  "application": {
+    "package_name": null,
+    "version_name": null,
+    "version_code": null,
+    "source_version": null
+  },
+  "sensors": [],
+  "source_configuration": {
+    "location_permission": "not_requested",
+    "location_service_enabled": null,
+    "gps_provider_enabled": null,
+    "network_provider_enabled": null,
+    "satellite_status_enabled": null,
+    "foreground_only": true
+  },
+  "calibration": {
+    "state": "not_applied",
+    "calibration_id": null
+  },
+  "record_count": "2",
+  "channel_counts": [
+    {
+      "channel": "diagnostic",
+      "count": "2"
+    }
+  ]
+}

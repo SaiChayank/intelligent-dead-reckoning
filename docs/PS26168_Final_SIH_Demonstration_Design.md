@@ -1,10 +1,12 @@
 # PS26168 — Final SIH Demonstration Design
 
+> **Current local prototype runbook:** use [RELEASE_PACKAGE.md](../RELEASE_PACKAGE.md) for the realizable synthetic demo, update safety, and fallback screen-recording instructions. The remainder of this historical target script is future acceptance guidance only; its navigation/AI steps below are not implemented or demonstrated. See the [capability matrix](PROTOTYPE_CAPABILITIES.md) and [known limitations](../KNOWN_LIMITATIONS.md).
+
 **Scope:** The final live demonstration sequence only. No architecture changes are introduced here.
 
-**Honesty constraint:** the current repository has verified acquisition, recording/export/replay, offline MapLibre rendering, and a synthetic GNSS/DR/recovery map demo. The real NavigationEngine, corrected INS, AI model, EKF/UKF, map matching, routing, and edge engine are not yet implemented. Therefore the sequence below is the **target acceptance script**; any step depending on an unimplemented module must not be presented as already working until that module passes its gate.
+**Honesty constraint:** this runbook is a target acceptance script, not evidence that its end-to-end claims currently pass. Acquisition, recording/export/replay, offline MapLibre rendering, calibration/fusion engines, and an evaluation-only map matcher exist. The normal app path does not supply a valid calibration to fusion, no independent moving-drive truth or navigation-performance acceptance exists, and the ML admission gate approves no data. Do not present a calibrated GNSS-denied route as working until these gates pass. Current status: [FINAL_RELEASE_READINESS.md](../FINAL_RELEASE_READINESS.md).
 
-**Fallback principle:** prefer validated recordings/replay of real system runs. A synthetic UI fixture may demonstrate interface behavior, but it cannot substitute for navigation-accuracy evidence.
+**Current fallback principle:** use only the tracked synthetic UI/replay fixture, clearly labelled as synthetic, or a clearly labelled rehearsal screen capture. No approved real ground-truth drive exists; see [RELEASE_PACKAGE.md](../RELEASE_PACKAGE.md).
 
 ---
 
@@ -15,13 +17,13 @@
 - Show attribution and offline coverage.
 - Confirm no tile/API-key/network dependency.
 
-**Evidence:** real local vector map renders offline.
+**Target evidence only.** Current physical airplane-mode map verification is pending device access; the checked-in host asset hashes do not prove device rendering without Internet.
 
 **Fallback:** rehearsal screen recording, explicitly labelled as such.
 
 ---
 
-## 2. Source & Contract Proof
+## 2. Source & Contract Proof (physical demonstration pending device access)
 - Open Diagnostics.
 - Select REAL PHONE.
 - Start acquisition explicitly.
@@ -33,7 +35,7 @@
 
 ---
 
-## 3. Local Recording
+## 3. Local Recording (optional physical workflow; not required for synthetic UI demo)
 - Start a new recording.
 - Show recording ID and acquisition session ID.
 - Show written/drop/error counters.
@@ -44,7 +46,7 @@
 ---
 
 ## 4. Calibration
-**Run only after real calibration exists and has passed acceptance.**
+**Future acceptance step only — the ordinary app flow has no calibration hand-off. Do not present as available.**
 
 - Mount phone in defined vehicle position.
 - Start guided calibration.
@@ -59,7 +61,7 @@
 ---
 
 ## 5. GNSS-Available Navigation
-**Run only after the real navigation engine exists.**
+**Future acceptance step only — do not present as currently available.**
 
 - Begin drive in open-sky area.
 - Show GNSS quality usable.
@@ -95,7 +97,7 @@ Map:
 
 ---
 
-## 7. AI Contribution / Ablation
+## 7. AI Contribution / Ablation (blocked: no approved data or model)
 
 Use the exact same held-out outage interval to compare:
 
@@ -125,7 +127,7 @@ Do not generalize to motorcycles/skids/parking if not tested.
 ---
 
 ## 9. Map Matching
-**Only after implemented.**
+**Future acceptance step only — map matching exists as an evaluation overlay, not an accepted navigation subsystem.**
 
 - show raw fused trail,
 - show matched trail as a distinct overlay,
@@ -201,7 +203,7 @@ Optional:
 
 ---
 
-## 15. Replay
+## 15. Replay (current tracked fixture is synthetic diagnostics only)
 - replay the exact saved real session,
 - show `replay_real`,
 - show original timestamps/order retained,
@@ -270,10 +272,12 @@ Do not claim 200 Hz merely by replaying 10 Hz phone data faster unless explicitl
 
 # Fallback Ladder
 
-1. **Live real drive**
-2. **Replay of a real, ground-truthed drive through the same pipeline**
-3. **Screen capture of that successful run**
-4. **Synthetic map demo — UI only**
+The live/ground-truth steps are future-only and blocked today. For this prototype, use the local runbook's explicitly labelled synthetic UI demo and, optionally, its diagnostic-only replay fixture. A screenshot or rehearsal clip never upgrades those to field evidence.
+
+1. **Current:** live local synthetic UI/map demo, with synthetic disclaimers visible
+2. **Current optional:** tracked synthetic diagnostic-only replay fixture
+3. **Fallback:** screen capture labelled synthetic/emulator/rehearsal with build/device/connectivity disclosed
+4. **Future only:** real ground-truthed drive replay and live drive, after calibration, data, and device gates pass
 
 ---
 
@@ -328,4 +332,4 @@ If built, show local graph routing. Otherwise explain that rendering, positionin
 
 ---
 
-**This document defines the target demonstration and fallback strategy only.**
+**This remaining checklist is future navigation acceptance guidance.** The runnable SIH prototype sequence is [RELEASE_PACKAGE.md](../RELEASE_PACKAGE.md); absent field truth/model/device access are blockers, not optional demo steps.

@@ -12,6 +12,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -49,7 +53,9 @@ fun SessionDialog(
     export: (String) -> Unit,
     close: () -> Unit,
     replay: (String) -> Unit = {},
+    delete: (String) -> Unit = {},
 ) {
+    var deleteConfirmationId by rememberSaveable { mutableStateOf<String?>(null) }
     AlertDialog(
         onDismissRequest = close,
         containerColor = IdrPalette.surfaceElevated,
@@ -70,7 +76,7 @@ fun SessionDialog(
                     Text(it, color = IdrPalette.danger, style = IdrType.bodySmall)
                 }
                 if (busy) {
-                    Text("Working… export and replay stay disabled until it finishes.",
+                    Text("Working… session actions stay disabled until it finishes.",
                         color = IdrPalette.textMuted, style = IdrType.bodySmall)
                 }
                 LazyColumn(
@@ -88,7 +94,7 @@ fun SessionDialog(
                         }
                     }
                     items(page.sessions, key = { it.id }) { session ->
-                        SessionRow(session, busy, export, replay, close)
+                        SessionRow(session, busy, export, replay, close) { deleteConfirmationId = it }
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
@@ -101,6 +107,25 @@ fun SessionDialog(
         },
         confirmButton = { IdrButton("Close", close, variant = IdrButtonVariant.GHOST) },
     )
+    deleteConfirmationId?.let { id ->
+        AlertDialog(
+            onDismissRequest = { deleteConfirmationId = null },
+            containerColor = IdrPalette.surfaceElevated,
+            titleContentColor = IdrPalette.textPrimary,
+            textContentColor = IdrPalette.textSecondary,
+            title = { Text("Delete session permanently?", style = IdrType.headlineMedium) },
+            text = { Text("This permanently removes the private recording for $id. Exported copies are not affected.", style = IdrType.bodySmall) },
+            confirmButton = {
+                IdrButton("Delete permanently", {
+                    deleteConfirmationId = null
+                    delete(id)
+                }, variant = IdrButtonVariant.DANGER)
+            },
+            dismissButton = {
+                IdrButton("Keep session", { deleteConfirmationId = null }, variant = IdrButtonVariant.GHOST)
+            },
+        )
+    }
 }
 
 @Composable
@@ -110,6 +135,7 @@ private fun SessionRow(
     export: (String) -> Unit,
     replay: (String) -> Unit,
     close: () -> Unit,
+    requestDelete: (String) -> Unit,
 ) {
     val m = session.metadata
     Column(verticalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
@@ -151,6 +177,14 @@ private fun SessionRow(
             enabled = !busy && session.replayable,
             variant = IdrButtonVariant.PRIMARY,
             testTag = "replay_${session.id}",
+            modifier = Modifier.fillMaxWidth(),
+        )
+        IdrButton(
+            "Delete session",
+            { requestDelete(session.id) },
+            enabled = !busy && session.error != "SESSION_NOT_FOUND",
+            variant = IdrButtonVariant.DANGER,
+            testTag = "delete_${session.id}",
             modifier = Modifier.fillMaxWidth(),
         )
         IdrDivider()

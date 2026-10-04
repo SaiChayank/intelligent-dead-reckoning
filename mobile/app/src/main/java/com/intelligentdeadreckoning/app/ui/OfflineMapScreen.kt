@@ -719,8 +719,9 @@ private fun LivePanel(
  * travelled trail come from `NavigationState`, the confidence radius and speed sigma from the
  * `Confidence` record paired with it — labelled calibrated only when that record's state is
  * `CALIBRATED`, and otherwise as the UNVALIDATED model covariance it is — and the localization
- * mode from the 1.1.0 `localization_mode` field. A value the engine did not publish stays `—`, and the heading legitimately stays `—`
- * until a calibration record supplies the vehicle attitude. GNSS quality is the acquisition
+ * mode from the 1.1.0 `localization_mode` field. The normal app path currently supplies no valid
+ * calibration, so fusion stays uninitialized and publishes no position, speed, heading or mode.
+ * GNSS quality is the acquisition
  * stream's own report and is labelled as acquisition, not engine, output: the engine publishes no
  * quality record yet and this screen does not invent one. The evaluation toggle adds the
  * map-matched claim beside the raw position — a parallel evaluation output, never a replacement
@@ -748,7 +749,7 @@ private fun EnginePanel(
             IdrIcon(IdrGlyph.NAVIGATE, tint = IdrPalette.textMuted, size = IdrSize.iconSm)
             Spacer(Modifier.width(IdrSpace.sm))
             Text(
-                if (point == null) "No engine position" else "Fused navigation · $mode",
+                if (point == null) "No engine position" else "Fusion engine · $mode",
                 color = IdrPalette.textPrimary,
                 style = IdrType.titleMedium,
                 maxLines = 1,
@@ -820,9 +821,9 @@ private fun EnginePanel(
             modifier = Modifier.testTag("engine_evaluation"),
         )
         Text(
-            "Navigation engine output only: this screen reads no sensor and estimates nothing. A stream that " +
-                "stops publishing leaves the screen within three seconds rather than being held or extrapolated, " +
-                "and the heading stays — until a calibration record supplies the vehicle attitude. The confidence " +
+            "This engine view reads no sensor and estimates nothing. Ordinary app use supplies no valid calibration, " +
+                "so fusion remains uninitialized and publishes no position. A stream that stops publishing leaves the " +
+                "screen within three seconds rather than being held or extrapolated. The confidence " +
                 "radius is the engine's own covariance: it is labelled calibrated only when the engine's confidence " +
                 "state says CALIBRATED, and it stays UNVALIDATED — a model claim, drawn as a dashed ring — until an " +
                 "independent reference has shown it matches real error.",

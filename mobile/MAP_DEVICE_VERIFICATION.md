@@ -1,5 +1,10 @@
 # Offline map device acceptance — 2026-09-25
 
+> **Current-status addendum — 2026-10-03:** everything below is dated evidence for
+> the individual stages described, not current navigation acceptance. The engine-map
+> device gate at the end remains pending; no current physical navigation output is
+> qualified. See [FINAL_RELEASE_READINESS.md](../FINAL_RELEASE_READINESS.md).
+
 Scope: optional offline Hyderabad renderer and **synthetic** navigation-state
 presentation. This is not acceptance of a real navigation engine, GNSS recovery
 algorithm, route planner or map matching.
@@ -492,9 +497,11 @@ bash gradlew installDebug --console=plain
 Expected: **41 tests, 0 failures**; `engine-no-output.png` in the app's private test cache.
 Then, on the same install:
 
-4. Start Sensors, open Map, select **Navigation engine**. Expected: the position appears
-   only after the engine publishes; no fixture or live marker appears; heading reads `—`
-   (no calibration record exists yet — this is the honest state, not a defect).
+4. Start Sensors, open Map, select **Navigation engine**. Current ordinary app flow has
+   no valid calibration hand-off, so the fusion engine stays uninitialized and publishes
+   no position, speed, heading or localization mode. The run verifies safe absence, not
+   a live navigation solution; no fixture or raw live marker may be substituted.
+   A future verified calibration-to-fusion flow is required before expecting position.
 5. Turn **Map matching on**. Expected: a dashed comparison-coloured claim appears beside
    the raw position and trail; the raw purple claim does not move or disappear; the note
    names the raw position as navigation truth.

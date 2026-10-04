@@ -1,6 +1,8 @@
 # PS26168 — Application Architecture
 
-**Scope:** The Android application architecture that hosts the verified acquisition/recording/replay/map subsystems and will later host the real navigation engine. This document defines framework choice, module boundaries, local streaming, storage, internal interfaces, lifecycle ownership, map integration, optional edge integration, and prototype-to-production storage recommendations.
+> **Current as-built diagram and demo procedures:** see [local release architecture](LOCAL_RELEASE_ARCHITECTURE.md) and [RELEASE_PACKAGE.md](../RELEASE_PACKAGE.md). The long proposal below is historical architecture context; status tables/sketches can lag source. Current implemented/future status and gate results are in [FINAL_RELEASE_READINESS.md](../FINAL_RELEASE_READINESS.md) and [PROTOTYPE_CAPABILITIES.md](PROTOTYPE_CAPABILITIES.md).
+
+**Scope:** Architecture proposal and implementation snapshot. Some status claims below are historical and are superseded by source and [FINAL_RELEASE_READINESS.md](../FINAL_RELEASE_READINESS.md), the current implementation/evidence register. The Android app hosts verified acquisition/recording/replay/map subsystems plus host-tested calibration and fusion engines, but the normal app journey does not hand a valid user calibration into fusion; field navigation is not accepted.
 
 **Not in scope:** INS/EKF/AI algorithm design, feature engineering, model selection/training, map-matching mathematics, routing-algorithm design, security threat modeling, or UI visual-design specification. Those belong in separate documents.
 
@@ -98,10 +100,15 @@ Logical layers:
         └──────┬────┴──────┬───────┘
                │ typed v1 Records
                ▼
-        NavigationEngine
-        (interface exists;
-         implementation future)
+        NavigationRuntime
                │
+        ┌──────┴────────┐
+        ▼               ▼
+ CalibrationEngine   FusionNavigationEngine
+ (host-tested;      (host-tested; valid app
+  no UI hand-off)    calibration still absent)
+        │               │
+        └──────┬────────┘
                ▼
  Navigation / quality / confidence
                │
@@ -110,6 +117,9 @@ Logical layers:
                │
                ▼
       Map / Dashboard consumers
+
+The runtime and map seam exist. Ordinary app use supplies no valid calibration,
+so fusion refuses alignment and emits no usable navigation position.
 
 Shared cross-cutting layers:
 - contracts/v1
@@ -129,15 +139,15 @@ No layer should bypass the contract boundary merely for convenience.
 |---|---|---|
 | `contracts/v1` | Cross-language measurement/navigation/quality/confidence/diagnostic contract and strict codecs | **Implemented / frozen baseline** |
 | `contracts/recording/v1` | Recording-session metadata and canonical recording semantics | **Implemented / frozen baseline** |
-| `app/acquisition` | Real Android IMU/GNSS input, permission handling, bounded queues, diagnostics, source coordination | **Implemented + physically verified** |
+| `app/acquisition` | Real Android IMU/GNSS input, permission handling, bounded queues, diagnostics, source coordination | **Implemented; historical device evidence, current run pending** |
 | `app/simulation` | Explicitly labelled scripted UI/demo source | **Implemented** |
-| `app/recording` | Bounded asynchronous local JSONL recorder, metadata finalization/recovery | **Implemented + physically verified** |
-| `app/sessions` | Saved-session inspection, paging, local ZIP export via user-selected document destination | **Implemented + physically verified** |
-| `app/replay` | Read-only local replay with exact timestamps and replay source mapping | **Implemented + physically verified** |
-| `app/map` | Navigation presentation adapter, offline pack install/style, renderer abstraction, GeoJSON overlays, synthetic demo controller | **Implemented; real engine not connected** |
+| `app/recording` | Bounded asynchronous local JSONL recorder, metadata finalization/recovery | **Implemented; historical device evidence** |
+| `app/sessions` | Saved-session inspection, paging, local ZIP export via user-selected document destination, explicit per-session delete | **Implemented; deletion host-tested, current device test unavailable** |
+| `app/replay` | Read-only local replay with exact timestamps and replay source mapping | **Implemented; historical device evidence; current instrumentation not executed** |
+| `app/map` | Navigation presentation adapter, offline pack install/style, renderer abstraction, GeoJSON overlays, synthetic demo controller, engine-output view | **Implemented; historical map evidence, current offline device check pending, engine output not accepted** |
 | `app/ui` | Compose Dashboard/Diagnostics/Map/About, recording/session/replay controls | **Implemented** |
 | `SessionViewModel` | Foreground owner/orchestrator for live source, recording, replay, export, session details | **Implemented** |
-| future `core/navigation` or equivalent | Calibration, corrected INS, fusion, constraints, mode handling, real navigation output | **Not implemented** |
+| `app/navigation`, `app/calibration`, `app/fusion`, `app/constraints` | Runtime, phone calibration engine, 15-state fusion EKF and vehicle constraints | **Implemented + host-tested; app lacks valid calibration hand-off and field qualification** |
 | future model-runtime adapter | On-device AI model loading/inference | **Not implemented** |
 | future map matching | Road-network constraint/matching | **Not implemented** |
 | future routing | Offline route planning/re-routing/turn guidance | **Not implemented / optional enhancement** |
@@ -164,7 +174,7 @@ It owns or coordinates:
 - location-permission history,
 - high-level mutual exclusion.
 
-This is appropriate for the current prototype because the app has one foreground session and one activity.
+This is appropriate for the current prototype because the app has one foreground session and one activity; the deletion gate also serializes library operations and protects sessions in active use.
 
 ### Important ownership rules
 
@@ -172,7 +182,7 @@ This is appropriate for the current prototype because the app has one foreground
 2. **Recorder never owns sensors or location.**
 3. **Replay never owns sensors or location.**
 4. **Map renderer never owns sensors or localization.**
-5. **Future NavigationEngine consumes typed records; it does not request Android permissions itself.**
+5. **NavigationEngine consumes typed records; it does not request Android permissions itself.**
 6. **Compose UI observes state; it does not perform sensor integration.**
 7. **Backgrounding stops live/replay/recording according to the frozen foreground-only policy.**
 8. **Returning to foreground never silently restarts acquisition, recording, replay, or navigation.**
@@ -209,9 +219,9 @@ On source switch:
 - stop an active recording if its source no longer matches,
 - stop replay before returning to a live source.
 
-### Future navigation-source behavior
+### Navigation-source behavior
 
-The real NavigationEngine should not add a second independent "source selector."
+The wired NavigationRuntime does not add a second independent "source selector."
 
 Instead:
 
@@ -245,9 +255,9 @@ The appropriate live transport inside this app is the existing coroutine/Flow mo
 - saved-session list/details → `StateFlow`
 - export state → `StateFlow`
 
-### Future navigation streams
+### Navigation streams
 
-Recommended logical contract:
+Current logical contract:
 
 ```text
 measurement input:
@@ -256,12 +266,11 @@ Flow<Record>
 navigation output:
 Flow<Record>
     ├── navigation
-    ├── gnss_quality
     ├── confidence
     └── diagnostic
 ```
 
-The exact buffering policy must be defined with the real engine because navigation has stricter timing/ordering semantics than UI snapshots.
+`NavigationRuntime` implements the bounded input/output seam. The current fusion engine emits navigation, confidence and diagnostics; the map obtains GNSS-quality presentation from the separate acquisition stream. The runtime runs on its own engine worker and preserves session/source identity.
 
 ### Why Flow is correct here
 
@@ -272,6 +281,8 @@ The exact buffering policy must be defined with the real engine because navigati
 - exact typed Kotlin records,
 - lower battery/latency overhead,
 - straightforward deterministic JVM testing.
+
+`NavigationRuntime` uses a bounded ingress queue and an engine-owned worker; those records are offered rather than awaited by the sensor producer. Output is limited to the canonical navigation record kinds.
 
 ### Why SSE/WebSocket is not appropriate
 
@@ -313,9 +324,9 @@ Rules:
 - recorder failure must not stop sensor acquisition,
 - session/source identity must match.
 
-### Acquisition → Future NavigationEngine
+### Acquisition → NavigationEngine
 
-Required future boundary.
+Implemented runtime boundary. Calibration hand-off into fusion remains an app integration gate.
 
 Rules:
 
@@ -327,9 +338,9 @@ Rules:
 - no conflation of IMU measurements,
 - bounded reorder/late policy must remain explicit.
 
-### Replay → Future NavigationEngine
+### Replay → NavigationEngine
 
-Future replay/evaluation path should reuse the same engine input contract.
+Replay feeds the same engine input contract as live acquisition.
 
 ```text
 saved measurements.jsonl
@@ -346,6 +357,8 @@ This is valuable because it avoids a separate "offline algorithm" code path.
 Replay time and stored measurement time must remain separate.
 
 ### NavigationEngine → Presentation
+
+Implemented through the map's `NavigationPresentation` path; it does not establish estimator accuracy.
 
 ```text
 NavigationEngine output
@@ -542,9 +555,10 @@ Purpose:
 - inspect,
 - page/list,
 - open replay,
-- export.
+- export an explicit copy,
+- permanently delete one confirmed private session without following symlinks.
 
-It is intentionally read-only except for export destination creation handled outside the private originals.
+The public session library gates deletion while that session is active in recording, replay, or export. Filesystem work is performed on an I/O worker.
 
 ### `MapRenderer`
 
@@ -560,7 +574,7 @@ It must not depend on navigation algorithm internals.
 
 ### `NavigationEngine`
 
-Current v1 interface:
+Current v1 interface with Android calibration and fusion implementations:
 
 ```text
 initialize(session, calibration, mode)
@@ -571,17 +585,17 @@ stop()
 reset()
 ```
 
-This is the correct central future boundary.
+This is the central navigation boundary.
 
 Do not replace it with a UI-specific ViewModel API.
 
 ---
 
-## 13. Recommended Future Navigation Runtime Adapter
+## 13. Navigation Runtime Adapter
 
-The existing interface is deliberately minimal. The application still needs an owner that translates Android/replay streams into engine calls and publishes outputs.
+`NavigationRuntime` owns an engine session, translates Android/replay streams into engine calls, and publishes outputs. The application is wired through this boundary; no valid calibration is currently supplied by the ordinary app journey.
 
-Recommended logical component:
+Implemented logical component:
 
 ```text
 NavigationRuntime / NavigationSession
@@ -625,7 +639,7 @@ interface NavigationRuntime {
 }
 ```
 
-This is a design recommendation for the later implementation phase, not a claim that the class exists now.
+This API is a design sketch; the concrete implementation is in `mobile/app/.../navigation/NavigationRuntime.kt`.
 
 ---
 
@@ -680,7 +694,7 @@ replay_real / replay_simulation typed events
 Replay UI diagnostics
 ```
 
-Future evaluation extension:
+Current replay-to-engine extension:
 
 ```text
 ReplayController / bounded evaluation reader
@@ -768,13 +782,13 @@ Implemented/presentation responsibilities:
 - display attribution,
 - display synthetic scenario overlays.
 
-Future responsibilities after real engine exists:
+Current presentation responsibilities:
 
-- consume real `NavigationState`,
-- consume validated confidence,
-- display actual GNSS/DR/fused/recovery mode once a versioned field exists,
-- interpolate marker motion for smooth display without altering state,
-- show map-matched output when explicitly produced.
+- consume published `NavigationState`, paired confidence and versioned localization mode,
+- keep raw output separate from the opt-in map-matching evaluation overlay,
+- interpolate marker motion for smooth display without altering state.
+
+Ordinary app use currently lacks a valid calibration hand-off, so fusion remains uninitialized and the map correctly has no position to display.
 
 Not map responsibilities:
 
@@ -1037,12 +1051,12 @@ This is a strong fit for the offline-navigation prototype.
 | export cancellation/failure | private original unchanged |
 | replay corrupt record | replay fails explicitly; source file unchanged |
 | offline map pack failure | visible map-unavailable state; no network fallback |
-| future NavigationEngine failure | navigation output moves to failed/degraded; acquisition/recording remain independently operable |
+| NavigationEngine failure | navigation output moves to failed/degraded; acquisition/recording remain independently operable |
 | future AI model load failure | explicit engine/model failure; no fake AI-corrected output |
 | routing unavailable | navigation still works; route/guidance unavailable |
 | map unavailable | numeric navigation state should still remain available |
 
-The navigation engine must not become a single point that destroys evidence capture.
+The navigation engine must not become a single point that destroys evidence capture. In the current ordinary app flow the fusion engine remains uninitialized until a valid calibration is supplied.
 
 ---
 
@@ -1064,7 +1078,7 @@ Current repository already contains dedicated tests for:
 - synthetic map controller,
 - Compose UI/lifecycle.
 
-### Future tests required when NavigationEngine is integrated
+### Tests already present, plus remaining device qualification
 
 1. source/session isolation,
 2. live acquisition → engine input mapping,
@@ -1159,37 +1173,38 @@ optional later
     └── GuidanceGenerator
 ```
 
-The final implementation language/module placement should be decided when the navigation-core phase begins and should preserve the already-frozen contract boundary.
+Any future shared-core extraction or edge module should preserve the existing contract boundary; the Android implementation currently lives in the app packages above.
 
 ---
 
 # CURRENT APPLICATION STATUS
+
+> The matrix below began as a design snapshot and is retained for architecture history. For current checkout evidence and explicitly pending device gates, use [FINAL_RELEASE_READINESS.md](../FINAL_RELEASE_READINESS.md) and [the local prototype capability matrix](PROTOTYPE_CAPABILITIES.md).
 
 ## 29. Implemented vs. Future
 
 | Capability | Status |
 |---|---|
 | Compose app shell | **IMPLEMENTED** |
-| real foreground IMU/GNSS | **IMPLEMENTED + VERIFIED** |
-| permission state handling | **IMPLEMENTED + VERIFIED** |
+| real foreground IMU/GNSS | **IMPLEMENTED; dated hardware evidence, no fresh device run in current audit** |
+| permission state handling | **IMPLEMENTED; historical device evidence** |
 | typed v1 records | **IMPLEMENTED** |
-| local recording | **IMPLEMENTED + VERIFIED** |
-| interrupted-recording recovery | **IMPLEMENTED + VERIFIED** |
+| local recording | **IMPLEMENTED; historical device evidence** |
+| interrupted-recording recovery | **IMPLEMENTED; historical device evidence** |
 | saved-session browser | **IMPLEMENTED** |
-| explicit local ZIP export | **IMPLEMENTED + VERIFIED** |
-| local replay | **IMPLEMENTED + VERIFIED** |
-| offline Hyderabad map | **IMPLEMENTED + VERIFIED** |
+| explicit local ZIP export | **IMPLEMENTED; historical device evidence** |
+| local replay | **IMPLEMENTED; historical device evidence** |
+| offline Hyderabad map | **IMPLEMENTED; historical rendering evidence, current offline device check pending** |
 | synthetic GNSS/DR/recovery map presentation | **IMPLEMENTED AS SYNTHETIC** |
 | `NavigationPresentation` adapter | **IMPLEMENTED + TESTED** |
-| actual `NavigationEngine` | **NOT IMPLEMENTED** |
-| live real navigation state on map | **NOT IMPLEMENTED** |
-| phone-to-vehicle calibration | **NOT IMPLEMENTED** |
-| corrected deployable INS | **NOT IMPLEMENTED** |
-| AI inference | **NOT IMPLEMENTED** |
-| EKF/UKF | **NOT IMPLEMENTED** |
-| real GNSS→DR→GNSS recovery | **NOT IMPLEMENTED** |
-| map matching | **NOT IMPLEMENTED** |
-| offline routing | **NOT IMPLEMENTED** |
+| `NavigationEngine` interface and Android calibration/fusion implementations | **IMPLEMENTED; HOST-TESTED** |
+| calibration-to-fusion app journey | **NOT INTEGRATED**; no user calibration flow or valid calibration hand-off |
+| live fusion output on engine-map surface | **WIRED BUT NOT FIELD-ACCEPTED**; normal app run lacks valid calibration |
+| real GNSS→DR→GNSS recovery | **IMPLEMENTED IN HOST ENGINE; NO INDEPENDENT FIELD EVIDENCE** |
+| map matching | **IMPLEMENTED AS OPTIONAL EVALUATION OVERLAY; NOT AN ESTIMATOR CONSTRAINT** |
+| AI inference / trained model | **NOT IMPLEMENTED; DATASET ADMISSION NO-GO** |
+| deployable navigation accuracy / performance | **NOT QUALIFIED** |
+| offline routing | **NOT IMPLEMENTED / DEFERRED** |
 | turn-by-turn guidance | **NOT IMPLEMENTED** |
 | edge engine | **NOT IMPLEMENTED** |
 | cloud/backend service | **NOT REQUIRED / NOT IMPLEMENTED** |
@@ -1227,7 +1242,7 @@ The final implementation language/module placement should be decided when the na
 
 ## 31. Exact Integration Point for the Real Navigation Engine
 
-The future live navigation implementation should connect here:
+The live navigation runtime is wired here:
 
 ```text
 SessionViewModel / dedicated NavigationRuntime
@@ -1253,7 +1268,7 @@ navigation + gnss_quality + confidence + diagnostic
 
 The existing synthetic map path should remain available but explicitly separate.
 
-The map must **not** subscribe directly to raw phone location as its future "live navigation" implementation.
+The map must **not** subscribe directly to raw phone location as a navigation implementation; its live-GNSS source is labelled separately from fusion output.
 
 ---
 
@@ -1263,11 +1278,9 @@ The map must **not** subscribe directly to raw phone location as its future "liv
 
 ### Build
 
-- real NavigationRuntime binding,
-- actual NavigationEngine implementation after frame/calibration gates,
-- live typed navigation output,
-- confidence/quality presentation,
-- real navigation → existing offline map adapter,
+- calibrate-to-fusion user journey and valid calibration hand-off,
+- independent moving-drive qualification of the existing engine and map presentation,
+- field confidence/performance acceptance,
 - model runtime only after validated model exists,
 - later map matcher if the core estimate is working.
 

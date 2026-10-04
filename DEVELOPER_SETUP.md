@@ -39,7 +39,9 @@ Run the Python suite:
 .\.venv\Scripts\python.exe -B -X utf8 -W error::ResourceWarning -m unittest discover -s tests
 ```
 
-Expected: 140 tests, 1 skip (symlink-dependent), 0 failures.
+The live test output is authoritative; suite counts vary over time. See
+[FINAL_RELEASE_READINESS.md](FINAL_RELEASE_READINESS.md) for this audit's dated
+result.
 
 ## Android build and test
 
@@ -54,9 +56,9 @@ $env:GRADLE_USER_HOME = "$PWD\.gradle-user-home"
 .\gradlew.bat testDebugUnitTest lintDebug assembleDebug --console=plain
 ```
 
-Expected: 154 host tests, 0 failures; `lintDebug` 0 errors (5 known
-dependency/target-version warnings); debug APK at
-`app/build/outputs/apk/debug/app-debug.apk`.
+The live task output is authoritative for test counts and lint warnings; this
+command also builds the debug APK at `app/build/outputs/apk/debug/app-debug.apk`.
+See [FINAL_RELEASE_READINESS.md](FINAL_RELEASE_READINESS.md) for dated results.
 
 **Gradle cache location — read this before debugging a plugin error.** The
 populated cache is `mobile/.gradle-user-home` (contains the Android Gradle
@@ -86,7 +88,9 @@ With one authorized device connected (`adb devices` shows it as `device`):
 .\gradlew.bat installDebug --console=plain
 ```
 
-Expected: 26 device tests, 0 failures. Notes learned from real runs:
+This runs only with an authorized device/emulator attached. Instrumented APK
+assembly is not a test pass; see [FINAL_RELEASE_READINESS.md](FINAL_RELEASE_READINESS.md)
+for the current availability and historical device evidence. Notes learned from real runs:
 
 - The test runner may **uninstall the app** when the suite finishes; reinstall
   with `installDebug` and re-seed any session you need afterwards.

@@ -46,6 +46,66 @@ class SessionFilesTest {
         }
         assertArrayEquals(bytes,original.readBytes()); assertEquals(modified,original.lastModified())
     }
+    @Test fun deleteRemovesOnlyRequestedSessionAndLeavesSiblingAndOutsideSymlinkTarget() {
+        val files = fixture()
+        fixture("keep")
+        assertNotNull(files.inspect("keep").metadata)
+        val outside = temp.newFolder("outside-delete")
+        val secret = File(outside, "secret.txt").apply { writeText("preserve") }
+        val sessionDir = File(temp.root, "session")
+        try {
+            Files.createSymbolicLink(File(sessionDir, "outside-link").toPath(), secret.toPath())
+        } catch (_: UnsupportedOperationException) {
+            // The regular-directory deletion behavior is still verified on hosts without symlinks.
+        } catch (_: IOException) {
+            // Some Windows configurations disable symlink creation for unprivileged test users.
+        } catch (_: SecurityException) {
+            // Same policy limitation as above.
+        }
+
+        files.delete("session")
+
+        assertFalse(sessionDir.exists())
+        assertTrue(secret.exists())
+        assertEquals("keep", files.inspect("keep").id)
+        assertEquals("SESSION_NOT_FOUND", files.inspect("session").error)
+    }
+
+    @Test fun deleteRemovesCorruptSessionAndMissingTargetsAreRefused() {
+        val files = fixture()
+        val corrupt = File(temp.root, "corrupt").apply { mkdir() }
+        File(corrupt, "metadata.json").writeText("not a recording")
+        File(corrupt, "measurements.jsonl").writeText("private location payload")
+
+        files.delete("corrupt")
+
+        assertFalse(corrupt.exists())
+        assertEquals("SESSION_NOT_FOUND", runCatching { files.delete("corrupt") }.exceptionOrNull()?.message)
+    }
+
+    @Test fun deleteRejectsTraversalAndDoesNotFollowSessionSymlink() {
+        val files = fixture()
+        val outside = temp.newFolder("outside-linked-session")
+        File(outside, "secret.txt").writeText("preserve")
+        val linked = File(temp.root, "linked-session")
+        val symlinkCreated = try {
+            Files.createSymbolicLink(linked.toPath(), outside.toPath())
+            true
+        } catch (_: UnsupportedOperationException) {
+            false // Symlink-specific assertions are unavailable on this host.
+        } catch (_: IOException) {
+            false // Some Windows configurations disable unprivileged symlink creation.
+        } catch (_: SecurityException) {
+            false // Same host policy limitation.
+        }
+        if (symlinkCreated) {
+            assertEquals("UNSAFE_SESSION_PATH", runCatching { files.delete("linked-session") }.exceptionOrNull()?.message)
+            assertTrue(File(outside, "secret.txt").exists())
+        }
+        assertEquals("UNSAFE_SESSION_ID", runCatching { files.delete("../outside-linked-session") }.exceptionOrNull()?.message)
+        assertTrue(outside.exists())
+    }
+
     @Test fun incompleteAndMissingAreExplicit() {
         val files = fixture(incomplete = true)
         val item = files.inspect("session")

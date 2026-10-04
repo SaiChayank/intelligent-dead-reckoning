@@ -56,9 +56,15 @@ Fine/coarse location are the only user-facing runtime permissions. The selected
 
 IMU rates do not require a high-rate sensor permission. There is no background
 
-location, foreground service, notification, internet or storage permission. No
+location, foreground service, notification, internet or broad storage permission.
 
-trip data, coordinates or raw samples are written to files or logged/uploaded.
+The separate, user-initiated recorder persists real sensor and permitted location
+
+records under app-private `noBackupFilesDir/recordings`; sessions remain there until
+
+deleted by the user or app data is cleared. Export creates an explicit separate copy.
+
+The app has no upload path, and diagnostics do not write raw values to system logs.
 
 Timing, units and ordering
 
@@ -200,7 +206,13 @@ session cannot receive old-run callbacks. Last displayed samples may be retained
 
 for inspection while stopped; they are cleared on Start. No automatic restart,
 
-background service, navigation, map, recording or calibration is implemented.
+background service or background navigation is implemented. Recording is an
+
+explicit sibling consumer, and calibration/fusion engines exist, but the app has
+
+no user-facing calibration composition flow and does not produce a qualified
+
+navigation solution in ordinary use. See ../FINAL_RELEASE_READINESS.md.
 
 Validation and device acceptance
 
@@ -304,11 +316,11 @@ Run a >=30-minute stationary foreground session. Inspect counters, bounded
 
    covered deterministically by unit fixtures.
 
-The original procedure's recording/export/replay step is deferred to Prompt 3,
+The recorded-session procedure is documented separately in ../RECORDING.md,
 
-because this task explicitly excludes recording. No session export/load command
+and current retention/deletion and release readiness are summarized in
 
-is advertised here. Do not operate the phone while driving.
+../FINAL_RELEASE_READINESS.md. Do not operate the phone while driving.
 
 Android API references
 
