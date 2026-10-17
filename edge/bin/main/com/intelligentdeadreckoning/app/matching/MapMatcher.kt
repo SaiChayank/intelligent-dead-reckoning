@@ -79,6 +79,7 @@ class MapMatcher(
             distanceToEdgeM = distanceM,
             candidateCount = candidates,
             matcherVersion = MATCHER_VERSION,
+            matchedHeadingRad = matched?.headingRad,
         )
 
         if (!graph.covers(latitudeDeg, longitudeDeg, config.coverageMarginDeg)) {

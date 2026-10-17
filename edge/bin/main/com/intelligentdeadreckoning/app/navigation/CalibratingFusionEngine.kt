@@ -14,8 +14,20 @@ import kotlin.math.*
  */
 class CalibratingFusionEngine(
     private val calibrator: NavigationEngine = CalibrationNavigationEngine(),
+    private val roadGraph: com.intelligentdeadreckoning.app.matching.RoadGraph? = null,
     private val fusionFactory: (Double) -> NavigationEngine = { heading ->
-        FusionNavigationEngine(initialHeadingRad = heading, publicationIntervalNs = 100_000_000L)
+        FusionNavigationEngine(
+            initialHeadingRad = heading,
+            publicationIntervalNs = 100_000_000L,
+            config = com.intelligentdeadreckoning.app.fusion.FusionConfig(
+                aiSpeedEstimationEnabled = true,
+                adaptiveNoiseScalingEnabled = true,
+                mountSlipDetectionEnabled = true,
+                mapHeadingFeedbackEnabled = true,
+                adaptiveDecimationEnabled = true,
+            ),
+            roadGraph = roadGraph,
+        )
     },
 ) : NavigationEngine {
     private var session: EngineSession? = null

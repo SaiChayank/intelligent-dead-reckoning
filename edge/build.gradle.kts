@@ -16,6 +16,9 @@ kotlin {
         kotlin.include(
             "**/contracts/v1/**",
             "**/app/fusion/**",
+            "**/app/matching/RoadGraph.kt",
+            "**/app/matching/MapMatcher.kt",
+            "**/app/matching/MapMatchTypes.kt",
             "**/app/calibration/Rotations.kt",
             "**/app/acquisition/GnssQuality.kt",
             "**/app/acquisition/Acquisition.kt",

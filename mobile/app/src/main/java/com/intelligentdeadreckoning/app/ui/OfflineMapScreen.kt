@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,6 +34,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -69,6 +72,7 @@ import com.intelligentdeadreckoning.app.map.currentOutageSeconds
 import com.intelligentdeadreckoning.app.map.forConsoleHidden
 import com.intelligentdeadreckoning.app.map.outageMarks
 import com.intelligentdeadreckoning.app.navigation.NavigationRuntimeState
+import com.intelligentdeadreckoning.app.navigation.OutageBenchmarkReport
 import com.intelligentdeadreckoning.app.replay.ReplayReader
 import com.intelligentdeadreckoning.app.sessions.SavedSession
 import com.intelligentdeadreckoning.app.sessions.SessionFiles
@@ -125,6 +129,10 @@ fun OfflineMapScreen(
     onEvaluation: (Boolean) -> Unit = {},
     onStart: () -> Unit = {},
     onPermission: () -> Unit = {},
+    onInjectOutage: (Double) -> Unit = {},
+    onCancelOutage: () -> Unit = {},
+    onExportKml: () -> Unit = {},
+    onExportGpx: () -> Unit = {},
 ) {
     val context = LocalContext.current
     var pack by remember { mutableStateOf<InstalledMap?>(null) }
@@ -532,10 +540,26 @@ fun OfflineMapScreen(
                     }
                     if (mode == MapMode.RECORDED) RecordedPanel(recordedView, recordedBusy, recordedError, renderer, ready)
                     if (mode == MapMode.LIVE) LivePanel(capture, source, liveGnss, renderer, ready, onStart, onPermission)
-                    if (mode == MapMode.ENGINE) EnginePanel(
-                        capture, navigation, engineMap, evaluation, onEvaluation, renderer, ready,
-                        onStart, onPermission,
-                    )
+                    if (mode == MapMode.ENGINE) {
+                        if (navigation.outageInjected) {
+                            OutageSimulationHudBanner(navigation.outageRemainingS, onCancelOutage)
+                        } else if (engineMap.localizationMode == "dead_reckoning") {
+                            DeadReckoningHudBanner(engineMap)
+                        } else if (engineMap.localizationMode == "recovery") {
+                            RecoveryHudBanner()
+                        }
+                        if (navigation.lastBenchmarkReport != null) {
+                            OutageBenchmarkCard(
+                                report = navigation.lastBenchmarkReport,
+                                onExportKml = onExportKml,
+                                onExportGpx = onExportGpx,
+                            )
+                        }
+                        EnginePanel(
+                            capture, navigation, engineMap, evaluation, onEvaluation, renderer, ready,
+                            onStart, onPermission, onInjectOutage, onCancelOutage,
+                        )
+                    }
                     Text(
                         "OpenFreeMap · © OpenMapTiles · © OpenStreetMap contributors · openstreetmap.org/copyright",
                         color = IdrPalette.textSecondary,
@@ -738,6 +762,8 @@ private fun EnginePanel(
     ready: Boolean,
     onStart: () -> Unit,
     onPermission: () -> Unit,
+    onInjectOutage: (Double) -> Unit = {},
+    onCancelOutage: () -> Unit = {},
 ) {
     val quality = capture.quality
     val point = engine.point
@@ -843,6 +869,25 @@ private fun EnginePanel(
             modifier = Modifier.testTag("engine_disclaimer"),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
+            if (capture.running) {
+                if (!navigation.outageInjected) {
+                    IdrChip(
+                        label = "Simulate Outage (30s)",
+                        selected = false,
+                        onClick = { onInjectOutage(30.0) },
+                        glyph = IdrGlyph.WARNING,
+                        testTag = "simulate_outage",
+                    )
+                } else {
+                    IdrChip(
+                        label = "Cancel Outage (${String.format(Locale.ROOT, "%.0fs", navigation.outageRemainingS)})",
+                        selected = true,
+                        onClick = onCancelOutage,
+                        glyph = IdrGlyph.CLOSE,
+                        testTag = "cancel_outage",
+                    )
+                }
+            }
             IdrChip(
                 label = "My position",
                 selected = false,
@@ -876,6 +921,201 @@ private fun EnginePanel(
                 IdrChip("Start sensors", selected = false, onClick = onStart, glyph = IdrGlyph.SATELLITE,
                     testTag = "engine_start")
             }
+        }
+    }
+}
+
+@Composable
+private fun DeadReckoningHudBanner(presentation: MapPresentation) {
+    IdrCard(emphasis = IdrEmphasis.GLASS, modifier = Modifier.fillMaxWidth().testTag("dr_hud_banner")) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(10.dp).background(IdrPalette.warning, CircleShape),
+            )
+            Spacer(Modifier.width(IdrSpace.sm))
+            Text(
+                "INTELLIGENT DEAD RECKONING ACTIVE",
+                color = IdrPalette.warning,
+                style = IdrType.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        Text(
+            "GNSS Denial Detected · AI Speed Estimation (Model A) & Map-Matching Active",
+            color = IdrPalette.textPrimary,
+            style = IdrType.bodySmall,
+        )
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Column {
+                Text("SPEED", color = IdrPalette.textMuted, style = IdrType.labelSmall)
+                Text(
+                    presentation.speedMetresPerSecond?.let { String.format(Locale.ROOT, "%.1f m/s", it) } ?: "—",
+                    color = IdrPalette.textPrimary,
+                    style = IdrType.monoSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            Column {
+                Text("HEADING", color = IdrPalette.textMuted, style = IdrType.labelSmall)
+                Text(
+                    presentation.headingDegrees?.let { String.format(Locale.ROOT, "%.1f°", it) } ?: "—",
+                    color = IdrPalette.textPrimary,
+                    style = IdrType.monoSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            Column {
+                Text("ROAD SNAP", color = IdrPalette.textMuted, style = IdrType.labelSmall)
+                Text(
+                    if (presentation.matchedEdgeId != null) "Constrained" else "Inertial",
+                    color = if (presentation.matchedEdgeId != null) IdrPalette.accent else IdrPalette.textSecondary,
+                    style = IdrType.monoSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecoveryHudBanner() {
+    IdrCard(emphasis = IdrEmphasis.GLASS, modifier = Modifier.fillMaxWidth().testTag("recovery_hud_banner")) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(10.dp).background(IdrPalette.success, CircleShape),
+            )
+            Spacer(Modifier.width(IdrSpace.sm))
+            Text(
+                "GNSS RECOVERED · POST-OUTAGE CONVERGENCE",
+                color = IdrPalette.success,
+                style = IdrType.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        Text(
+            "Authoritative fixes re-acquired · Kalman gain smoothly converging trajectory",
+            color = IdrPalette.textSecondary,
+            style = IdrType.bodySmall,
+        )
+    }
+}
+
+@Composable
+private fun OutageSimulationHudBanner(remainingS: Double, onCancel: () -> Unit) {
+    IdrCard(emphasis = IdrEmphasis.GLASS, modifier = Modifier.fillMaxWidth().testTag("outage_simulation_hud_banner")) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier.size(10.dp).background(IdrPalette.danger, CircleShape),
+                )
+                Spacer(Modifier.width(IdrSpace.sm))
+                Column {
+                    Text(
+                        "SIMULATED GNSS OUTAGE ACTIVE",
+                        color = IdrPalette.danger,
+                        style = IdrType.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        "Withholding GNSS fixes · Ground truth buffering in background",
+                        color = IdrPalette.textPrimary,
+                        style = IdrType.bodySmall,
+                    )
+                }
+            }
+            IdrChip(
+                label = "Abort (${String.format(Locale.ROOT, "%.0fs", remainingS)})",
+                selected = true,
+                onClick = onCancel,
+                glyph = IdrGlyph.CLOSE,
+                testTag = "abort_outage_chip",
+            )
+        }
+    }
+}
+
+@Composable
+private fun OutageBenchmarkCard(
+    report: OutageBenchmarkReport,
+    onExportKml: () -> Unit,
+    onExportGpx: () -> Unit,
+) {
+    IdrCard(emphasis = IdrEmphasis.PRIMARY, modifier = Modifier.fillMaxWidth().testTag("outage_benchmark_card")) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "FIELD DRIFT BENCHMARK REPORT",
+                color = IdrPalette.textPrimary,
+                style = IdrType.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            val badgeColor = if (report.passed10PercentMandate) IdrPalette.success else IdrPalette.warning
+            val badgeText = if (report.passed10PercentMandate) "PASSED (< 10%)" else "DRIFT EXCEEDED"
+            Box(
+                Modifier
+                    .clip(IdrShapes.chip)
+                    .background(badgeColor.copy(alpha = 0.2f))
+                    .border(1.dp, badgeColor, IdrShapes.chip)
+                    .padding(horizontal = IdrSpace.sm, vertical = 4.dp),
+            ) {
+                Text(
+                    badgeText,
+                    color = badgeColor,
+                    style = IdrType.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        }
+        Spacer(Modifier.height(IdrSpace.xs))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Column {
+                Text("DURATION", color = IdrPalette.textMuted, style = IdrType.labelSmall)
+                Text(
+                    String.format(Locale.ROOT, "%.1f s", report.outageDurationS),
+                    color = IdrPalette.textPrimary,
+                    style = IdrType.monoSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            Column {
+                Text("DISTANCE", color = IdrPalette.textMuted, style = IdrType.labelSmall)
+                Text(
+                    String.format(Locale.ROOT, "%.1f m", report.outageDistanceM),
+                    color = IdrPalette.textPrimary,
+                    style = IdrType.monoSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            Column {
+                Text("FINAL DRIFT", color = IdrPalette.textMuted, style = IdrType.labelSmall)
+                Text(
+                    String.format(Locale.ROOT, "%.2f m", report.finalDriftErrorM),
+                    color = IdrPalette.textPrimary,
+                    style = IdrType.monoSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            Column {
+                Text("DRIFT RATIO", color = IdrPalette.textMuted, style = IdrType.labelSmall)
+                Text(
+                    String.format(Locale.ROOT, "%.2f%%", report.driftPercent),
+                    color = if (report.passed10PercentMandate) IdrPalette.success else IdrPalette.warning,
+                    style = IdrType.monoSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        }
+        Spacer(Modifier.height(IdrSpace.xs))
+        Row(horizontalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
+            IdrChip("Export KML (Google Earth)", selected = false, onClick = onExportKml, glyph = IdrGlyph.LAYERS, testTag = "export_kml_chip")
+            IdrChip("Export GPX", selected = false, onClick = onExportGpx, glyph = IdrGlyph.LOCATE, testTag = "export_gpx_chip")
         }
     }
 }

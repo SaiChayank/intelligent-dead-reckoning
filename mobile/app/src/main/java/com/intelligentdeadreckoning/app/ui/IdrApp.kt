@@ -126,12 +126,22 @@ fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
            onRefreshSessions: (String?) -> Unit = {}, onExport: (String) -> Unit = {},
            libraryOperationBusy: Boolean = false, onDeleteSession: (String) -> Unit = {},
            replay: ReplayState = ReplayState(), replayVisible: Boolean = false, onReplay: (String) -> Unit = {},
-           onPauseReplay: () -> Unit = {}, onResumeReplay: () -> Unit = {}, onStopReplay: () -> Unit = {}) {
+           onPauseReplay: () -> Unit = {}, onResumeReplay: () -> Unit = {}, onStopReplay: () -> Unit = {},
+           onInstallDemo: (String) -> Unit = {},
+           onInstallAndReplayDemo: (String) -> Unit = {},
+           onInstallAllDemos: () -> Unit = {},
+           onInjectOutage: (Double) -> Unit = {},
+           onCancelOutage: () -> Unit = {},
+           onExportKml: () -> Unit = {},
+           onExportGpx: () -> Unit = {}) {
     var sessionsOpen by rememberSaveable { mutableStateOf(false) }
     var detailsOpen by rememberSaveable { mutableStateOf(false) }
     if (sessionsOpen) SessionDialog(library, libraryError,
         recording.busy || export.busy || replay.busy || libraryOperationBusy, export.message,
-        onRefreshSessions, onExport, { sessionsOpen = false }, onReplay, onDeleteSession)
+        onRefreshSessions, onExport, { sessionsOpen = false }, onReplay, onDeleteSession,
+        installDemo = onInstallDemo,
+        installAndReplay = onInstallAndReplayDemo,
+        installAllDemos = onInstallAllDemos)
     var selected by rememberSaveable { mutableStateOf(Screen.DASHBOARD) }
     BackHandler(enabled = selected != Screen.DASHBOARD) { selected = Screen.DASHBOARD }
     Scaffold(
@@ -203,6 +213,10 @@ fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
                                             onStart()
                                         },
                                         onPermission = onPermission,
+                                        onInjectOutage = onInjectOutage,
+                                        onCancelOutage = onCancelOutage,
+                                        onExportKml = onExportKml,
+                                        onExportGpx = onExportGpx,
                                     )
                                 }
                                 Screen.EVALUATION -> EntranceFade {

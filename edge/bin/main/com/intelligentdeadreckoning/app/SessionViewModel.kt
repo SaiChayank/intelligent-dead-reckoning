@@ -137,10 +137,101 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
         listJob?.cancel()
         listJob = viewModelScope.launch {
             try {
+                if (after == null) {
+                    withContext(Dispatchers.IO) {
+                        try {
+                            SampleDriveInstaller.installIfMissing(
+                                getApplication(),
+                                File(getApplication<Application>().noBackupFilesDir, "recordings")
+                            )
+                        } catch (_: Exception) {
+                            // Non-fatal if asset fixture unpacking is skipped in minimal environments
+                        }
+                    }
+                }
                 libraryMutable.value = withContext(Dispatchers.IO) { files.list(after) }
                 libraryError.value = null
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) { libraryError.value = "Cannot read sessions (${SafeSecurityMessages.code(e, "SESSION_IO_ERROR")})." }
+        }
+    }
+
+    /** Unpacks or restores a specific bundled sample drive session (defaults to primary Hyderabad demo drive). */
+    @JvmOverloads
+    fun installDemoDrive(sessionId: String = SampleDriveInstaller.DEMO_SESSION_ID) {
+        if (libraryOperationBusy.value) return
+        libraryOperationBusy.value = true
+        libraryError.value = null
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    SampleDriveInstaller.installSession(
+                        getApplication(),
+                        File(getApplication<Application>().noBackupFilesDir, "recordings"),
+                        sessionId
+                    )
+                }
+                libraryError.value = null
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                libraryError.value = "Cannot install demo drive (${SafeSecurityMessages.code(e, "DEMO_INSTALL_FAILED")})."
+            } finally {
+                libraryOperationBusy.value = false
+                refreshSessions()
+            }
+        }
+    }
+
+    /** Unpacks a bundled sample drive scenario and immediately starts replaying it. */
+    fun installAndReplayDemo(sessionId: String) {
+        if (libraryOperationBusy.value) return
+        libraryOperationBusy.value = true
+        libraryError.value = null
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    SampleDriveInstaller.installSession(
+                        getApplication(),
+                        File(getApplication<Application>().noBackupFilesDir, "recordings"),
+                        sessionId
+                    )
+                }
+                libraryError.value = null
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                libraryError.value = "Cannot install demo drive (${SafeSecurityMessages.code(e, "DEMO_INSTALL_FAILED")})."
+            } finally {
+                libraryOperationBusy.value = false
+                refreshSessions()
+                startReplay(sessionId)
+            }
+        }
+    }
+
+    /** Unpacks all bundled benchmark driving scenarios into saved sessions at once. */
+    fun installAllDemoScenarios() {
+        if (libraryOperationBusy.value) return
+        libraryOperationBusy.value = true
+        libraryError.value = null
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    SampleDriveInstaller.forceInstallAll(
+                        getApplication(),
+                        File(getApplication<Application>().noBackupFilesDir, "recordings")
+                    )
+                }
+                libraryError.value = null
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                libraryError.value = "Cannot install demo drives (${SafeSecurityMessages.code(e, "DEMO_INSTALL_FAILED")})."
+            } finally {
+                libraryOperationBusy.value = false
+                refreshSessions()
+            }
         }
     }
     fun chooseExport(id: String): Boolean {
@@ -361,6 +452,32 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
     }
     /** Clears a stopped or failed engine session so a new one may start. Never automatic. */
     fun resetNavigation() = navigation.reset()
+    fun injectOutage(durationS: Double = 30.0): Boolean = navigation.injectOutage(durationS)
+    fun cancelOutage(): Boolean = navigation.cancelOutage()
+
+    fun exportTelemetryKml(): String {
+        val states = navigation.getRecentNavigationStates()
+        val pts = com.intelligentdeadreckoning.app.export.KmlGpxExporter.extractTrackPoints(states)
+        val kml = com.intelligentdeadreckoning.app.export.KmlGpxExporter.toKml("Intelligent Dead Reckoning Run", pts)
+        try {
+            val dir = getApplication<Application>().getExternalFilesDir("exports") ?: getApplication<Application>().filesDir
+            dir.mkdirs()
+            File(dir, "idr_telemetry_latest.kml").writeText(kml)
+        } catch (_: Exception) {}
+        return kml
+    }
+
+    fun exportTelemetryGpx(): String {
+        val states = navigation.getRecentNavigationStates()
+        val pts = com.intelligentdeadreckoning.app.export.KmlGpxExporter.extractTrackPoints(states)
+        val gpx = com.intelligentdeadreckoning.app.export.KmlGpxExporter.toGpx("Intelligent Dead Reckoning Run", pts)
+        try {
+            val dir = getApplication<Application>().getExternalFilesDir("exports") ?: getApplication<Application>().filesDir
+            dir.mkdirs()
+            File(dir, "idr_telemetry_latest.gpx").writeText(gpx)
+        } catch (_: Exception) {}
+        return gpx
+    }
     fun startRecording() {
         val snapshot = capture.value
         if (foreground && !libraryOperationBusy.value && !player.state.value.busy && !replayVisible.value && !export.value.busy && source.value == InputSource.REAL && snapshot.running && snapshot.sensors.isNotEmpty()) {
@@ -403,7 +520,8 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
     }
     override fun onCleared() { player.stop(); releaseNavigation(); navigation.close(); recorder.close(); real.close(); super.onCleared() }
 
-    // Declared last on purpose: property initializers and init blocks run in declaration order, so
-    // the report read starts only after every field it touches exists.
-    init { refreshEvaluation() }
+    init {
+        refreshSessions()
+        refreshEvaluation()
+    }
 }

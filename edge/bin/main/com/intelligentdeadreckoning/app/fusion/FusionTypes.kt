@@ -188,6 +188,93 @@ data class FusionConfig(
     /** Ceiling of the constraint-variance inflation factor (on sigma), so an arbitrarily long
      * outage still leaves the constraints some — but never coercive — authority. */
     val constraintMaxSigmaInflation: Double = 5.0,
+
+    // ---------------------------------------------------------------------------------------
+    // AI-ML Forward Speed Estimation (Model A)
+    // ---------------------------------------------------------------------------------------
+    /** Master switch for Model A speed estimation aiding during GNSS degradation/outages. */
+    val aiSpeedEstimationEnabled: Boolean = false,
+
+    /** Cadence at which AI speed updates are offered to the EKF during GNSS outages, seconds. */
+    val aiSpeedUpdateIntervalS: Double = 0.1,
+
+    /** Minimum GNSS staleness before AI forward speed updates activate, seconds. */
+    val aiSpeedMinGnssStalenessS: Double = 1.0,
+
+    /** Maximum allowed speed innovation variance multiplier for conservative gating. */
+    val aiSpeedVarianceScale: Double = 1.0,
+
+    // ---------------------------------------------------------------------------------------
+    // Model B: Adaptive Process Noise & Vibration Filtering
+    // ---------------------------------------------------------------------------------------
+    /** Master switch for Model B adaptive vibration-aware process noise scaling. */
+    val adaptiveNoiseScalingEnabled: Boolean = false,
+
+    /** Nominal vibration standard deviation threshold (m/s^2) above which noise scales up. */
+    val vibrationThresholdM_S2: Double = 0.5,
+
+    /** Maximum multiplier for process noise inflation under severe road vibration. */
+    val maxAdaptiveNoiseInflation: Double = 5.0,
+
+    // ---------------------------------------------------------------------------------------
+    // Dynamic Mount Slip Detection & In-Motion Re-Leveling (Phase 2)
+    // ---------------------------------------------------------------------------------------
+    /** Master switch for dynamic mount slip detection and causal in-motion re-leveling. */
+    val mountSlipDetectionEnabled: Boolean = false,
+
+    /** Angular deviation threshold between nominal mounting and apparent gravity (degrees). */
+    val mountSlipAngleThresholdDeg: Double = 4.0,
+
+    /** Persistent dwell duration (seconds) required before a mount slip is declared confirmed. */
+    val mountSlipDwellS: Double = 0.35,
+
+    /** Filter time constant (seconds) for tracking device-frame apparent gravity vector. */
+    val gravityFilterTimeConstantS: Double = 0.5,
+
+    /** Attitude variance inflation added to EKF covariance on in-motion re-leveling (rad^2). */
+    val mountSlipAttitudeCovarianceInflationRad2: Double = 0.01,
+
+    // ---------------------------------------------------------------------------------------
+    // Closed-Loop Map-Matching Heading Feedback (Phase 3)
+    // ---------------------------------------------------------------------------------------
+    /** Master switch for closed-loop map-matching heading feedback during GNSS outages. */
+    val mapHeadingFeedbackEnabled: Boolean = false,
+
+    /** Minimum map-matching confidence required before accepting road heading feedback. */
+    val mapHeadingMinConfidence: Double = 0.80,
+
+    /** Measurement variance for map road heading observation, rad^2 ((5 deg)^2 = ~0.0076). */
+    val mapHeadingVarianceRad2: Double = 0.0076,
+
+    /** Minimum interval between map heading updates offered to the EKF, seconds. */
+    val mapHeadingUpdateIntervalS: Double = 0.5,
+
+    /** Maximum allowed heading innovation difference (degrees) before gating out update. */
+    val mapHeadingMaxInnovationDeg: Double = 30.0,
+
+    /** Minimum speed (m/s) required before map heading feedback is active. */
+    val mapHeadingMinSpeedM_S: Double = 2.0,
+
+    /** Minimum GNSS staleness (seconds) before map heading feedback activates. */
+    val mapHeadingMinGnssStalenessS: Double = 1.0,
+
+    // ---------------------------------------------------------------------------------------
+    // Adaptive Rate Decimation for Thermal & Battery Optimization (Phase 4)
+    // ---------------------------------------------------------------------------------------
+    /** Master switch for adaptive IMU rate decimation during stationary periods. */
+    val adaptiveDecimationEnabled: Boolean = false,
+
+    /** Decimation factor during stationary stillness (e.g. 5x decimation: 100 Hz -> 20 Hz). */
+    val decimationFactor: Int = 5,
+
+    /** Minimum contiguous stationary dwell time before decimation engages (seconds). */
+    val decimationMinStationaryDwellS: Double = 1.0,
+
+    /** Acceleration jerk norm threshold (m/s^2) that triggers immediate wake-up. */
+    val decimationWakeupJerkM_S2: Double = 0.3,
+
+    /** Gyroscope angular rate norm threshold (rad/s) that triggers immediate wake-up. */
+    val decimationWakeupGyroRad_S: Double = 0.08,
 )
 
 /** The filter's own lifecycle. The contract's navigation status is the engine's to decide. */

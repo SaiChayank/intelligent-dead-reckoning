@@ -19,11 +19,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.intelligentdeadreckoning.app.sessions.DemoScenario
+import com.intelligentdeadreckoning.app.sessions.SampleDriveInstaller
 import com.intelligentdeadreckoning.app.sessions.SavedSession
 import com.intelligentdeadreckoning.app.sessions.SessionPage
 import com.intelligentdeadreckoning.app.ui.design.IdrButton
 import com.intelligentdeadreckoning.app.ui.design.IdrButtonVariant
+import com.intelligentdeadreckoning.app.ui.design.IdrCard
 import com.intelligentdeadreckoning.app.ui.design.IdrDivider
+import com.intelligentdeadreckoning.app.ui.design.IdrEmphasis
 import com.intelligentdeadreckoning.app.ui.design.IdrGlyph
 import com.intelligentdeadreckoning.app.ui.design.IdrIcon
 import com.intelligentdeadreckoning.app.ui.design.IdrPalette
@@ -54,8 +58,13 @@ fun SessionDialog(
     close: () -> Unit,
     replay: (String) -> Unit = {},
     delete: (String) -> Unit = {},
+    installDemo: (String) -> Unit = {},
+    installAndReplay: (String) -> Unit = {},
+    installAllDemos: () -> Unit = {},
 ) {
     var deleteConfirmationId by rememberSaveable { mutableStateOf<String?>(null) }
+    var showScenarioPicker by rememberSaveable { mutableStateOf(false) }
+
     AlertDialog(
         onDismissRequest = close,
         containerColor = IdrPalette.surfaceElevated,
@@ -76,8 +85,11 @@ fun SessionDialog(
                     Text(it, color = IdrPalette.danger, style = IdrType.bodySmall)
                 }
                 if (busy) {
-                    Text("Working… session actions stay disabled until it finishes.",
-                        color = IdrPalette.textMuted, style = IdrType.bodySmall)
+                    Text(
+                        "Working… session actions stay disabled until it finishes.",
+                        color = IdrPalette.textMuted,
+                        style = IdrType.bodySmall,
+                    )
                 }
                 LazyColumn(
                     Modifier.heightIn(max = 380.dp),
@@ -87,7 +99,7 @@ fun SessionDialog(
                         item {
                             StatePanel(
                                 title = "No saved sessions",
-                                message = "Record with Phone sensors; sessions appear here after recording stops.",
+                                message = "Record with Phone sensors, or tap 'Demo Scenarios' below to load a benchmark driving challenge.",
                                 tone = IdrStateTone.EMPTY,
                                 testTag = "sessions_empty",
                             )
@@ -98,15 +110,54 @@ fun SessionDialog(
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
-                    IdrButton("Refresh / first", { refresh(null) }, variant = IdrButtonVariant.SECONDARY,
-                        modifier = Modifier.weight(1f))
-                    IdrButton("Next page", { refresh(page.next) }, enabled = page.next != null,
-                        variant = IdrButtonVariant.GHOST, modifier = Modifier.weight(1f))
+                    IdrButton(
+                        "Refresh / first",
+                        { refresh(null) },
+                        variant = IdrButtonVariant.SECONDARY,
+                        modifier = Modifier.weight(1f),
+                    )
+                    IdrButton(
+                        "Demo Scenarios",
+                        { showScenarioPicker = true },
+                        enabled = !busy,
+                        variant = IdrButtonVariant.PRIMARY,
+                        modifier = Modifier.weight(1.1f),
+                        testTag = "install_demo_drive",
+                    )
+                    IdrButton(
+                        "Next page",
+                        { refresh(page.next) },
+                        enabled = page.next != null,
+                        variant = IdrButtonVariant.GHOST,
+                        modifier = Modifier.weight(0.9f),
+                    )
                 }
             }
         },
         confirmButton = { IdrButton("Close", close, variant = IdrButtonVariant.GHOST) },
     )
+
+    if (showScenarioPicker) {
+        DemoScenarioPickerDialog(
+            installedSessionIds = page.sessions.map { it.id }.toSet(),
+            busy = busy,
+            onSelectScenario = { scenarioId, shouldReplay ->
+                if (shouldReplay) {
+                    installAndReplay(scenarioId)
+                    replay(scenarioId)
+                    showScenarioPicker = false
+                    close()
+                } else {
+                    installDemo(scenarioId)
+                }
+            },
+            onInstallAll = {
+                installAllDemos()
+            },
+            onDismiss = { showScenarioPicker = false },
+        )
+    }
+
     deleteConfirmationId?.let { id ->
         AlertDialog(
             onDismissRequest = { deleteConfirmationId = null },
@@ -138,12 +189,17 @@ private fun SessionRow(
     requestDelete: (String) -> Unit,
 ) {
     val m = session.metadata
+    val benchmarkInfo = SampleDriveInstaller.getScenario(session.id)
+
     Column(verticalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IdrIcon(IdrGlyph.LAYERS, tint = IdrPalette.textSecondary, size = IdrSize.iconSm)
             Spacer(Modifier.width(IdrSpace.sm))
             Text(session.id, color = IdrPalette.textPrimary, style = IdrType.titleMedium,
                 modifier = Modifier.weight(1f))
+            if (benchmarkInfo != null) {
+                StatusPill(benchmarkInfo.badge, tone = IdrTone.ACCENT, detail = benchmarkInfo.durationText)
+            }
         }
         KeyValueRow("Time", m?.startedUtcMs?.let { Instant.ofEpochMilli(it).toString() } ?: "unknown", mono = true)
         KeyValueRow("Source", m?.source?.wire ?: "unknown", mono = true)
@@ -188,5 +244,138 @@ private fun SessionRow(
             modifier = Modifier.fillMaxWidth(),
         )
         IdrDivider()
+    }
+}
+
+/**
+ * Interactive multi-scenario picker for selecting and replaying benchmark driving challenges.
+ */
+@Composable
+fun DemoScenarioPickerDialog(
+    installedSessionIds: Set<String>,
+    busy: Boolean,
+    onSelectScenario: (String, Boolean) -> Unit,
+    onInstallAll: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = IdrPalette.surfaceElevated,
+        titleContentColor = IdrPalette.textPrimary,
+        textContentColor = IdrPalette.textSecondary,
+        shape = IdrShapes.cardLarge,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IdrIcon(IdrGlyph.NAVIGATE, tint = IdrPalette.accent, size = IdrSize.iconLg)
+                Spacer(Modifier.width(IdrSpace.sm))
+                Column {
+                    Text("Benchmark Scenarios", style = IdrType.headlineMedium, color = IdrPalette.textPrimary)
+                    Text("Evaluate 15-state EKF Dead Reckoning", style = IdrType.bodySmall, color = IdrPalette.textSecondary)
+                }
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(IdrSpace.md)) {
+                Text(
+                    "Select a driving challenge to evaluate tunnel GNSS outages, urban multipath jump gating, or stop-and-go zero velocity updates (ZUPT).",
+                    color = IdrPalette.textSecondary,
+                    style = IdrType.bodySmall,
+                )
+                LazyColumn(
+                    modifier = Modifier.heightIn(max = 420.dp),
+                    verticalArrangement = Arrangement.spacedBy(IdrSpace.md),
+                ) {
+                    items(SampleDriveInstaller.DEMO_SCENARIOS, key = { it.id }) { scenario ->
+                        ScenarioCard(
+                            scenario = scenario,
+                            isInstalled = installedSessionIds.contains(scenario.id),
+                            busy = busy,
+                            onSelect = onSelectScenario,
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(IdrSpace.sm)) {
+                IdrButton(
+                    "Install All",
+                    onInstallAll,
+                    enabled = !busy,
+                    variant = IdrButtonVariant.SECONDARY,
+                    testTag = "install_all_scenarios",
+                )
+                IdrButton("Back", onDismiss, variant = IdrButtonVariant.GHOST)
+            }
+        },
+    )
+}
+
+@Composable
+private fun ScenarioCard(
+    scenario: DemoScenario,
+    isInstalled: Boolean,
+    busy: Boolean,
+    onSelect: (String, Boolean) -> Unit,
+) {
+    IdrCard(
+        emphasis = IdrEmphasis.SECONDARY,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(scenario.title, style = IdrType.titleMedium, color = IdrPalette.textPrimary)
+            StatusPill(scenario.durationText, tone = IdrTone.INFO)
+        }
+        Text(scenario.subtitle, style = IdrType.label, color = IdrPalette.accent)
+        Text(scenario.description, style = IdrType.bodySmall, color = IdrPalette.textSecondary)
+
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            scenario.keyFeatures.forEach { feature ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IdrIcon(IdrGlyph.CHECK, tint = IdrPalette.success, size = 12.dp)
+                    Spacer(Modifier.width(IdrSpace.xs))
+                    Text(feature, style = IdrType.bodySmall, color = IdrPalette.textMuted)
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(IdrSpace.sm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (isInstalled) {
+                StatusPill("INSTALLED", tone = IdrTone.SUCCESS, modifier = Modifier.weight(0.9f))
+                IdrButton(
+                    label = "Replay",
+                    onClick = { onSelect(scenario.id, true) },
+                    enabled = !busy,
+                    variant = IdrButtonVariant.PRIMARY,
+                    modifier = Modifier.weight(1.1f),
+                    testTag = "replay_scenario_${scenario.id}",
+                )
+            } else {
+                IdrButton(
+                    label = "Load & Replay",
+                    onClick = { onSelect(scenario.id, true) },
+                    enabled = !busy,
+                    variant = IdrButtonVariant.PRIMARY,
+                    modifier = Modifier.weight(1.2f),
+                    testTag = "load_replay_${scenario.id}",
+                )
+                IdrButton(
+                    label = "Install",
+                    onClick = { onSelect(scenario.id, false) },
+                    enabled = !busy,
+                    variant = IdrButtonVariant.SECONDARY,
+                    modifier = Modifier.weight(0.8f),
+                    testTag = "install_${scenario.id}",
+                )
+            }
+        }
     }
 }

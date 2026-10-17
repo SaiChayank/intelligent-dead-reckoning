@@ -17,8 +17,11 @@ import com.intelligentdeadreckoning.contracts.v1.NavigationStatus
 import com.intelligentdeadreckoning.contracts.v1.Record
 import com.intelligentdeadreckoning.contracts.v1.Severity
 import com.intelligentdeadreckoning.contracts.v1.Source
+import com.intelligentdeadreckoning.app.fusion.Geodesy
+import com.intelligentdeadreckoning.app.fusion.GeodeticAnchor
 import java.util.UUID
 import java.util.concurrent.Executors
+import kotlin.math.sqrt
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
@@ -59,6 +62,19 @@ const val ENGINE_OUTPUT_CONTRACT_VERSION = "1.1.0"
  * handed to the engine — the queue depth a producer actually reached, which is the figure a
  * backlog report needs and `ingressCapacity` alone cannot give.
  */
+/**
+ * Real-time field evaluation benchmark produced after an injected or natural GNSS outage.
+ */
+data class OutageBenchmarkReport(
+    val outageDurationS: Double,
+    val outageDistanceM: Double,
+    val finalDriftErrorM: Double,
+    val driftPercent: Double,
+    val passed10PercentMandate: Boolean,
+    val startTimestampNs: Long,
+    val endTimestampNs: Long,
+)
+
 data class NavigationRuntimeState(
     val phase: NavigationPhase = NavigationPhase.IDLE,
     val sessionId: String? = null,
@@ -74,6 +90,9 @@ data class NavigationRuntimeState(
     val outputRejected: Long = 0,
     val calibration: CalibrationResult? = null,
     val message: String = "No navigation session. Explicit start required.",
+    val outageInjected: Boolean = false,
+    val outageRemainingS: Double = 0.0,
+    val lastBenchmarkReport: OutageBenchmarkReport? = null,
 )
 
 /**
@@ -143,6 +162,18 @@ class NavigationRuntime(
     /** Admitted-but-unprocessed records. Guarded by [lock]; feeds `ingressHighWater`. */
     private var inFlight = 0L
     private var nextEventId = 0L
+
+    @Volatile
+    private var injectedOutageRequestedDurationNs: Long = 0L
+    @Volatile
+    private var injectedOutagePending = false
+    @Volatile
+    private var injectedOutageCancelRequested = false
+    private var injectedOutageUntilNs: Long = 0L
+    private var injectedOutageStartNs: Long = 0L
+    private val outageReferenceFixes = mutableListOf<GnssMeasurement>()
+    private var lastDrainedNavState: NavigationState? = null
+    private val recentNavStates = ArrayDeque<NavigationState>(2000)
 
     /**
      * Creates one engine session bound to [header]. Every record offered later must carry
@@ -262,6 +293,32 @@ class NavigationRuntime(
         return result.isSuccess
     }
 
+    fun injectOutage(durationS: Double = 30.0): Boolean {
+        synchronized(lock) {
+            val current = mutable.value
+            if (current.phase != NavigationPhase.RUNNING) return false
+            injectedOutageRequestedDurationNs = (durationS * 1_000_000_000.0).toLong()
+            injectedOutagePending = true
+            injectedOutageCancelRequested = false
+            mutable.value = current.copy(
+                outageInjected = true,
+                outageRemainingS = durationS,
+            )
+            return true
+        }
+    }
+
+    fun cancelOutage(): Boolean {
+        synchronized(lock) {
+            val current = mutable.value
+            if (!current.outageInjected) return false
+            injectedOutageCancelRequested = true
+            return true
+        }
+    }
+
+    fun getRecentNavigationStates(): List<NavigationState> = synchronized(lock) { recentNavStates.toList() }
+
     /** Stops the session and releases the worker thread when the runtime owns it. */
     override fun close() {
         stop()
@@ -297,6 +354,48 @@ class NavigationRuntime(
                 // engine. A record admitted by offer() but abandoned before this point is
                 // counted as an ingress drop instead, so the counters never overlap.
                 synchronized(lock) { inFlight -= 1 }
+
+                val recordTimeNs = record.event.t_ns
+
+                if (injectedOutagePending) {
+                    injectedOutagePending = false
+                    injectedOutageStartNs = recordTimeNs
+                    injectedOutageUntilNs = recordTimeNs + injectedOutageRequestedDurationNs
+                    synchronized(lock) {
+                        outageReferenceFixes.clear()
+                    }
+                }
+
+                if (injectedOutageCancelRequested && injectedOutageUntilNs > 0L) {
+                    injectedOutageCancelRequested = false
+                    val report = completeOutageBenchmark(recordTimeNs)
+                    injectedOutageUntilNs = 0L
+                    synchronized(lock) {
+                        mutable.value = mutable.value.copy(
+                            outageInjected = false,
+                            outageRemainingS = 0.0,
+                            lastBenchmarkReport = report,
+                        )
+                    }
+                } else if (injectedOutageUntilNs > 0L) {
+                    if (recordTimeNs >= injectedOutageUntilNs) {
+                        val report = completeOutageBenchmark(recordTimeNs)
+                        injectedOutageUntilNs = 0L
+                        synchronized(lock) {
+                            mutable.value = mutable.value.copy(
+                                outageInjected = false,
+                                outageRemainingS = 0.0,
+                                lastBenchmarkReport = report,
+                            )
+                        }
+                    } else {
+                        val remainingS = maxOf(0.0, (injectedOutageUntilNs - recordTimeNs) / 1_000_000_000.0)
+                        synchronized(lock) {
+                            mutable.value = mutable.value.copy(outageRemainingS = remainingS)
+                        }
+                    }
+                }
+
                 when (record.event.data) {
                     is ImuMeasurement -> {
                         countAccepted(imu = true)
@@ -304,7 +403,13 @@ class NavigationRuntime(
                     }
                     is GnssMeasurement -> {
                         countAccepted(imu = false)
-                        engine.acceptGnss(record)
+                        if (injectedOutageUntilNs > 0L) {
+                            synchronized(lock) {
+                                outageReferenceFixes.add(record.event.data as GnssMeasurement)
+                            }
+                        } else {
+                            engine.acceptGnss(record)
+                        }
                     }
                     // Unreachable: offer() admits only IMU and GNSS payloads.
                     else -> Unit
@@ -360,8 +465,13 @@ class NavigationRuntime(
                 val current = mutable.value
                 mutable.value = when {
                     !canonical -> current.copy(outputRejected = current.outputRejected + 1)
-                    record.event.data is NavigationState ->
-                        current.copy(engineStatus = (record.event.data as NavigationState).status)
+                    record.event.data is NavigationState -> {
+                        val nav = record.event.data as NavigationState
+                        lastDrainedNavState = nav
+                        if (recentNavStates.size >= 2000) recentNavStates.removeFirst()
+                        recentNavStates.addLast(nav)
+                        current.copy(engineStatus = nav.status)
+                    }
                     record.event.data is CalibrationResult ->
                         current.copy(calibration = record.event.data as CalibrationResult)
                     else -> current
@@ -371,6 +481,91 @@ class NavigationRuntime(
                 synchronized(lock) { mutable.value = mutable.value.copy(outputDropped = mutable.value.outputDropped + 1) }
             }
         }
+    }
+
+    private fun completeOutageBenchmark(endNs: Long): OutageBenchmarkReport {
+        val durationS = if (injectedOutageStartNs > 0L && endNs > injectedOutageStartNs) {
+            (endNs - injectedOutageStartNs) / 1_000_000_000.0
+        } else {
+            0.0
+        }
+        val fixes = synchronized(lock) { outageReferenceFixes.toList() }
+        if (fixes.isEmpty()) {
+            return OutageBenchmarkReport(
+                outageDurationS = durationS,
+                outageDistanceM = 0.0,
+                finalDriftErrorM = 0.0,
+                driftPercent = 0.0,
+                passed10PercentMandate = true,
+                startTimestampNs = injectedOutageStartNs,
+                endTimestampNs = endNs,
+            )
+        }
+
+        val firstFix = fixes.first()
+        val anchor = lastDrainedNavState?.origin_wgs84_deg_m?.let { origin ->
+            GeodeticAnchor(
+                latitudeDeg = origin.latitude_deg,
+                longitudeDeg = origin.longitude_deg,
+                altitudeM = origin.altitude_m ?: 0.0,
+                hasAltitude = origin.altitude_m != null,
+            )
+        } ?: GeodeticAnchor(
+            latitudeDeg = firstFix.latitude_deg,
+            longitudeDeg = firstFix.longitude_deg,
+            altitudeM = firstFix.altitude_m ?: 0.0,
+            hasAltitude = firstFix.altitude_m != null,
+        )
+
+        val enuPositions = fixes.map { fix ->
+            Geodesy.enuFromGeodetic(
+                anchor = anchor,
+                latitudeDeg = fix.latitude_deg,
+                longitudeDeg = fix.longitude_deg,
+                altitudeM = fix.altitude_m ?: 0.0,
+            )
+        }
+
+        var cumDistance = 0.0
+        for (i in 1 until enuPositions.size) {
+            val p0 = enuPositions[i - 1]
+            val p1 = enuPositions[i]
+            val dx = p1.x - p0.x
+            val dy = p1.y - p0.y
+            cumDistance += sqrt(dx * dx + dy * dy)
+        }
+
+        val truthFinal = enuPositions.last()
+        val drFinal = lastDrainedNavState?.position_enu_m
+        val finalDriftErrorM = if (drFinal != null) {
+            val dx = drFinal.x - truthFinal.x
+            val dy = drFinal.y - truthFinal.y
+            sqrt(dx * dx + dy * dy)
+        } else {
+            0.0
+        }
+
+        val driftPercent = if (cumDistance > 1.0) {
+            (finalDriftErrorM / cumDistance) * 100.0
+        } else {
+            0.0
+        }
+
+        val passed = if (cumDistance > 5.0) {
+            driftPercent < 10.0
+        } else {
+            finalDriftErrorM < 3.0
+        }
+
+        return OutageBenchmarkReport(
+            outageDurationS = durationS,
+            outageDistanceM = cumDistance,
+            finalDriftErrorM = finalDriftErrorM,
+            driftPercent = driftPercent,
+            passed10PercentMandate = passed,
+            startTimestampNs = injectedOutageStartNs,
+            endTimestampNs = endNs,
+        )
     }
 
     private fun fail(t: Throwable, engineStopped: Boolean) {

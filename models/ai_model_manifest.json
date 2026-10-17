@@ -1,0 +1,26 @@
+{
+  "manifest_version": "1.0.0",
+  "status": "approved_model_artifacts",
+  "model_count": 1,
+  "artifacts": [
+    {
+      "name": "ai_forward_speed_estimator",
+      "role": "Model A — Speed / Vibration Estimator",
+      "file": "speed_estimator_weights.json",
+      "sha256": "75556fc6364fe1bb4f972d2807eac7284e47e6703a13dfbe411eae38ff7620c6",
+      "metrics": {
+        "val_speed_rmse_m_s": 0.8805,
+        "val_speed_mae_m_s": 0.4689,
+        "val_stop_accuracy": 0.9973,
+        "samples_train": 26595,
+        "samples_val": 7092
+      }
+    }
+  ],
+  "training_admission": {
+    "decision": "approved",
+    "model_type": "Model A (Inertial Speed Estimator)",
+    "benchmark_passed": true
+  },
+  "policy": "Model A runs causal inference on 1-second IMU sliding windows; outputs forward velocity constraint for 15-state EKF."
+}

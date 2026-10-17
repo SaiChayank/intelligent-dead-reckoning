@@ -65,6 +65,29 @@ class MainActivity : ComponentActivity() {
                 libraryOperationBusy = libraryOperationBusy, onDeleteSession = session::deleteSession,
                 replay = replay, replayVisible = replayVisible, onReplay = session::startReplay,
                 onPauseReplay = session::pauseReplay, onResumeReplay = session::resumeReplay, onStopReplay = session::stopReplay,
+                onInstallDemo = session::installDemoDrive,
+                onInstallAndReplayDemo = session::installAndReplayDemo,
+                onInstallAllDemos = session::installAllDemoScenarios,
+                onInjectOutage = session::injectOutage,
+                onCancelOutage = session::cancelOutage,
+                onExportKml = {
+                    val kml = session.exportTelemetryKml()
+                    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_SUBJECT, "IDR Google Earth Telemetry (KML)")
+                        putExtra(Intent.EXTRA_TEXT, kml)
+                    }
+                    startActivity(Intent.createChooser(sendIntent, "Export KML"))
+                },
+                onExportGpx = {
+                    val gpx = session.exportTelemetryGpx()
+                    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_SUBJECT, "IDR GPS Exchange Telemetry (GPX)")
+                        putExtra(Intent.EXTRA_TEXT, gpx)
+                    }
+                    startActivity(Intent.createChooser(sendIntent, "Export GPX"))
+                },
                 onExport = { id -> if (session.chooseExport(id)) {
                     try { exportDocument.launch(id) } catch (_: Exception) { session.exportResult(null) }
                 } }) }

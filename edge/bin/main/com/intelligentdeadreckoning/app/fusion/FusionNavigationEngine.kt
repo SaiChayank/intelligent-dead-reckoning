@@ -6,10 +6,15 @@ import com.intelligentdeadreckoning.app.calibration.conjugate
 import com.intelligentdeadreckoning.app.calibration.isProperRotation
 import com.intelligentdeadreckoning.app.calibration.norm
 import com.intelligentdeadreckoning.app.calibration.normalizeDegrees360
+import com.intelligentdeadreckoning.app.calibration.normalized
 import com.intelligentdeadreckoning.app.calibration.quaternionAboutZ
 import com.intelligentdeadreckoning.app.calibration.rotate
 import com.intelligentdeadreckoning.app.calibration.times
 import com.intelligentdeadreckoning.app.calibration.toRotationMatrix
+import com.intelligentdeadreckoning.app.matching.MapMatchResult
+import com.intelligentdeadreckoning.app.matching.MapMatchStatus
+import com.intelligentdeadreckoning.app.matching.MapMatcher
+import com.intelligentdeadreckoning.app.matching.RoadGraph
 import com.intelligentdeadreckoning.contracts.v1.AltitudeReference
 import com.intelligentdeadreckoning.contracts.v1.CalibrationResult
 import com.intelligentdeadreckoning.contracts.v1.CalibrationStatus
@@ -94,6 +99,7 @@ class FusionNavigationEngine(
      */
     private val initialHeadingRad: Double? = null,
     private val publicationIntervalNs: Long = 200_000_000L,
+    private val roadGraph: RoadGraph? = null,
 ) : NavigationEngine {
 
     private val filter = GnssInsEkf(config)
@@ -121,6 +127,23 @@ class FusionNavigationEngine(
     private var pairedSamples = 0L
     private var discardedBeforeAlignment = 0L
     private var unmatchedSamples = 0L
+
+    private val aiSpeedEstimator: AiSpeedEstimator? by lazy {
+        try {
+            AiSpeedEstimator.fromResource()
+        } catch (_: Exception) {
+            null
+        }
+    }
+    private var lastAiSpeedUpdateNs: Long = 0L
+
+    private val mountSlipDetector: MountSlipDetector? =
+        if (config.mountSlipDetectionEnabled) MountSlipDetector(config) else null
+    private var relevelCount: Int = 0
+
+    private val mapMatcher: MapMatcher? = roadGraph?.let { MapMatcher(it) }
+    private var lastMapHeadingUpdateNs: Long = 0L
+    private var mapHeadingAcceptedCount: Long = 0L
 
     private var lastAcceptedGnssNs: Long? = null
     private var lastAcceptedGnssProvider: String? = null
@@ -153,6 +176,26 @@ class FusionNavigationEngine(
     private var nhcSuspendedUntilNs = 0L
     private var zuptEngaged = false
 
+    // Model B: Adaptive Process Noise & Vibration Filter
+    private val recentVerticalAccels = DoubleArray(20)
+    private var verticalAccelIndex = 0
+    private var verticalAccelCount = 0
+
+    // Phase 4: Adaptive Rate Decimation for Thermal & Battery Optimization
+    private var decimationActive = false
+    private var decimationSkipCount = 0
+    private var decimatedSamplesCount = 0L
+    private var decimationWakeupCount = 0L
+    private var lastRawAccel: Vector3? = null
+    private var lastRawGyro: Vector3? = null
+    private var accumulatedDecimationAccel = Vector3(0.0, 0.0, 0.0)
+    private var accumulatedDecimationGyro = Vector3(0.0, 0.0, 0.0)
+    private var accumulatedDecimationSamples = 0
+
+    val isDecimationActive: Boolean get() = decimationActive
+    val decimatedSamples: Long get() = decimatedSamplesCount
+    val decimationWakeups: Long get() = decimationWakeupCount
+
     /** The filter's own state, for diagnostics and for tests. Not a published record. */
     val solution: FusionSolution get() = filter.solution
 
@@ -168,6 +211,11 @@ class FusionNavigationEngine(
         pending.clear()
         filter.reset()
         mountingQVehicleFromDevice = null
+        aiSpeedEstimator?.reset()
+        lastAiSpeedUpdateNs = 0L
+        verticalAccelIndex = 0
+        verticalAccelCount = 0
+        filter.adaptiveNoiseInflation = 1.0
         calibrationId = null
         priorGyroBias = null
         priorAccelBias = null
@@ -203,6 +251,15 @@ class FusionNavigationEngine(
         nhcSuspendedUntilNs = 0L
         zuptEngaged = false
         lastAcceptedGnssSpeedM_S = null
+        decimationActive = false
+        decimationSkipCount = 0
+        decimatedSamplesCount = 0L
+        decimationWakeupCount = 0L
+        lastRawAccel = null
+        lastRawGyro = null
+        accumulatedDecimationAccel = Vector3(0.0, 0.0, 0.0)
+        accumulatedDecimationGyro = Vector3(0.0, 0.0, 0.0)
+        accumulatedDecimationSamples = 0
 
         adoptCalibration(calibration)
         emitDiagnostic(
@@ -303,6 +360,16 @@ class FusionNavigationEngine(
         failureAnnounced = false
         stationaryDetector.reset()
         lastConstraintNs = 0L
+        aiSpeedEstimator?.reset()
+        lastAiSpeedUpdateNs = 0L
+        relevelCount = 0
+        mountSlipDetector?.reset()
+        lastMapHeadingUpdateNs = 0L
+        mapHeadingAcceptedCount = 0L
+        mapMatcher?.reset()
+        verticalAccelIndex = 0
+        verticalAccelCount = 0
+        filter.adaptiveNoiseInflation = 1.0
         constraintAcceptedAnnounced = false
         constraintRejectedAnnounced = false
         nhcBenignSinceNs = null
@@ -386,11 +453,172 @@ class FusionNavigationEngine(
         clockNs = maxOf(clockNs, tNs)
         pairedSamples += 1
         stationaryDetector.offer(tNs, accel.second, gyro.second)
+        val initialMounting = mountingQVehicleFromDevice
+        if (initialMounting != null && config.mountSlipDetectionEnabled) {
+            val slipEvent = mountSlipDetector?.offer(tNs, accel.second, gyro.second, initialMounting)
+            if (slipEvent != null) {
+                applyMountSlipRelevel(slipEvent)
+            }
+        }
+        val mounting = mountingQVehicleFromDevice
+        if (mounting != null && config.aiSpeedEstimationEnabled) {
+            val m = mounting.toRotationMatrix()
+            val ax = m[0] * accel.second.x + m[1] * accel.second.y + m[2] * accel.second.z
+            val ay = m[3] * accel.second.x + m[4] * accel.second.y + m[5] * accel.second.z
+            val az = m[6] * accel.second.x + m[7] * accel.second.y + m[8] * accel.second.z
+            val gx = m[0] * gyro.second.x + m[1] * gyro.second.y + m[2] * gyro.second.z
+            val gy = m[3] * gyro.second.x + m[4] * gyro.second.y + m[5] * gyro.second.z
+            val gz = m[6] * gyro.second.x + m[7] * gyro.second.y + m[8] * gyro.second.z
+            aiSpeedEstimator?.acceptSample(Vector3(ax, ay, az), Vector3(gx, gy, gz))
+        }
+        if (config.adaptiveNoiseScalingEnabled) {
+            val zForce = if (mounting != null) {
+                val m = mounting.toRotationMatrix()
+                m[6] * accel.second.x + m[7] * accel.second.y + m[8] * accel.second.z
+            } else {
+                accel.second.z
+            }
+            recentVerticalAccels[verticalAccelIndex] = zForce
+            verticalAccelIndex = (verticalAccelIndex + 1) % recentVerticalAccels.size
+            if (verticalAccelCount < recentVerticalAccels.size) verticalAccelCount++
+            if (verticalAccelCount >= 10) {
+                var sum = 0.0
+                for (k in 0 until verticalAccelCount) sum += recentVerticalAccels[k]
+                val mean = sum / verticalAccelCount
+                var varSum = 0.0
+                for (k in 0 until verticalAccelCount) {
+                    val diff = recentVerticalAccels[k] - mean
+                    varSum += diff * diff
+                }
+                val stdDev = kotlin.math.sqrt(varSum / verticalAccelCount)
+                val inflation = if (stdDev > config.vibrationThresholdM_S2) {
+                    1.0 + (stdDev - config.vibrationThresholdM_S2) / config.vibrationThresholdM_S2
+                } else {
+                    1.0
+                }
+                filter.adaptiveNoiseInflation = inflation.coerceIn(1.0, config.maxAdaptiveNoiseInflation)
+            }
+        }
         if (!filter.aligned) {
             discardedBeforeAlignment += 1
             return
         }
+
+        // Adaptive Rate Decimation for Thermal & Battery Optimization (Phase 4)
+        if (config.adaptiveDecimationEnabled) {
+            val prevAccel = lastRawAccel
+            lastRawAccel = accel.second
+            lastRawGyro = gyro.second
+
+            val jerk = if (prevAccel != null) {
+                val dx = accel.second.x - prevAccel.x
+                val dy = accel.second.y - prevAccel.y
+                val dz = accel.second.z - prevAccel.z
+                kotlin.math.sqrt(dx * dx + dy * dy + dz * dz)
+            } else 0.0
+
+            val gyroNorm = kotlin.math.sqrt(
+                gyro.second.x * gyro.second.x +
+                    gyro.second.y * gyro.second.y +
+                    gyro.second.z * gyro.second.z,
+            )
+
+            val stationaryDwellSatisfied = stationaryDetector.stationary &&
+                stationaryDetector.stationarySinceNs?.let {
+                    (tNs - it) >= (config.decimationMinStationaryDwellS * 1e9).toLong()
+                } == true
+
+            val mayDecimate = stationaryDwellSatisfied &&
+                zuptEngaged &&
+                solution.status == FusionStatus.RUNNING
+
+            if (decimationActive) {
+                val wakeup = !stationaryDetector.stationary ||
+                    jerk > config.decimationWakeupJerkM_S2 ||
+                    gyroNorm > config.decimationWakeupGyroRad_S ||
+                    !zuptEngaged
+
+                if (wakeup) {
+                    decimationActive = false
+                    decimationSkipCount = 0
+                    decimationWakeupCount++
+                    accumulatedDecimationAccel = Vector3(0.0, 0.0, 0.0)
+                    accumulatedDecimationGyro = Vector3(0.0, 0.0, 0.0)
+                    accumulatedDecimationSamples = 0
+                    emitDiagnostic(
+                        Severity.INFO, "ADAPTIVE_DECIMATION_WAKEUP",
+                        "Motion onset detected (jerk ${"%.2f".format(Locale.ROOT, jerk)} m/s²): " +
+                            "instantly restored full EKF propagation rate within 5 ms.",
+                    )
+                } else {
+                    decimationSkipCount++
+                    accumulatedDecimationAccel = Vector3(
+                        accumulatedDecimationAccel.x + accel.second.x,
+                        accumulatedDecimationAccel.y + accel.second.y,
+                        accumulatedDecimationAccel.z + accel.second.z,
+                    )
+                    accumulatedDecimationGyro = Vector3(
+                        accumulatedDecimationGyro.x + gyro.second.x,
+                        accumulatedDecimationGyro.y + gyro.second.y,
+                        accumulatedDecimationGyro.z + gyro.second.z,
+                    )
+                    accumulatedDecimationSamples++
+
+                    if (decimationSkipCount < config.decimationFactor) {
+                        decimatedSamplesCount++
+                        publish(force = false)
+                        return
+                    } else {
+                        decimationSkipCount = 0
+                        val n = accumulatedDecimationSamples.toDouble()
+                        val avgAccel = Vector3(
+                            accumulatedDecimationAccel.x / n,
+                            accumulatedDecimationAccel.y / n,
+                            accumulatedDecimationAccel.z / n,
+                        )
+                        val avgGyro = Vector3(
+                            accumulatedDecimationGyro.x / n,
+                            accumulatedDecimationGyro.y / n,
+                            accumulatedDecimationGyro.z / n,
+                        )
+                        accumulatedDecimationAccel = Vector3(0.0, 0.0, 0.0)
+                        accumulatedDecimationGyro = Vector3(0.0, 0.0, 0.0)
+                        accumulatedDecimationSamples = 0
+
+                        val outcome = filter.propagate(avgAccel, avgGyro, tNs)
+                        handlePropagationOutcome(outcome)
+                        if (outcome == PropagationOutcome.PROPAGATED) {
+                            movedOffAnchor = true
+                            applyMotionConstraints(tNs, avgAccel, avgGyro)
+                        }
+                        publish(force = false)
+                        return
+                    }
+                }
+            } else if (mayDecimate) {
+                decimationActive = true
+                decimationSkipCount = 0
+                accumulatedDecimationAccel = Vector3(0.0, 0.0, 0.0)
+                accumulatedDecimationGyro = Vector3(0.0, 0.0, 0.0)
+                accumulatedDecimationSamples = 0
+                emitDiagnostic(
+                    Severity.INFO, "ADAPTIVE_DECIMATION_ENGAGED",
+                    "Stationary rate decimation engaged (${config.decimationFactor}x factor): " +
+                        "reducing EKF propagation rate to conserve power and reduce dashboard thermal load.",
+                )
+            }
+        }
+
         val outcome = filter.propagate(accel.second, gyro.second, tNs)
+        handlePropagationOutcome(outcome)
+        if (outcome == PropagationOutcome.PROPAGATED) {
+            movedOffAnchor = true
+            applyMotionConstraints(tNs, accel.second, gyro.second)
+        }
+        publish(force = false)
+    }
+
+    private fun handlePropagationOutcome(outcome: PropagationOutcome) {
         when (outcome) {
             PropagationOutcome.HELD_GAP -> {
                 if (!gapAnnounced) {
@@ -416,11 +644,104 @@ class FusionNavigationEngine(
             PropagationOutcome.FAILED, PropagationOutcome.NOT_ALIGNED -> announceFailureIfAny()
             else -> Unit
         }
-        if (outcome == PropagationOutcome.PROPAGATED) {
-            movedOffAnchor = true
-            applyMotionConstraints(tNs, accel.second, gyro.second)
+    }
+
+    private fun applyMountSlipRelevel(slipEvent: MountSlipEvent) {
+        val previousMounting = mountingQVehicleFromDevice ?: return
+        mountingQVehicleFromDevice = slipEvent.updatedMounting
+        relevelCount = slipEvent.relevelCount
+        val baseCalId = calibrationId?.substringBefore("-relevel-") ?: "cal"
+        calibrationId = "$baseCalId-relevel-$relevelCount"
+
+        if (filter.aligned) {
+            val currentQEnuFromDevice = filter.solution.qEnuFromDevice
+            val qEnuFromVehicle = currentQEnuFromDevice * previousMounting.conjugate()
+            val updatedQEnuFromDevice = (qEnuFromVehicle * slipEvent.updatedMounting).normalized()
+            filter.relevelDeviceAttitude(
+                newQEnuFromDevice = updatedQEnuFromDevice,
+                attitudeVarianceInflationRad2 = config.mountSlipAttitudeCovarianceInflationRad2,
+            )
         }
-        publish(force = false)
+
+        emitDiagnostic(
+            Severity.WARNING, "MOUNT_SLIP_RELEVELED",
+            "In-motion mount slip detected: angle deviation ${"%.1f".format(Locale.ROOT, slipEvent.slipAngleDeg)} deg " +
+                "persisted for ${"%.2f".format(Locale.ROOT, slipEvent.dwellDurationS)} s. Re-leveled mounting to " +
+                "eliminate horizontal gravity leakage without interrupting navigation (event #$relevelCount).",
+        )
+    }
+
+    /**
+     * Accepts a map-matched road heading observation and constrains heading drift in the EKF (Phase 3).
+     *
+     * @param tNs timestamp in nanoseconds
+     * @param roadHeadingRad road heading in radians, clockwise from North in [0, 2*pi)
+     * @param confidence map matching confidence in [0, 1]
+     * @return true if heading update was accepted and applied, false otherwise
+     */
+    fun acceptRoadHeading(tNs: Long, roadHeadingRad: Double, confidence: Double): Boolean {
+        if (!config.mapHeadingFeedbackEnabled || !filter.aligned || solution.status != FusionStatus.RUNNING) {
+            return false
+        }
+        if (confidence < config.mapHeadingMinConfidence) return false
+        val gnssStalenessS = lastAcceptedGnssNs?.let { (tNs - it) / 1e9 } ?: Double.POSITIVE_INFINITY
+        if (gnssStalenessS < config.mapHeadingMinGnssStalenessS) {
+            return false
+        }
+        val speed = solution.velocityEnuM_S.let { sqrt(it.x * it.x + it.y * it.y) }
+        if (speed < config.mapHeadingMinSpeedM_S) {
+            return false
+        }
+        if ((tNs - lastMapHeadingUpdateNs) < (config.mapHeadingUpdateIntervalS * 1e9).toLong()) {
+            return false
+        }
+
+        val mounting = mountingQVehicleFromDevice ?: return false
+        val qEnuFromVehicle = solution.qEnuFromDevice * mounting.conjugate()
+        val c = qEnuFromVehicle.toRotationMatrix()
+        // Column 0 is vehicle forward in ENU: (c[0], c[3], c[6])
+        val currentHeadingRad = atan2(c[0], c[3]).let { if (it < 0.0) it + 2.0 * Math.PI else it }
+
+        val diff1 = angularDifferenceRad(currentHeadingRad, roadHeadingRad)
+        val diff2 = angularDifferenceRad(currentHeadingRad, (roadHeadingRad + Math.PI) % (2.0 * Math.PI))
+        val residual = if (abs(diff1) <= abs(diff2)) diff1 else diff2
+
+        if (abs(residual) > Math.toRadians(config.mapHeadingMaxInnovationDeg)) {
+            return false
+        }
+
+        val outcome = filter.updateHeading(tNs, residual, config.mapHeadingVarianceRad2)
+        if (outcome.result != GnssUpdateResult.REJECTED_GATE &&
+            outcome.result != GnssUpdateResult.REJECTED_INVALID &&
+            outcome.result != GnssUpdateResult.REJECTED_ILL_CONDITIONED
+        ) {
+            lastMapHeadingUpdateNs = tNs
+            mapHeadingAcceptedCount++
+            emitDiagnostic(
+                Severity.INFO, "MAP_HEADING_FEEDBACK_APPLIED",
+                "Applied closed-loop map-matching heading feedback: residual ${"%.2f".format(Locale.ROOT, Math.toDegrees(residual))} deg, " +
+                    "confidence ${"%.2f".format(Locale.ROOT, confidence)} (update #$mapHeadingAcceptedCount).",
+            )
+            return true
+        }
+        return false
+    }
+
+    /**
+     * Accepts a [MapMatchResult] and applies heading feedback if the result is [MapMatchStatus.MATCHED].
+     */
+    fun acceptMapMatch(result: MapMatchResult): Boolean {
+        val heading = result.matchedHeadingRad ?: return false
+        if (result.status != MapMatchStatus.MATCHED) return false
+        return acceptRoadHeading(result.timestampNs, heading, result.confidence)
+    }
+
+    private fun angularDifferenceRad(a: Double, b: Double): Double {
+        val twoPi = 2.0 * Math.PI
+        var difference = (b - a) % twoPi
+        if (difference <= -Math.PI) difference += twoPi
+        if (difference > Math.PI) difference -= twoPi
+        return difference
     }
 
     override fun acceptGnss(measurement: Record) {
@@ -846,6 +1167,68 @@ class FusionNavigationEngine(
                 appliedAny = true
             } else {
                 nhcSuspendedUntilNs = tNs + (config.nhcBackoffS * 1e9).toLong()
+            }
+        }
+
+        // ---- AI Forward Speed Estimation (Model A) --------------------------------------
+        // Applied during GNSS outages to bound longitudinal dead reckoning velocity.
+        if (config.aiSpeedEstimationEnabled &&
+            mounting != null &&
+            !zuptEngaged &&
+            solution.status != FusionStatus.FAILED
+        ) {
+            val gnssOutage = lastAcceptedGnssNs == null ||
+                (tNs - lastAcceptedGnssNs!!) >= (config.aiSpeedMinGnssStalenessS * 1e9).toLong()
+            val aiDue = (tNs - lastAiSpeedUpdateNs) >= (config.aiSpeedUpdateIntervalS * 1e9).toLong()
+
+            if (gnssOutage && aiDue) {
+                val est = aiSpeedEstimator?.estimate()
+                if (est != null && !est.isStationary) {
+                    attemptedAny = true
+                    val qEnuFromVehicle = solution.qEnuFromDevice * mounting.conjugate()
+                    val variance = maxOf(0.04, est.sigmaM_S * est.sigmaM_S * config.aiSpeedVarianceScale)
+                    val outcome = filter.updateForwardSpeed(
+                        tNs,
+                        qEnuFromVehicle,
+                        est.speedM_S,
+                        variance,
+                    )
+                    if (outcome.result != GnssUpdateResult.REJECTED_GATE &&
+                        outcome.result != GnssUpdateResult.REJECTED_INVALID &&
+                        outcome.result != GnssUpdateResult.REJECTED_ILL_CONDITIONED
+                    ) {
+                        appliedAny = true
+                    }
+                    lastAiSpeedUpdateNs = tNs
+                }
+            }
+        }
+
+        // ---- Closed-Loop Map-Matching Heading Feedback (Phase 3) -------------------------
+        // Constrains heading drift during GNSS outages when matched to a road segment.
+        if (config.mapHeadingFeedbackEnabled &&
+            mounting != null &&
+            !zuptEngaged &&
+            solution.status != FusionStatus.FAILED &&
+            mapMatcher != null
+        ) {
+            val geodetic = solution.geodetic
+            if (geodetic != null) {
+                val speed = solution.velocityEnuM_S.let { sqrt(it.x * it.x + it.y * it.y) }
+                val qEnuVeh = solution.qEnuFromDevice * mounting.conjugate()
+                val cVeh = qEnuVeh.toRotationMatrix()
+                val headingRad = atan2(cVeh[0], cVeh[3]).let { if (it < 0.0) it + 2.0 * Math.PI else it }
+                val match = mapMatcher.match(
+                    timestampNs = tNs,
+                    latitudeDeg = geodetic.latitudeDeg,
+                    longitudeDeg = geodetic.longitudeDeg,
+                    headingRad = headingRad,
+                    accuracy95M = 15.0,
+                    speedM_S = speed,
+                )
+                if (acceptMapMatch(match)) {
+                    appliedAny = true
+                }
             }
         }
 

@@ -23,6 +23,7 @@ data class MapMatchResult(
     val distanceToEdgeM: Double?,
     val candidateCount: Int,
     val matcherVersion: String,
+    val matchedHeadingRad: Double? = null,
 )
 
 enum class MapMatchStatus {

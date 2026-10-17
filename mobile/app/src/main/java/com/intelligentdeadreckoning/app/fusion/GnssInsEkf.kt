@@ -217,6 +217,34 @@ class GnssInsEkf(val config: FusionConfig = FusionConfig()) {
         rejectionSpanS = 0.0
     }
 
+    /**
+     * Inflates the attitude error covariance block (indices 6-8) by [additionalVarianceRad2].
+     *
+     * Used when external evidence or in-motion re-leveling introduces attitude uncertainty,
+     * allowing the filter to smoothly absorb corrections without divergence.
+     */
+    fun inflateAttitudeCovariance(additionalVarianceRad2: Double) {
+        if (status != FusionStatus.RUNNING || additionalVarianceRad2 <= 0.0 || !additionalVarianceRad2.isFinite()) return
+        covariance[IDX_ATT * DIM + IDX_ATT] += additionalVarianceRad2
+        covariance[(IDX_ATT + 1) * DIM + IDX_ATT + 1] += additionalVarianceRad2
+        covariance[(IDX_ATT + 2) * DIM + IDX_ATT + 2] += additionalVarianceRad2
+    }
+
+    /**
+     * Updates the nominal device attitude [qEnuFromDevice] after an in-motion mount re-leveling event.
+     *
+     * Clears [havePreviousAcceleration] to avoid mixing pre- and post-slip specific force vectors
+     * in the trapezoidal integration step, and optionally inflates attitude covariance.
+     */
+    fun relevelDeviceAttitude(newQEnuFromDevice: Quaternion, attitudeVarianceInflationRad2: Double = 0.0) {
+        if (status != FusionStatus.RUNNING || !isFiniteQuaternion(newQEnuFromDevice)) return
+        qEnuFromDevice = newQEnuFromDevice.normalized()
+        havePreviousAcceleration = false
+        if (attitudeVarianceInflationRad2 > 0.0 && attitudeVarianceInflationRad2.isFinite()) {
+            inflateAttitudeCovariance(attitudeVarianceInflationRad2)
+        }
+    }
+
     // ---------------------------------------------------------------------------------------
     // Prediction
     // ---------------------------------------------------------------------------------------
@@ -379,10 +407,17 @@ class GnssInsEkf(val config: FusionConfig = FusionConfig()) {
      * by white acceleration noise, including the cross term; dropping the cross term is a common
      * simplification that makes the pair of blocks inconsistent with each other.
      */
+    var adaptiveNoiseInflation: Double = 1.0
+
     private fun processNoise(dt: Double): DoubleArray {
         val q = DoubleArray(DIM * DIM)
-        val accel = config.accelNoiseDensityM_S2_RT_HZ * config.accelNoiseDensityM_S2_RT_HZ
-        val gyro = config.gyroNoiseDensityRad_S_RT_HZ * config.gyroNoiseDensityRad_S_RT_HZ
+        val inflation = if (config.adaptiveNoiseScalingEnabled) {
+            adaptiveNoiseInflation.coerceIn(1.0, config.maxAdaptiveNoiseInflation)
+        } else {
+            1.0
+        }
+        val accel = config.accelNoiseDensityM_S2_RT_HZ * config.accelNoiseDensityM_S2_RT_HZ * inflation
+        val gyro = config.gyroNoiseDensityRad_S_RT_HZ * config.gyroNoiseDensityRad_S_RT_HZ * inflation
         addBlock(q, DIM, IDX_POS, IDX_POS, scale3(identity(3), accel * dt * dt * dt / 3.0))
         addBlock(q, DIM, IDX_POS, IDX_VEL, scale3(identity(3), accel * dt * dt / 2.0))
         addBlock(q, DIM, IDX_VEL, IDX_POS, scale3(identity(3), accel * dt * dt / 2.0))
@@ -550,6 +585,61 @@ class GnssInsEkf(val config: FusionConfig = FusionConfig()) {
                 -projectVelocity(vertical),
             ),
             variances = doubleArrayOf(lateralVarianceM2, verticalVarianceM2),
+            countAsConstraint = true,
+        )
+    }
+
+    /**
+     * AI-ML Forward Speed Update (Model A).
+     *
+     * Ingests the estimated vehicle forward velocity scalar along the longitudinal (+X) axis.
+     * When GNSS fixes are absent or in an outage, this bounds longitudinal velocity drift
+     * and prevents quadratic position error accumulation from accelerometer bias integration.
+     */
+    fun updateForwardSpeed(
+        tNs: Long,
+        qEnuFromVehicle: Quaternion,
+        forwardSpeedM_S: Double,
+        varianceM2: Double,
+    ): GnssUpdateOutcome = guarded {
+        val c = qEnuFromVehicle.toRotationMatrix()
+        // Column 0 is the vehicle +X (forward) axis expressed in ENU coordinates
+        val forward = doubleArrayOf(c[0], c[3], c[6])
+        val currentForward = projectVelocity(forward)
+        val residual = forwardSpeedM_S - currentForward
+        applyRows(
+            tNs,
+            resetsRejectionSpan = false,
+            rows = arrayListOf(velocityRow(forward)),
+            residuals = doubleArrayOf(residual),
+            variances = doubleArrayOf(varianceM2),
+            countAsConstraint = true,
+        )
+    }
+
+    /**
+     * Map-Matching Heading Feedback (Phase 3).
+     *
+     * Directly constrains heading error (the yaw rotation error about navigation Up, index 8)
+     * using high-confidence road segment orientation during GNSS degradation/outages.
+     *
+     * @param tNs timestamp in nanoseconds
+     * @param headingResidualRad signed heading difference (road_heading - current_heading) in radians
+     * @param varianceRad2 measurement variance in radians^2 (e.g. (5 deg)^2 = 0.0076 rad^2)
+     */
+    fun updateHeading(
+        tNs: Long,
+        headingResidualRad: Double,
+        varianceRad2: Double,
+    ): GnssUpdateOutcome = guarded {
+        val row = unitRow(IDX_ATT + 2)
+        row[IDX_ATT + 2] = -1.0
+        applyRows(
+            tNs,
+            resetsRejectionSpan = false,
+            rows = arrayListOf(row),
+            residuals = doubleArrayOf(headingResidualRad),
+            variances = doubleArrayOf(varianceRad2),
             countAsConstraint = true,
         )
     }

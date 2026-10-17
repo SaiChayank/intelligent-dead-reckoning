@@ -44,6 +44,7 @@ android {
         rootProject.file("../contracts/v1"),
         rootProject.file("../contracts/recording/v1"),
         rootProject.file("../contracts/evaluation/v1"),
+        rootProject.file("../models"),
     )
 
     sourceSets.getByName("main").kotlin.srcDirs(
