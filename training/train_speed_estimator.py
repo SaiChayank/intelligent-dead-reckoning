@@ -13,10 +13,20 @@ import hashlib
 from pathlib import Path
 
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import TensorDataset, DataLoader
+
+try:
+    import torch
+    import torch.nn as nn
+    import torch.optim as optim
+    from torch.utils.data import TensorDataset, DataLoader
+    HAS_TORCH = True
+except ImportError:
+    torch = None
+    nn = None
+    optim = None
+    TensorDataset = None  # type: ignore[misc,assignment]
+    DataLoader = None  # type: ignore[misc,assignment]
+    HAS_TORCH = False
 
 from training.speed_estimator import (
     SpeedEstimatorModel,

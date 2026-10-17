@@ -20,9 +20,17 @@ from pathlib import Path
 from typing import List, Tuple, Optional, Dict, Any
 
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+
+try:
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    HAS_TORCH = True
+except ImportError:
+    torch = None
+    nn = None
+    F = None
+    HAS_TORCH = False
 
 WINDOW_SIZE = 100  # 1.0 second at 100 Hz
 NUM_CHANNELS = 6   # [ax, ay, az, gx, gy, gz] in vehicle frame
@@ -32,73 +40,78 @@ NUM_CHANNELS = 6   # [ax, ay, az, gx, gy, gz] in vehicle frame
 # 1. PyTorch Neural Network Definition (Model A)
 # -----------------------------------------------------------------------------
 
-class SpeedEstimatorModel(nn.Module):
-    """
-    Causal 1D-CNN + Feature Fusion Model for Forward Speed Estimation.
+if HAS_TORCH:
+    class SpeedEstimatorModel(nn.Module):
+        """
+        Causal 1D-CNN + Feature Fusion Model for Forward Speed Estimation.
 
-    Inputs:
-        x_seq: (B, 6, 100) - 1-second sliding window of IMU channels in vehicle frame.
-        x_stats: (B, 10)   - Window statistics:
-            [mean_ax, mean_ay, mean_az, std_ax, std_ay, std_az, std_gz, jerk_rms, norm_a, norm_g]
+        Inputs:
+            x_seq: (B, 6, 100) - 1-second sliding window of IMU channels in vehicle frame.
+            x_stats: (B, 10)   - Window statistics:
+                [mean_ax, mean_ay, mean_az, std_ax, std_ay, std_az, std_gz, jerk_rms, norm_a, norm_g]
 
-    Outputs:
-        speed: (B, 1)      - Estimated forward speed (m/s, strictly >= 0)
-        sigma: (B, 1)      - Estimated speed standard deviation (m/s, >= 0.25)
-        stationary: (B, 1) - Stillness probability in [0, 1]
-    """
-    def __init__(self, in_channels: int = 6, stats_dim: int = 10):
-        super().__init__()
+        Outputs:
+            speed: (B, 1)      - Estimated forward speed (m/s, strictly >= 0)
+            sigma: (B, 1)      - Estimated speed standard deviation (m/s, >= 0.25)
+            stationary: (B, 1) - Stillness probability in [0, 1]
+        """
+        def __init__(self, in_channels: int = 6, stats_dim: int = 10):
+            super().__init__()
 
-        # Causal temporal convolutions
-        # Conv1: receptive field 5 samples (50 ms)
-        self.conv1 = nn.Conv1d(in_channels, 16, kernel_size=5, padding=2)
-        # Conv2: receptive field 9 samples, downsample by 2
-        self.conv2 = nn.Conv1d(16, 32, kernel_size=5, stride=2, padding=2)
-        # Conv3: receptive field 13 samples
-        self.conv3 = nn.Conv1d(32, 32, kernel_size=3, padding=1)
+            # Causal temporal convolutions
+            # Conv1: receptive field 5 samples (50 ms)
+            self.conv1 = nn.Conv1d(in_channels, 16, kernel_size=5, padding=2)
+            # Conv2: receptive field 9 samples, downsample by 2
+            self.conv2 = nn.Conv1d(16, 32, kernel_size=5, stride=2, padding=2)
+            # Conv3: receptive field 13 samples
+            self.conv3 = nn.Conv1d(32, 32, kernel_size=3, padding=1)
 
-        self.act = nn.LeakyReLU(negative_slope=0.1)
+            self.act = nn.LeakyReLU(negative_slope=0.1)
 
-        # Temporal pooling: mean pool + max pool across time -> 32 + 32 = 64 features
-        conv_out_dim = 32 * 2
-        fused_dim = conv_out_dim + stats_dim  # 64 + 10 = 74
+            # Temporal pooling: mean pool + max pool across time -> 32 + 32 = 64 features
+            conv_out_dim = 32 * 2
+            fused_dim = conv_out_dim + stats_dim  # 64 + 10 = 74
 
-        # Dense MLP Head
-        self.fc1 = nn.Linear(fused_dim, 48)
-        self.fc2 = nn.Linear(48, 24)
+            # Dense MLP Head
+            self.fc1 = nn.Linear(fused_dim, 48)
+            self.fc2 = nn.Linear(48, 24)
 
-        # Output Heads
-        self.head_speed = nn.Linear(24, 1)
-        self.head_sigma = nn.Linear(24, 1)
-        self.head_stop = nn.Linear(24, 1)
+            # Output Heads
+            self.head_speed = nn.Linear(24, 1)
+            self.head_sigma = nn.Linear(24, 1)
+            self.head_stop = nn.Linear(24, 1)
 
-    def forward(self, x_seq: torch.Tensor, x_stats: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        # x_seq: (B, 6, 100)
-        h = self.act(self.conv1(x_seq))
-        h = self.act(self.conv2(h))
-        h = self.act(self.conv3(h))
+        def forward(self, x_seq: torch.Tensor, x_stats: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+            # x_seq: (B, 6, 100)
+            h = self.act(self.conv1(x_seq))
+            h = self.act(self.conv2(h))
+            h = self.act(self.conv3(h))
 
-        # Global pooling across time
-        mean_p = torch.mean(h, dim=-1)
-        max_p, _ = torch.max(h, dim=-1)
-        conv_feats = torch.cat([mean_p, max_p], dim=-1)  # (B, 64)
+            # Global pooling across time
+            mean_p = torch.mean(h, dim=-1)
+            max_p, _ = torch.max(h, dim=-1)
+            conv_feats = torch.cat([mean_p, max_p], dim=-1)  # (B, 64)
 
-        # Fuse with statistical summary features
-        fused = torch.cat([conv_feats, x_stats], dim=-1)  # (B, 74)
+            # Fuse with statistical summary features
+            fused = torch.cat([conv_feats, x_stats], dim=-1)  # (B, 74)
 
-        feat = self.act(self.fc1(fused))
-        feat = self.act(self.fc2(feat))
+            feat = self.act(self.fc1(fused))
+            feat = self.act(self.fc2(feat))
 
-        # 1. Speed: Softplus guarantees speed >= 0
-        speed = F.softplus(self.head_speed(feat))
+            # 1. Speed: Softplus guarantees speed >= 0
+            speed = F.softplus(self.head_speed(feat))
 
-        # 2. Sigma: Softplus + baseline 0.25 m/s
-        sigma = F.softplus(self.head_sigma(feat)) + 0.25
+            # 2. Sigma: Softplus + baseline 0.25 m/s
+            sigma = F.softplus(self.head_sigma(feat)) + 0.25
 
-        # 3. Stationary probability: Sigmoid in [0, 1]
-        stationary = torch.sigmoid(self.head_stop(feat))
+            # 3. Stationary probability: Sigmoid in [0, 1]
+            stationary = torch.sigmoid(self.head_stop(feat))
 
-        return speed, sigma, stationary
+            return speed, sigma, stationary
+else:
+    class SpeedEstimatorModel:  # type: ignore[no-redef]
+        def __init__(self, *args, **kwargs):
+            raise ImportError("PyTorch is required for SpeedEstimatorModel training. Install torch to use.")
 
 
 # -----------------------------------------------------------------------------
