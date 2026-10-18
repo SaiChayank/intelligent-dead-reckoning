@@ -6,7 +6,7 @@ list and no hashes because there are no weights to hash.
 
 **No model has been trained or approved.** Training is gated: 0 sequences are approved in
 [reports/training_admission.json](../reports/training_admission.json), and the build order in
-[CURRENT_STATE_AUDIT.md](../CURRENT_STATE_AUDIT.md) places AI work after the classical baseline
+[ARCHITECTURE.md](../ARCHITECTURE.md) places AI work after the classical baseline
 is credible. Do not add weights here before that gate opens.
 
 Weight files (`*.tflite`, `*.onnx`, `*.pt`, `*.h5`, `*.keras`, `*.ckpt`) are

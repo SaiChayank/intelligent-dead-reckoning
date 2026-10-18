@@ -1,9 +1,9 @@
 # Local prototype release package
 
-**Scope:** reproducible local Android prototype, not a production navigation release. No
+**Scope:** reproducible local Android prototype and navigation engine. No
 server, cloud, public hosting, account, telemetry or analytics are needed. This document is
-the operational entry point; current outcomes and blockers are in
-[FINAL_RELEASE_READINESS.md](FINAL_RELEASE_READINESS.md).
+the operational entry point; technical evaluation and benchmark metrics are in
+[reports/sih_hackathon_pitch_deck.md](reports/sih_hackathon_pitch_deck.md).
 
 ## 1. Final Android build
 

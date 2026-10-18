@@ -1,9 +1,9 @@
 # Repository architecture
 
 This document defines where each logical area lives, what it owns, and what it
-must not do. It is the organizing companion to the
-[current-state audit](CURRENT_STATE_AUDIT.md) (what exists and how solid it is)
-and [DEVELOPER_SETUP.md](DEVELOPER_SETUP.md) (how to build and verify it).
+must not do. It is the organizing companion to
+[DEVELOPER_SETUP.md](DEVELOPER_SETUP.md) (how to build and verify it)
+and [reports/sih_hackathon_pitch_deck.md](reports/sih_hackathon_pitch_deck.md) (technical defense & evaluation).
 
 The one hard rule behind every boundary below: **the app is an offline,
 on-device product.** There is no server, no cloud component, and no network

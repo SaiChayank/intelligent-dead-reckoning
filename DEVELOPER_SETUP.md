@@ -40,8 +40,8 @@ Run the Python suite:
 ```
 
 The live test output is authoritative; suite counts vary over time. See
-[FINAL_RELEASE_READINESS.md](FINAL_RELEASE_READINESS.md) for this audit's dated
-result.
+[reports/sih_hackathon_pitch_deck.md](reports/sih_hackathon_pitch_deck.md) for technical defense
+and benchmark results.
 
 ## Android build and test
 
@@ -58,7 +58,6 @@ $env:GRADLE_USER_HOME = "$PWD\.gradle-user-home"
 
 The live task output is authoritative for test counts and lint warnings; this
 command also builds the debug APK at `app/build/outputs/apk/debug/app-debug.apk`.
-See [FINAL_RELEASE_READINESS.md](FINAL_RELEASE_READINESS.md) for dated results.
 
 **Gradle cache location — read this before debugging a plugin error.** The
 populated cache is `mobile/.gradle-user-home` (contains the Android Gradle
@@ -89,8 +88,8 @@ With one authorized device connected (`adb devices` shows it as `device`):
 ```
 
 This runs only with an authorized device/emulator attached. Instrumented APK
-assembly is not a test pass; see [FINAL_RELEASE_READINESS.md](FINAL_RELEASE_READINESS.md)
-for the current availability and historical device evidence. Notes learned from real runs:
+assembly is not a test pass; see [reports/sih_hackathon_pitch_deck.md](reports/sih_hackathon_pitch_deck.md)
+for the hardware profile and field verification. Notes learned from real runs:
 
 - The test runner may **uninstall the app** when the suite finishes; reinstall
   with `installDebug` and re-seed any session you need afterwards.

@@ -7,7 +7,7 @@ mechanization, propagation and fusion, independent of UI and map code.
 `contracts/v1/kotlin/.../Models.kt` is the frozen interface any implementation
 must satisfy (initialize / acceptImu / acceptGnss / drain / stop / reset).
 Prerequisites before work starts here: the corrected INS baseline and the
-frame/calibration resolution tracked in [CURRENT_STATE_AUDIT.md](../CURRENT_STATE_AUDIT.md)
+frame/calibration resolution tracked in [ARCHITECTURE.md](../ARCHITECTURE.md)
 (Phases D–F of the build order).
 
 `training/common.py` is a data-analysis utility module, **not** this core.
