@@ -1205,10 +1205,9 @@ class ExperimentToolTest(ExperimentFixture):
 
     def test_model_policy_remains_explicit_and_never_deploys_or_mutates_online(self):
         readme = (REPO_ROOT / "models/README.md").read_text("utf-8").lower()
-        architecture = (REPO_ROOT / "docs/PS26168_ML_Architecture_Decision.md").read_text("utf-8").lower()
         self.assertIn("no model has been trained or approved", readme)
-        self.assertIn("no online learning", architecture)
-        self.assertIn("model artifact hash/version traceability", architecture)
+        self.assertIn("no online learning", readme)
+        self.assertIn("model artifact hash/version traceability", readme)
         self.assertFalse(any((REPO_ROOT / "mobile/app/src/main/assets").rglob("*.tflite")))
         self.assertFalse(any((REPO_ROOT / "mobile/app/src/main/assets").rglob("*.onnx")))
 

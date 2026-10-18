@@ -4,7 +4,7 @@ An experiment is the evaluation unit: a recording session plus the context that
 makes the drive reusable. The schema is
 [contracts/experiment/v1](../contracts/experiment/v1/README.md) and the collection
 procedure is
-[docs/PS26168_Experiment_Data_Collection_Protocol.md](../docs/PS26168_Experiment_Data_Collection_Protocol.md).
+[docs/FIELD_TEST_PROTOCOL.md](../docs/FIELD_TEST_PROTOCOL.md).
 
 Experiment **content is gitignored**. Only this README is tracked, because
 experiments contain recordings: real drives, real timestamps, real device

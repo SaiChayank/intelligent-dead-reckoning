@@ -5,9 +5,9 @@ tracked file is [model_manifest.json](model_manifest.json), which records an emp
 list and no hashes because there are no weights to hash.
 
 **No model has been trained or approved.** Training is gated: 0 sequences are approved in
-[reports/training_admission.json](../reports/training_admission.json), and the build order in
-[ARCHITECTURE.md](../ARCHITECTURE.md) places AI work after the classical baseline
-is credible. Do not add weights here before that gate opens.
+[reports/training_admission.json](../reports/training_admission.json).
+No online learning is permitted on device; all model training is strictly offline with
+model artifact hash/version traceability. Do not add weights here before that gate opens.
 
 Weight files (`*.tflite`, `*.onnx`, `*.pt`, `*.h5`, `*.keras`, `*.ckpt`) are
 gitignored by policy; model *code* lives in `training/`, evaluation evidence in
