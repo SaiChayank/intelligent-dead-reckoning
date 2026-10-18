@@ -308,8 +308,13 @@ def build_html():
       <span class="badge-sih">SIH #26168</span>
       <h1 style="font-size: 16px; font-weight: 700;">Intelligent Dead Reckoning — Mission Replay &amp; AI Evidence</h1>
     </div>
-    <div id="statusBadge" class="badge-status status-good">
-      <span style="font-size: 8px;">●</span> GNSS ACTIVE (1.0 Hz)
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <a href="pitch.html" class="ctrl-btn" style="text-decoration:none; padding: 6px 12px; font-size: 12px;">
+        <span style="color:var(--accent-blue);">📊</span> Technical Pitch Deck
+      </a>
+      <div id="statusBadge" class="badge-status status-good">
+        <span style="font-size: 8px;">●</span> GNSS ACTIVE (1.0 Hz)
+      </div>
     </div>
   </header>
 
