@@ -1,0 +1,443 @@
+{
+  "grouping_rule": "drive_session",
+  "num_folds": 12,
+  "num_drives": 12,
+  "num_sequences": 12,
+  "total_duration_s": 815.0,
+  "drives": [
+    "vta1",
+    "vta12",
+    "vta13",
+    "vta19",
+    "vta23",
+    "vta24",
+    "vta7",
+    "vtb10",
+    "vtb12",
+    "vtb7",
+    "vw16",
+    "vw9"
+  ],
+  "folds": [
+    {
+      "fold": 0,
+      "held_out_drive": "vta1",
+      "test_sequences": [
+        "vta1b"
+      ],
+      "train_drives": [
+        "vta12",
+        "vta13",
+        "vta19",
+        "vta23",
+        "vta24",
+        "vta7",
+        "vtb10",
+        "vtb12",
+        "vtb7",
+        "vw16",
+        "vw9"
+      ],
+      "train_sequences": [
+        "vta12",
+        "vta13",
+        "vta19",
+        "vta23",
+        "vta24",
+        "vta7",
+        "vtb10",
+        "vtb12",
+        "vtb7",
+        "vw16b",
+        "vw9"
+      ],
+      "test_duration_s": 95.2,
+      "train_duration_s": 719.8
+    },
+    {
+      "fold": 1,
+      "held_out_drive": "vta12",
+      "test_sequences": [
+        "vta12"
+      ],
+      "train_drives": [
+        "vta1",
+        "vta13",
+        "vta19",
+        "vta23",
+        "vta24",
+        "vta7",
+        "vtb10",
+        "vtb12",
+        "vtb7",
+        "vw16",
+        "vw9"
+      ],
+      "train_sequences": [
+        "vta13",
+        "vta19",
+        "vta1b",
+        "vta23",
+        "vta24",
+        "vta7",
+        "vtb10",
+        "vtb12",
+        "vtb7",
+        "vw16b",
+        "vw9"
+      ],
+      "test_duration_s": 60.9,
+      "train_duration_s": 754.1
+    },
+    {
+      "fold": 2,
+      "held_out_drive": "vta13",
+      "test_sequences": [
+        "vta13"
+      ],
+      "train_drives": [
+        "vta1",
+        "vta12",
+        "vta19",
+        "vta23",
+        "vta24",
+        "vta7",
+        "vtb10",
+        "vtb12",
+        "vtb7",
+        "vw16",
+        "vw9"
+      ],
+      "train_sequences": [
+        "vta12",
+        "vta19",
+        "vta1b",
+        "vta23",
+        "vta24",
+        "vta7",
+        "vtb10",
+        "vtb12",
+        "vtb7",
+        "vw16b",
+        "vw9"
+      ],
+      "test_duration_s": 40.3,
+      "train_duration_s": 774.7
+    },
+    {
+      "fold": 3,
+      "held_out_drive": "vta19",
+      "test_sequences": [
+        "vta19"
+      ],
+      "train_drives": [
+        "vta1",
+        "vta12",
+        "vta13",
+        "vta23",
+        "vta24",
+        "vta7",
+        "vtb10",
+        "vtb12",
+        "vtb7",
+        "vw16",
+        "vw9"
+      ],
+      "train_sequences": [
+        "vta12",
+        "vta13",
+        "vta1b",
+        "vta23",
+        "vta24",
+        "vta7",
+        "vtb10",
+        "vtb12",
+        "vtb7",
+        "vw16b",
+        "vw9"
+      ],
+      "test_duration_s": 29.1,
+      "train_duration_s": 785.9
+    },
+    {
+      "fold": 4,
+      "held_out_drive": "vta23",
+      "test_sequences": [
+        "vta23"
+      ],
+      "train_drives": [
+        "vta1",
+        "vta12",
+        "vta13",
+        "vta19",
+        "vta24",
+        "vta7",
+        "vtb10",
+        "vtb12",
+        "vtb7",
+        "vw16",
+        "vw9"
+      ],
+      "train_sequences": [
+        "vta12",
+        "vta13",
+        "vta19",
+        "vta1b",
+        "vta24",
+        "vta7",
+        "vtb10",
+        "vtb12",
+        "vtb7",
+        "vw16b",
+        "vw9"
+      ],
+      "test_duration_s": 110.9,
+      "train_duration_s": 704.1
+    },
+    {
+      "fold": 5,
+      "held_out_drive": "vta24",
+      "test_sequences": [
+        "vta24"
+      ],
+      "train_drives": [
+        "vta1",
+        "vta12",
+        "vta13",
+        "vta19",
+        "vta23",
+        "vta7",
+        "vtb10",
+        "vtb12",
+        "vtb7",
+        "vw16",
+        "vw9"
+      ],
+      "train_sequences": [
+        "vta12",
+        "vta13",
+        "vta19",
+        "vta1b",
+        "vta23",
+        "vta7",
+        "vtb10",
+        "vtb12",
+        "vtb7",
+        "vw16b",
+        "vw9"
+      ],
+      "test_duration_s": 117.0,
+      "train_duration_s": 698.0
+    },
+    {
+      "fold": 6,
+      "held_out_drive": "vta7",
+      "test_sequences": [
+        "vta7"
+      ],
+      "train_drives": [
+        "vta1",
+        "vta12",
+        "vta13",
+        "vta19",
+        "vta23",
+        "vta24",
+        "vtb10",
+        "vtb12",
+        "vtb7",
+        "vw16",
+        "vw9"
+      ],
+      "train_sequences": [
+        "vta12",
+        "vta13",
+        "vta19",
+        "vta1b",
+        "vta23",
+        "vta24",
+        "vtb10",
+        "vtb12",
+        "vtb7",
+        "vw16b",
+        "vw9"
+      ],
+      "test_duration_s": 83.9,
+      "train_duration_s": 731.1
+    },
+    {
+      "fold": 7,
+      "held_out_drive": "vtb10",
+      "test_sequences": [
+        "vtb10"
+      ],
+      "train_drives": [
+        "vta1",
+        "vta12",
+        "vta13",
+        "vta19",
+        "vta23",
+        "vta24",
+        "vta7",
+        "vtb12",
+        "vtb7",
+        "vw16",
+        "vw9"
+      ],
+      "train_sequences": [
+        "vta12",
+        "vta13",
+        "vta19",
+        "vta1b",
+        "vta23",
+        "vta24",
+        "vta7",
+        "vtb12",
+        "vtb7",
+        "vw16b",
+        "vw9"
+      ],
+      "test_duration_s": 19.4,
+      "train_duration_s": 795.6
+    },
+    {
+      "fold": 8,
+      "held_out_drive": "vtb12",
+      "test_sequences": [
+        "vtb12"
+      ],
+      "train_drives": [
+        "vta1",
+        "vta12",
+        "vta13",
+        "vta19",
+        "vta23",
+        "vta24",
+        "vta7",
+        "vtb10",
+        "vtb7",
+        "vw16",
+        "vw9"
+      ],
+      "train_sequences": [
+        "vta12",
+        "vta13",
+        "vta19",
+        "vta1b",
+        "vta23",
+        "vta24",
+        "vta7",
+        "vtb10",
+        "vtb7",
+        "vw16b",
+        "vw9"
+      ],
+      "test_duration_s": 44.6,
+      "train_duration_s": 770.4
+    },
+    {
+      "fold": 9,
+      "held_out_drive": "vtb7",
+      "test_sequences": [
+        "vtb7"
+      ],
+      "train_drives": [
+        "vta1",
+        "vta12",
+        "vta13",
+        "vta19",
+        "vta23",
+        "vta24",
+        "vta7",
+        "vtb10",
+        "vtb12",
+        "vw16",
+        "vw9"
+      ],
+      "train_sequences": [
+        "vta12",
+        "vta13",
+        "vta19",
+        "vta1b",
+        "vta23",
+        "vta24",
+        "vta7",
+        "vtb10",
+        "vtb12",
+        "vw16b",
+        "vw9"
+      ],
+      "test_duration_s": 46.0,
+      "train_duration_s": 769.0
+    },
+    {
+      "fold": 10,
+      "held_out_drive": "vw16",
+      "test_sequences": [
+        "vw16b"
+      ],
+      "train_drives": [
+        "vta1",
+        "vta12",
+        "vta13",
+        "vta19",
+        "vta23",
+        "vta24",
+        "vta7",
+        "vtb10",
+        "vtb12",
+        "vtb7",
+        "vw9"
+      ],
+      "train_sequences": [
+        "vta12",
+        "vta13",
+        "vta19",
+        "vta1b",
+        "vta23",
+        "vta24",
+        "vta7",
+        "vtb10",
+        "vtb12",
+        "vtb7",
+        "vw9"
+      ],
+      "test_duration_s": 112.5,
+      "train_duration_s": 702.5
+    },
+    {
+      "fold": 11,
+      "held_out_drive": "vw9",
+      "test_sequences": [
+        "vw9"
+      ],
+      "train_drives": [
+        "vta1",
+        "vta12",
+        "vta13",
+        "vta19",
+        "vta23",
+        "vta24",
+        "vta7",
+        "vtb10",
+        "vtb12",
+        "vtb7",
+        "vw16"
+      ],
+      "train_sequences": [
+        "vta12",
+        "vta13",
+        "vta19",
+        "vta1b",
+        "vta23",
+        "vta24",
+        "vta7",
+        "vtb10",
+        "vtb12",
+        "vtb7",
+        "vw16b"
+      ],
+      "test_duration_s": 55.2,
+      "train_duration_s": 759.8
+    }
+  ]
+}

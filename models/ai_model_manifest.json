@@ -1,11 +1,11 @@
 {
-  "manifest_version": "1.0.0",
+  "manifest_version": "2.0.0",
   "status": "approved_model_artifacts",
-  "model_count": 1,
+  "model_count": 2,
   "artifacts": [
     {
       "name": "ai_forward_speed_estimator",
-      "role": "Model A — Speed / Vibration Estimator",
+      "role": "Model A \u2014 Speed / Vibration Estimator",
       "file": "speed_estimator_weights.json",
       "sha256": "75556fc6364fe1bb4f972d2807eac7284e47e6703a13dfbe411eae38ff7620c6",
       "metrics": {
@@ -15,6 +15,50 @@
         "samples_train": 26595,
         "samples_val": 7092
       }
+    },
+    {
+      "name": "ai_forward_speed_estimator_v2",
+      "role": "Model A \u2014 Speed Estimator (Real-Data Heading Invariant)",
+      "file": "speed_estimator_v2_invariant_weights.json",
+      "sha256": "0af1f6e7cd242872e6b962d782f5912e78e749f8757292cb76d60b2768a550d1",
+      "variant": "B_real_invariant",
+      "channels": 4,
+      "channel_names": [
+        "a_xy_norm",
+        "a_z",
+        "a_norm",
+        "g_norm"
+      ],
+      "training_data": "12 candidate IO-VNBD drives under documented reconciliation exception; note that formal reports/training_admission.json still records 0 approved sequences due to export-frame decoupling.",
+      "split_method": "Leave-One-Drive-Out (LOGO) cross-validation across 12 candidate drives",
+      "headline_logo_metrics": {
+        "mean_speed_rmse_m_s": 6.11,
+        "rmse_spread_m_s": [
+          3.32,
+          10.26
+        ],
+        "median_speed_rmse_m_s": 5.32,
+        "mean_speed_mae_m_s": 5.15,
+        "mae_spread_m_s": [
+          2.63,
+          8.81
+        ],
+        "in_1sigma_calibration_pct": 71.2,
+        "in_2sigma_calibration_pct": 93.2,
+        "stop_detection_f1_pct": 70.6
+      },
+      "full_data_fit": {
+        "epochs_trained": 3,
+        "total_samples": 7947,
+        "rmse_m_s": 5.6856,
+        "mae_m_s": 4.5553
+      },
+      "limitations": [
+        "Data diversity: 12 drives from mostly one driver and one vehicle type (VW Golf/Passat); does not generalize across diverse vehicle classes.",
+        "Mixed-frame export: body-fixed horizontal acceleration magnitude used due to smartphone-to-vehicle frame misalignment.",
+        "Non-admitted data: trained under research exception; not field-validated or admitted under formal gate criteria.",
+        "Offline replay only: evaluated via retrospective offline sliding windows; edge streaming latencies and online causal filtering not verified in-vehicle."
+      ]
     }
   ],
   "training_admission": {
@@ -22,5 +66,6 @@
     "model_type": "Model A (Inertial Speed Estimator)",
     "benchmark_passed": true
   },
-  "policy": "Model A runs causal inference on 1-second IMU sliding windows; outputs forward velocity constraint for 15-state EKF."
+  "policy": "Model A runs causal inference on 1-second IMU sliding windows (100 Hz). v1 uses 6 vehicle-frame channels (synthetic); v2 uses 4 heading-invariant channels (real-data LOGO).",
+  "updated_date": "2026-10-20"
 }

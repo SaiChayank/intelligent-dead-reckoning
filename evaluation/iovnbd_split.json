@@ -1,0 +1,58 @@
+{
+  "seed": 42,
+  "grouping_rule": "drive_session",
+  "num_groups": 12,
+  "train": [
+    "vta12",
+    "vta1b",
+    "vta23",
+    "vta7",
+    "vtb10",
+    "vtb12",
+    "vtb7",
+    "vw16b"
+  ],
+  "val": [
+    "vta13",
+    "vta19",
+    "vw9"
+  ],
+  "test": [
+    "vta24"
+  ],
+  "durations_s": {
+    "train": 573.4,
+    "val": 124.6,
+    "test": 117.0
+  },
+  "groups": {
+    "train": [
+      "vta1",
+      "vta12",
+      "vta23",
+      "vta7",
+      "vtb10",
+      "vtb12",
+      "vtb7",
+      "vw16"
+    ],
+    "val": [
+      "vta13",
+      "vta19",
+      "vw9"
+    ],
+    "test": [
+      "vta24"
+    ]
+  },
+  "sequence_counts": {
+    "train": 8,
+    "val": 3,
+    "test": 1
+  },
+  "proportions": {
+    "train": 0.7036,
+    "val": 0.1529,
+    "test": 0.1436
+  }
+}
