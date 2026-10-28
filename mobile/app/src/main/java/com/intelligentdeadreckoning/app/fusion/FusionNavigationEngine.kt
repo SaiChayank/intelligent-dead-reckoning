@@ -137,6 +137,15 @@ class FusionNavigationEngine(
     }
     private var lastAiSpeedUpdateNs: Long = 0L
 
+    private val speedTracker: OutageSpeedTracker? by lazy {
+        if (!config.speedCorrectionEnabled) null else try {
+            OutageSpeedTracker(SpeedCorrectionModel.fromResource())
+        } catch (_: Exception) {
+            null
+        }
+    }
+    private var lastSpeedCorrectionNs: Long = 0L
+
     private val mountSlipDetector: MountSlipDetector? =
         if (config.mountSlipDetectionEnabled) MountSlipDetector(config) else null
     private var relevelCount: Int = 0
@@ -213,6 +222,8 @@ class FusionNavigationEngine(
         mountingQVehicleFromDevice = null
         aiSpeedEstimator?.reset()
         lastAiSpeedUpdateNs = 0L
+        speedTracker?.reset()
+        lastSpeedCorrectionNs = 0L
         verticalAccelIndex = 0
         verticalAccelCount = 0
         filter.adaptiveNoiseInflation = 1.0
@@ -362,6 +373,8 @@ class FusionNavigationEngine(
         lastConstraintNs = 0L
         aiSpeedEstimator?.reset()
         lastAiSpeedUpdateNs = 0L
+        speedTracker?.reset()
+        lastSpeedCorrectionNs = 0L
         relevelCount = 0
         mountSlipDetector?.reset()
         lastMapHeadingUpdateNs = 0L
@@ -470,6 +483,13 @@ class FusionNavigationEngine(
             val gy = m[3] * gyro.second.x + m[4] * gyro.second.y + m[5] * gyro.second.z
             val gz = m[6] * gyro.second.x + m[7] * gyro.second.y + m[8] * gyro.second.z
             aiSpeedEstimator?.acceptSample(Vector3(ax, ay, az), Vector3(gx, gy, gz))
+        }
+        if (mounting != null && config.speedCorrectionEnabled) {
+            val m = mounting.toRotationMatrix()
+            val ax = m[0] * accel.second.x + m[1] * accel.second.y + m[2] * accel.second.z
+            val ay = m[3] * accel.second.x + m[4] * accel.second.y + m[5] * accel.second.z
+            val gz = m[6] * gyro.second.x + m[7] * gyro.second.y + m[8] * gyro.second.z
+            speedTracker?.accept(tNs, ax, ay, gz)
         }
         if (config.adaptiveNoiseScalingEnabled) {
             val zForce = if (mounting != null) {
@@ -972,6 +992,7 @@ class FusionNavigationEngine(
                 lastAcceptedGnssProvider = payload.provider
                 lastCorrectionM = position.correctionM
                 lastAcceptedGnssSpeedM_S = payload.speed_m_s?.takeIf { it.isFinite() && it >= 0.0 }
+                speedTracker?.onGnssFix(tNs, lastAcceptedGnssSpeedM_S)
                 gnssUsed = true
                 movedOffAnchor = true
                 recoveryFixesRemaining = if (wasStale) config.localizationRecoveryFixes
@@ -1200,6 +1221,38 @@ class FusionNavigationEngine(
                         appliedAny = true
                     }
                     lastAiSpeedUpdateNs = tNs
+                }
+            }
+        }
+
+        // ---- Model A v3: learned outage speed correction ----------------------------------
+        // Anchored at the last accepted GNSS fix; offered at a slow cadence as a forward-speed
+        // pseudo-measurement through the same gated update as the AI speed above.
+        if (config.speedCorrectionEnabled &&
+            mounting != null &&
+            !zuptEngaged &&
+            solution.status != FusionStatus.FAILED &&
+            lastAcceptedGnssNs != null
+        ) {
+            val gnssOutage = (tNs - lastAcceptedGnssNs!!) >= (config.aiSpeedMinGnssStalenessS * 1e9).toLong()
+            val due = (tNs - lastSpeedCorrectionNs) >= (config.speedCorrectionUpdateIntervalS * 1e9).toLong()
+            if (gnssOutage && due) {
+                val est = speedTracker?.estimate(config.speedCorrectionMinOutageS)
+                if (est != null) {
+                    attemptedAny = true
+                    val outcome = filter.updateForwardSpeed(
+                        tNs,
+                        solution.qEnuFromDevice * mounting.conjugate(),
+                        est.speedM_S,
+                        config.speedCorrectionSigmaM_S * config.speedCorrectionSigmaM_S,
+                    )
+                    if (outcome.result != GnssUpdateResult.REJECTED_GATE &&
+                        outcome.result != GnssUpdateResult.REJECTED_INVALID &&
+                        outcome.result != GnssUpdateResult.REJECTED_ILL_CONDITIONED
+                    ) {
+                        appliedAny = true
+                    }
+                    lastSpeedCorrectionNs = tNs
                 }
             }
         }

@@ -1,0 +1,122 @@
+{
+  "fixes": 6283,
+  "folds": [
+    {
+      "drive": "m",
+      "fixes": 1066,
+      "median_error_m": 2.57,
+      "mae_learned_m": 1.78,
+      "mae_reported_accuracy_m": 1.84
+    },
+    {
+      "drive": "s1",
+      "fixes": 516,
+      "median_error_m": 2.56,
+      "mae_learned_m": 1.87,
+      "mae_reported_accuracy_m": 1.97
+    },
+    {
+      "drive": "s2",
+      "fixes": 923,
+      "median_error_m": 2.32,
+      "mae_learned_m": 1.96,
+      "mae_reported_accuracy_m": 2.01
+    },
+    {
+      "drive": "s3a",
+      "fixes": 247,
+      "median_error_m": 2.77,
+      "mae_learned_m": 2.21,
+      "mae_reported_accuracy_m": 1.91
+    },
+    {
+      "drive": "s3c",
+      "fixes": 384,
+      "median_error_m": 5.23,
+      "mae_learned_m": 4.7,
+      "mae_reported_accuracy_m": 4.84
+    },
+    {
+      "drive": "s4",
+      "fixes": 870,
+      "median_error_m": 2.69,
+      "mae_learned_m": 1.44,
+      "mae_reported_accuracy_m": 1.31
+    },
+    {
+      "drive": "vfa01",
+      "fixes": 120,
+      "median_error_m": 2.1,
+      "mae_learned_m": 2.0,
+      "mae_reported_accuracy_m": 1.68
+    },
+    {
+      "drive": "vta16",
+      "fixes": 119,
+      "median_error_m": 2.22,
+      "mae_learned_m": 2.07,
+      "mae_reported_accuracy_m": 1.76
+    },
+    {
+      "drive": "vta17",
+      "fixes": 49,
+      "median_error_m": 2.54,
+      "mae_learned_m": 1.83,
+      "mae_reported_accuracy_m": 1.59
+    },
+    {
+      "drive": "vta2",
+      "fixes": 1022,
+      "median_error_m": 1.76,
+      "mae_learned_m": 1.33,
+      "mae_reported_accuracy_m": 2.22
+    },
+    {
+      "drive": "vta28",
+      "fixes": 41,
+      "median_error_m": 3.64,
+      "mae_learned_m": 2.07,
+      "mae_reported_accuracy_m": 1.74
+    },
+    {
+      "drive": "vta30",
+      "fixes": 152,
+      "median_error_m": 2.82,
+      "mae_learned_m": 2.21,
+      "mae_reported_accuracy_m": 2.16
+    },
+    {
+      "drive": "vta8",
+      "fixes": 31,
+      "median_error_m": 3.66,
+      "mae_learned_m": 1.4,
+      "mae_reported_accuracy_m": 1.32
+    },
+    {
+      "drive": "vw3",
+      "fixes": 41,
+      "median_error_m": 2.81,
+      "mae_learned_m": 4.62,
+      "mae_reported_accuracy_m": 4.95
+    },
+    {
+      "drive": "y1",
+      "fixes": 702,
+      "median_error_m": 5.01,
+      "mae_learned_m": 6.79,
+      "mae_reported_accuracy_m": 6.93
+    }
+  ],
+  "mae_m": {
+    "learned": 2.487,
+    "reported_accuracy": 2.638
+  },
+  "spearman": {
+    "learned": 0.28,
+    "reported_accuracy": 0.048
+  },
+  "top10pct_recall": {
+    "learned": 0.231,
+    "reported_accuracy": 0.145
+  }
+}

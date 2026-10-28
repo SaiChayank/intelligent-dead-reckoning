@@ -1,0 +1,91 @@
+{
+  "manifest_version": "1.0.0",
+  "name": "speed_estimator_v3",
+  "role": "Learned correction of integrated longitudinal acceleration, anchored at the last GNSS fix",
+  "file": "speed_estimator_v3_weights.json",
+  "sha256": "1de8d1e1cac656c4f937399939cafde9f451465d27659b89dcbd57c1ef9d5ca4",
+  "android_asset": "mobile/app/src/main/assets/models/speed_estimator_v3_weights.json",
+  "enabled_by_default": false,
+  "config_flag": "FusionConfig.speedCorrectionEnabled",
+  "code": [
+    "training/speed_v3.py",
+    "mobile/app/src/main/java/com/intelligentdeadreckoning/app/fusion/OutageSpeedCorrection.kt"
+  ],
+  "parity_test": "mobile/app/src/test/java/com/intelligentdeadreckoning/app/SpeedV3ParityTest.kt",
+  "features": [
+    "v0",
+    "h",
+    "i_long",
+    "i_long_per_s",
+    "mean_abs_yaw",
+    "std_a_long_3s",
+    "mean_a_long_3s",
+    "std_a_lat_3s",
+    "v_dr"
+  ],
+  "training_data": "11 IO-VNBD drives with a VBOX vehicle-frame inertial recording (tools/iovnbd_to_contract.py)",
+  "drives": [
+    "m",
+    "s1",
+    "s2",
+    "s3c",
+    "s4",
+    "vfa01",
+    "vta16",
+    "vta2",
+    "vta8",
+    "vw3",
+    "y1"
+  ],
+  "protocol": "leave-one-drive-out; vehicle-frame IMU input; VBOX speed as label only",
+  "headline_loo_metrics": {
+    "speed_rmse_m_s": {
+      "hold": {
+        "all": 4.785,
+        "h10": 3.995,
+        "h30": 5.695,
+        "h60": 6.309
+      },
+      "integrated": {
+        "all": 4.273,
+        "h10": 2.263,
+        "h30": 4.914,
+        "h60": 7.267
+      },
+      "learned": {
+        "all": 2.554,
+        "h10": 1.83,
+        "h30": 3.017,
+        "h60": 3.735
+      }
+    },
+    "median_drift_pct": {
+      "h30_hold": 22.07,
+      "h30_integrated": 17.8,
+      "h30_learned": 12.0,
+      "h60_hold": 29.24,
+      "h60_integrated": 29.61,
+      "h60_learned": 17.36
+    },
+    "pass_rate_drift_lt_10pct": {
+      "h30_hold": 0.266,
+      "h30_integrated": 0.305,
+      "h30_learned": 0.425,
+      "h60_hold": 0.141,
+      "h60_integrated": 0.139,
+      "h60_learned": 0.253
+    },
+    "drift_samples": {
+      "h30": 3994,
+      "h60": 3975
+    }
+  },
+  "evidence": "reports/speed_v3_eval.json",
+  "limitations": [
+    "Trained and evaluated on the VBOX vehicle-frame acceleration and yaw rate (external-IMU case), not on a phone IMU; the phone export in IO-VNBD is not a usable inertial signal.",
+    "Median drift is still above the 10 % gate (about 12 % over 30 s outages and 17 % over 60 s outages); only 25-43 % of outages are under 10 %.",
+    "Drift is a position built from this speed and a yaw-integrated heading starting at the true position, not the full engine; the engine arm 'ekf_nhc_v3' has not been evaluated yet.",
+    "Mostly UK roads and a few vehicles; no tunnel, urban-canyon or two-wheeler data; not run on a device or in a vehicle.",
+    "No vibration features: IO-VNBD is 10 Hz."
+  ]
+}

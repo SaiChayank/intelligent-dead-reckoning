@@ -85,3 +85,49 @@ The engine does not meet the 10 % gate, even on clean inertial data. Why:
 
 Not claimed: that the engine meets or fails the PS gate in a vehicle. These are IO-VNBD drives, VBOX GNSS at
 1 Hz, a batch mount calibration on the phone input, and no on-device run.
+
+## Phase 2: speed model v3 (2026-10-29)
+
+Why this form: IO-VNBD phone data is 10 Hz and its phone accelerometer export cannot support vibration or
+inertial speed estimation (see the Phase 1 diagnosis). The model instead learns the residual of
+`v_dr = v0 + integral(a_long)` from nine causal features anchored at the last GNSS fix (`training/speed_v3.py`).
+Input is the vehicle-frame channels (external-IMU case). Leave-one-drive-out over the 11 drives with a
+vehicle-IMU recording (`reports/speed_v3_eval.json`):
+
+| | Hold last speed | Integrated acceleration | Learned v3 |
+|---|---:|---:|---:|
+| Speed RMSE, all horizons (m/s) | 4.79 | 4.27 | 2.55 |
+| Speed RMSE at 30 s | 5.70 | 4.91 | 3.02 |
+| Median drift, 30 s outages (%) | 22.1 | 17.8 | 12.0 |
+| Median drift, 60 s outages (%) | 29.2 | 29.6 | 17.4 |
+| Outages under 10 % drift, 30 s / 60 s | 27 % / 14 % | 31 % / 14 % | 43 % / 25 % |
+
+Gate B4 (beats the best non-AI baseline on held-out drives): passed on this Python dead-reckoning comparison.
+It still does not reach the 10 % gate on the median. The engine arm `ekf_nhc_v3` exists but has not been run yet.
+
+Kotlin: `OutageSpeedCorrection.kt` (model plus causal tracker), `speedCorrection*` flags in `FusionConfig`
+(off by default), hooks in `FusionNavigationEngine`, weights in `models/` and the app assets, parity test
+`SpeedV3ParityTest` against golden vectors from Python. Not done in this block: the pothole/bump filter
+(B5) and replacing the synthetic v1 model in the app, because v3 needs a vehicle-frame inertial input the
+phone path does not yet provide.
+
+## Phase 3: learned GNSS trust (research artifact only, 2026-10-29)
+
+`training/gnss_trust.py` predicts the real horizontal error of a phone GPS fix from its metadata and its
+consistency with the previous fix (`reports/gnss_trust_eval.json`, leave-one-drive-out, 6,283 fixes):
+
+| | Reported accuracy | Learned |
+|---|---:|---:|
+| MAE (m) | 2.64 | 2.49 |
+| Spearman with true error | 0.05 | 0.28 |
+| Top-10 % worst fixes caught | 14.5 % | 23.1 % |
+
+A real but small signal; phone fixes here are already accurate (median error about 2.5 m). It is not wired
+into the engine because no engine-level improvement has been shown. Gate not met; not shipped.
+
+## Verification at this point
+
+Python 326 unittest tests (5 skipped) and 374 pytest tests pass; mobile 424 and edge 15 JVM tests pass;
+lint and assembleDebug pass; hygiene check clean. One existing test asserted the stale README sentence
+"no model has been trained or approved"; it now checks the formal-gate statement instead.
+Not run: the on-device suite (9 failures earlier, phone not connected).

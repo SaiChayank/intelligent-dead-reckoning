@@ -1205,7 +1205,8 @@ class ExperimentToolTest(ExperimentFixture):
 
     def test_model_policy_remains_explicit_and_never_deploys_or_mutates_online(self):
         readme = (REPO_ROOT / "models/README.md").read_text("utf-8").lower()
-        self.assertIn("no model has been trained or approved", readme)
+        self.assertIn("still records 0 approved", readme)         # the formal admission gate is unchanged
+        self.assertIn("not field-validated", readme)             # no shipped weights are claimed as validated
         self.assertIn("no online learning", readme)
         self.assertIn("model artifact hash/version traceability", readme)
         self.assertFalse(any((REPO_ROOT / "mobile/app/src/main/assets").rglob("*.tflite")))
