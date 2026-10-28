@@ -10,10 +10,16 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import unittest
 from pathlib import Path
 
 import numpy as np
 import pytest
+
+try:
+    import torch  # noqa: F401  (training.model_a_logo_eval needs it)
+except ImportError:
+    raise unittest.SkipTest("PyTorch is not installed; Model A LOGO evaluation tests need it")
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:

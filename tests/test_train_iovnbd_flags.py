@@ -12,12 +12,17 @@ from __future__ import annotations
 
 import copy
 import sys
+import unittest
 from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
 import pytest
-import torch
+
+try:
+    import torch
+except ImportError:
+    raise unittest.SkipTest("PyTorch is not installed; Model A training tests need it")
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:

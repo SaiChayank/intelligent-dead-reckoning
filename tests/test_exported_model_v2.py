@@ -16,10 +16,16 @@ import hashlib
 import json
 import subprocess
 import sys
+import unittest
 from pathlib import Path
 
 import numpy as np
 import pytest
+
+try:
+    import torch  # noqa: F401  (training.export_final_model_a needs it)
+except ImportError:
+    raise unittest.SkipTest("PyTorch is not installed; Model A export tests need it")
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:

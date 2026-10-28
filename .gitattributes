@@ -1,0 +1,14 @@
+# Text files are stored with LF and checked out with LF on every platform, so
+# byte-exact golden fixtures and codecs agree with CI regardless of core.autocrlf.
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF in the working tree.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+*.gz binary
+*.jar binary
+*.mbtiles binary
+*.pbf binary
+*.pdf binary
+*.png binary
