@@ -180,7 +180,7 @@ in [0, 9223372036854775807], not `1.0`, `1e0`, booleans or quoted numbers.
   checked against independent truth; `calibrated` means it has been, under a stated
   protocol. The production engine publishes only `unvalidated` (covariance restated with
   the stated `sqrt(5.991)` circular conversion), and no consumer may read an unvalidated
-  radius as a calibrated accuracy: [mobile/CONFIDENCE.md](../mobile/CONFIDENCE.md) records
+  radius as a calibrated accuracy: mobile/CONFIDENCE.md records
   the measured coverage and what a `calibrated` claim would require.
 
 `diagnostic`:

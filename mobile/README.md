@@ -1,6 +1,8 @@
 # IDR Android foundation
 
-See [the demonstration procedure](DEMONSTRATION.md) for the new session-local
+> **Documentation note:** the detailed companion documents this file used to link (acquisition, recording, export, replay, calibration, fusion, map, UI design, security and release notes) were removed in the repository cleanup. Their content is not reproduced here; the current verification record is [reports/gap_closure_log.md](../reports/gap_closure_log.md).
+
+See the demonstration procedure for the new session-local
 calibration-to-fusion handoff and its device/field acceptance boundaries. Older
 no-handoff statements below describe the previous checkpoint.
 
@@ -14,17 +16,17 @@ existing repository.
 
 ## What works
 
-- Optional central Hyderabad offline map preview: bundled tiles, camera controls, attribution and an explicitly started synthetic marker/heading/trail demo. Four separate map sources are implemented: synthetic fixture, recorded session, live raw phone GNSS and navigation-engine output. However, the ordinary app journey supplies no valid calibration, so the fusion engine remains uninitialized and the engine source correctly displays no position. Engine covariance/presentation is host-tested only and is not validated navigation. The optional raw-vs-map-matched overlay is evaluation-only. No routing exists. See [map scope and device gate](OFFLINE_MAP.md), [the engine view](MAP_ENGINE_VIEW.md) and [confidence semantics](CONFIDENCE.md).
-- Recording details, paged local sessions and explicit local ZIP export through Android's document picker are implemented. See [export workflow and device-validation gate](EXPORT.md).
-- Read-only local replay supports start/pause/resume/stop with explicit `replay_real` / `replay_simulation` labels. See [replay policy and verification](REPLAY.md).
+- Optional central Hyderabad offline map preview: bundled tiles, camera controls, attribution and an explicitly started synthetic marker/heading/trail demo. Four separate map sources are implemented: synthetic fixture, recorded session, live raw phone GNSS and navigation-engine output. However, the ordinary app journey supplies no valid calibration, so the fusion engine remains uninitialized and the engine source correctly displays no position. Engine covariance/presentation is host-tested only and is not validated navigation. The optional raw-vs-map-matched overlay is evaluation-only. No routing exists. See map scope and device gate, the engine view and confidence semantics.
+- Recording details, paged local sessions and explicit local ZIP export through Android's document picker are implemented. See export workflow and device-validation gate.
+- Read-only local replay supports start/pause/resume/stop with explicit `replay_real` / `replay_simulation` labels. See replay policy and verification.
 
-- **Evaluation tab** — renders the checked-in `contracts/evaluation/v1` arm-comparison report (classical INS, classical fusion, + constraints, + AI correction, + map matching) with every absent value stated as `not measured` / `not implemented`, never filled; the JVM harness regenerates the report from the host evaluation pipeline and requires it to match the shipped bytes. It is a console-free engineering page, not device or field accuracy evidence. See [EVALUATION.md](EVALUATION.md).
+- **Evaluation tab** — renders the checked-in `contracts/evaluation/v1` arm-comparison report (classical INS, classical fusion, + constraints, + AI correction, + map matching) with every absent value stated as `not measured` / `not implemented`, never filled; the JVM harness regenerates the report from the host evaluation pipeline and requires it to match the shipped bytes. It is a console-free engineering page, not device or field accuracy evidence. See EVALUATION.md.
 - Kotlin + Jetpack Compose / Material 3 UI: Dashboard, Map, Diagnostics, Evaluation and About.
 - A visible `SIMULATION` or `REAL PHONE` banner on every screen and an explicit
   source selector. Simulation values remain scripted demo data.
 - Phone sensors mode collects accelerometer, gyroscope, magnetometer and optional
   gravity plus permitted GNSS/network fixes and satellite status. See
-  [acquisition details](ACQUISITION.md) for time, queue and permission behavior.
+  acquisition details for time, queue and permission behavior.
 - Start begins a fresh deterministic demo; Stop retains the final snapshot.
 - Switching tabs retains the session. Android Back returns to Dashboard first.
 - Leaving the foreground stops the demo. Returning never automatically resumes.
@@ -36,7 +38,7 @@ existing repository.
 
 Optional foreground local recording subscribes to the Phone sensors stream, with
 explicit Start/Stop, bounded writing and interrupted-session recovery. See
-[recording architecture and device acceptance](RECORDING.md). Its new physical
+recording architecture and device acceptance. Its new physical
 device gate is separate from the frozen acquisition verification.
 
 Not implemented: ZIP import, replay seek/speed controls, rotation-vector events,
@@ -44,14 +46,14 @@ routing, AI correction, and a user-facing calibration collection/composition flo
 The 15-state EKF, phone-to-vehicle calibration, constraints and navigation runtime
 exist in source and have host coverage, but they are not integrated into a usable
 calibrated app journey and have no independent moving-drive acceptance. See
-[CALIBRATION.md](CALIBRATION.md), [FUSION.md](FUSION.md), and
-[FINAL_RELEASE_READINESS.md](../FINAL_RELEASE_READINESS.md). Device acceptance
+CALIBRATION.md, FUSION.md, and
+[reports/gap_closure_log.md](../reports/gap_closure_log.md). Device acceptance
 remains separately required.
 
 ## Interface and design system
 
 The Compose surface runs on a single dark design system — the written contract is
-[UI_DESIGN.md](UI_DESIGN.md) (tokens, state vocabulary, honesty rules, map-overlay
+UI_DESIGN.md (tokens, state vocabulary, honesty rules, map-overlay
 colours, dialog and accessibility rules). The implementation lives in
 `app/src/main/java/com/intelligentdeadreckoning/app/ui/design/`:
 
@@ -81,7 +83,7 @@ instead of covering page content, so scrolled controls stay reachable and clicka
 
 This is a historical presentation checkpoint. Its **195 JVM test** count and source-change
 summary describe only that dated change, not the current checkout. Test counts and current
-verification are recorded in [FINAL_RELEASE_READINESS.md](../FINAL_RELEASE_READINESS.md).
+verification are recorded in [reports/gap_closure_log.md](../reports/gap_closure_log.md).
 
 ## Open and run in Android Studio
 
@@ -211,14 +213,14 @@ Manual acceptance: Start on Dashboard; verify changing demo values; switch to
 Diagnostics; Stop and verify values freeze; start a new demo; press Home and
 return, verifying it stays stopped. Read About for scope/privacy boundaries.
 Test counts change as the suite evolves; use the dated results in
-[FINAL_RELEASE_READINESS.md](../FINAL_RELEASE_READINESS.md) and the current local
+[reports/gap_closure_log.md](../reports/gap_closure_log.md) and the current local
 Gradle/Python output rather than old count snapshots. Android instrumentation APK
 assembly is compile evidence only; it does not mean tests ran on a device.
 Never test the UI while driving.
 
 ## Security and privacy verification
 
-The local/offline boundary, automated gates, and hands-on device checklist are documented in [SECURITY_VERIFICATION.md](SECURITY_VERIFICATION.md). It covers the effective permission set, no-backup private recordings, user-initiated local export, safe paths, strict codecs, offline asset and experiment integrity, the dependency audit, and the fact that no model is currently deployed. Host tests/builds do not substitute for the documented physical-device checks.
+The local/offline boundary, automated gates, and hands-on device checklist are documented in SECURITY_VERIFICATION.md. It covers the effective permission set, no-backup private recordings, user-initiated local export, safe paths, strict codecs, offline asset and experiment integrity, the dependency audit, and the fact that no model is currently deployed. Host tests/builds do not substitute for the documented physical-device checks.
 
 ## Privacy and research boundaries
 
@@ -237,6 +239,6 @@ secondary `edge/` deployment are not implemented here. Existing IO-VNBD frame
 uncertainties cannot be resolved simply by displaying this phone's future readings.
 
 Current release gates and scoped evidence are consolidated in
-[FINAL_RELEASE_READINESS.md](../FINAL_RELEASE_READINESS.md). Do not claim field
+[reports/gap_closure_log.md](../reports/gap_closure_log.md). Do not claim field
 navigation until calibration composition, independent reference drives and the
 physical performance/accuracy gates pass.
