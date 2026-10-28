@@ -31,3 +31,57 @@ Baseline gate, all green with no source changes:
 | `tools/check_repo_hygiene.py` | clean |
 
 Not run: `connectedDebugAndroidTest` and installation, which need a connected phone.
+
+## Phase 1 — IO-VNBD outage harness: diagnosis of the failing drift gate (2026-10-29, uncommitted work)
+
+Result of the first full run (13 drives, 223 engine runs): GNSS-aided error median 1.8 m, but
+outage drift median 75 % over 30 s and about 180 % over 1 km; the 10 % gate passes in 1-3 % of
+outages (50 m outages: about 25 %). Holding the last GNSS speed and heading beats the engine
+(30 s outages: median end error 129 m versus about 190 m).
+
+Findings (all computed by throwaway scripts against converted recordings; truth used only to diagnose):
+
+1. Engine heading is already 12-35 degrees off truth before an outage starts, and engine speed
+   runs away by +6 to +15 m/s within 30 s.
+2. The batch mount-yaw calibration differs from a truth-fitted mount angle by 6-37 degrees
+   (s2 10, s4 37, m 6, vta2 6, s3c 21), and the truth fit itself correlates weakly
+   (r_long 0.21-0.60).
+3. Decisive check: even with an oracle mount angle, oracle bias removal and VBOX speed as the
+   reference, integrating the logged phone accelerometer over 30 s windows misses the true speed
+   change by a median of 4-6 m/s, and its correlation with true longitudinal acceleration is
+   only 0.2-0.5. The IO-VNBD phone accelerometer export (pre-rotated, mixed frame; see
+   reports/frame_resolution_followup.md) cannot support inertial dead reckoning.
+
+Conclusion: the poor outage drift is dominated by the input data, not shown to be an engine bug.
+These numbers must not be quoted as the system's performance. Candidate next step: run the same
+harness with the VBOX vehicle-frame yaw rate and longitudinal/lateral acceleration as the inertial
+input (an external-IMU case) and with the team's own 100 Hz phone recordings (Phase 7).
+
+### Phase 1: vehicle-frame input result and what it means (2026-10-29)
+
+The same harness was run with VBOX vehicle-frame yaw rate and longitudinal/lateral acceleration as the
+inertial input (an external-IMU case, 11 drives) in place of the phone export. Results are in
+`reports/iovnbd_eval/vehicle/` (phone export: `reports/iovnbd_eval/phone/`). The phone run reproduced
+the first run exactly, which is the repeatability check.
+
+Vehicle input, median drift as a percentage of outage distance (pass = under 10 %):
+
+| Scenario | INS | EKF+NHC/ZUPT | Hold last GNSS velocity | Pass rates (INS / EKF / hold) |
+|---|---:|---:|---:|---|
+| 50 m | 13.0 | 13.8 | 18.1 | 37 % / 33 % / 39 % |
+| 30 s | 43.0 | 42.1 | 53.3 | 8 % / 6 % / 6 % |
+| 60 s | 83.9 | 83.6 | 71.5 | 3 % / 3 % / 3 % |
+| 1 km | 112 | 123 | 68.7 | 2 % / 3 % / 2 % |
+
+The engine does not meet the 10 % gate, even on clean inertial data. Why:
+- Heading is good on this input: median error before an outage 3.5-5.9 degrees, after 30 s 5-7 degrees.
+- Speed is not: median speed error after 30 s is 3.6-4.8 m/s (INS arm), matching plain integration of the
+  acceleration channel (Python integrated-acceleration baseline: 4.9 m/s RMSE at 30 s). The engine behaves
+  as an integrator of this channel, so no engine fault is indicated.
+- The channel's mean bias is small (-0.04 to +0.06 m/s^2) but it follows true acceleration only moderately
+  (r = 0.44-0.89, residual std 0.14-0.65 m/s^2). Road grade explains little of it with GPS height as the
+  grade source (r = 0.2-0.57, slope about 0.08), which is inconclusive because that height is noisy.
+- The app's AI configuration (`app`, synthetic Model A v1) is far worse (median drift 767-1407 %), as before.
+
+Not claimed: that the engine meets or fails the PS gate in a vehicle. These are IO-VNBD drives, VBOX GNSS at
+1 Hz, a batch mount calibration on the phone input, and no on-device run.

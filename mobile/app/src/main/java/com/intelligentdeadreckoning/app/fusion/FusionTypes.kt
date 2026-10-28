@@ -205,6 +205,25 @@ data class FusionConfig(
     val aiSpeedVarianceScale: Double = 1.0,
 
     // ---------------------------------------------------------------------------------------
+    // Model A v3: learned correction of integrated acceleration, anchored at the last GNSS fix
+    // ---------------------------------------------------------------------------------------
+    /** Master switch for the v3 outage speed correction (see OutageSpeedCorrection.kt). */
+    val speedCorrectionEnabled: Boolean = false,
+
+    /** Cadence at which corrected speeds are offered to the filter during an outage, seconds. */
+    val speedCorrectionUpdateIntervalS: Double = 1.0,
+
+    /** No correction before the outage has lasted this long, seconds (the model starts at 2 s). */
+    val speedCorrectionMinOutageS: Double = 2.0,
+
+    /**
+     * Standard deviation assumed for the corrected speed, m/s. Held-out speed RMSE of the
+     * correction is 1.8 / 3.0 / 3.7 m/s at 10 / 30 / 60 s (reports/speed_v3_eval.json); 3.0 is a
+     * stated engineering choice in that range, not a calibrated probability.
+     */
+    val speedCorrectionSigmaM_S: Double = 3.0,
+
+    // ---------------------------------------------------------------------------------------
     // Model B: Adaptive Process Noise & Vibration Filtering
     // ---------------------------------------------------------------------------------------
     /** Master switch for Model B adaptive vibration-aware process noise scaling. */
