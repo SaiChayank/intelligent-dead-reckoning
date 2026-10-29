@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import dataclasses
+from pathlib import Path
 import unittest
 
 import numpy as np
@@ -71,6 +72,30 @@ class ModelTest(unittest.TestCase):
         a = sv.train_mlp(x, y, hidden=4, epochs=5).predict(x)
         b = sv.train_mlp(x, y, hidden=4, epochs=5).predict(x)
         np.testing.assert_array_equal(a, b)
+
+
+class HeldOutTest(unittest.TestCase):
+    def test_held_out_weights_differ_from_all_drive_weights_and_reject_unknown_names(self):
+        a = synthetic_drive(seed=1)
+        b = dataclasses.replace(synthetic_drive(seed=2), name="other")
+        drives = [a, b]
+        all_model = sv.train_mlp(np.vstack([sv.build_samples(d)["x"] for d in drives]),
+                                 np.concatenate([sv.build_samples(d)["y"] for d in drives]), 4, 3)
+        without_a = sv.train_without(drives, "syn", 4, 3)
+        probe = sv.build_samples(a)["x"][:20]
+        self.assertFalse(np.allclose(all_model.predict(probe), without_a.predict(probe)))
+        with self.assertRaises(ValueError):
+            sv.train_without(drives, "missing", 4, 3)
+
+    def test_export_writes_one_file_per_drive_outside_the_tracked_models_folder(self):
+        import tempfile
+        drives = [synthetic_drive(seed=1), dataclasses.replace(synthetic_drive(seed=2), name="other")]
+        out = Path(tempfile.mkdtemp())
+        paths = sv.export_heldout(drives, out, 4, 2)
+        self.assertEqual(set(paths), {"syn", "other"})
+        self.assertTrue(all(p.parent == out and p.name.startswith("speed_v3_without_") for p in paths.values()))
+        restored = sv.Mlp.from_json(__import__("json").loads(paths["syn"].read_text(encoding="utf-8")))
+        self.assertEqual(restored.mean.shape[0], len(sv.FEATURES))
 
 
 class DriftTest(unittest.TestCase):

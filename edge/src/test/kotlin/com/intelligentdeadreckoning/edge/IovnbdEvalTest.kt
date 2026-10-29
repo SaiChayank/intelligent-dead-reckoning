@@ -92,6 +92,24 @@ class IovnbdEvalTest {
     }
 
     @Test
+    fun heldOutArmUsesTheV3CorrectionAndReadsItsOwnWeightsFileFromTheJob() {
+        assertTrue(IovnbdEval.Arm.EKF_NHC_V3_HELDOUT.config().speedCorrectionEnabled)
+        val file = Files.createTempFile("iovnbd-jobs", ".json")
+        try {
+            Files.writeString(file, """
+                {"jobs":[{"session":"a","output":"a.csv","arm":"ekf_nhc_v3_heldout","outages_ns":[],
+                          "speed_model":"weights/speed_v3_without_a.json","calibration":null},
+                         {"session":"b","output":"b.csv","arm":"ekf_nhc_v3","outages_ns":[],"calibration":null}]}
+            """.trimIndent())
+            val jobs = IovnbdEval.readJobs(file)
+            assertEquals("speed_v3_without_a.json", jobs[0].speedModel!!.fileName.toString())
+            assertNull(jobs[1].speedModel)
+        } finally {
+            Files.deleteIfExists(file)
+        }
+    }
+
+    @Test
     fun armsDifferOnlyWhereIntended() {
         assertFalse(IovnbdEval.Arm.INS.config().motionConstraintsEnabled)
         assertTrue(IovnbdEval.Arm.EKF_NHC.config().motionConstraintsEnabled)

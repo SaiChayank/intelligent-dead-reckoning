@@ -279,6 +279,27 @@ def evaluate(drives: list[Drive], hidden: int, epochs: int, drift_horizons=(30, 
     return out
 
 
+def train_without(drives: list[Drive], held_out: str, hidden: int, epochs: int) -> Mlp:
+    """Weights trained on every drive except `held_out`, for an engine run on that drive."""
+    rest = [d for d in drives if d.name != held_out]
+    if len(rest) == len(drives):
+        raise ValueError(f"{held_out} is not among the drives")
+    data = [build_samples(d) for d in rest]
+    return train_mlp(np.vstack([d["x"] for d in data if len(d["x"])]),
+                     np.concatenate([d["y"] for d in data if len(d["y"])]), hidden, epochs)
+
+
+def export_heldout(drives: list[Drive], out_dir: Path, hidden: int, epochs: int) -> dict[str, Path]:
+    """One weights file per drive, trained without that drive. Written outside the tracked models/ folder."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    paths = {}
+    for d in drives:
+        path = out_dir / f"speed_v3_without_{d.name}.json"
+        path.write_text(json.dumps(train_without(drives, d.name, hidden, epochs).to_json()) + "\n", encoding="utf-8")
+        paths[d.name] = path
+    return paths
+
+
 def available_drives() -> list[str]:
     idx = json.loads((DATA / "index.json").read_text(encoding="utf-8"))["converted"]
     names = []
@@ -291,11 +312,12 @@ def available_drives() -> list[str]:
 
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    p.add_argument("command", choices=["evaluate", "export"])
+    p.add_argument("command", choices=["evaluate", "export", "export-heldout"])
     p.add_argument("--hidden", type=int, default=16)
     p.add_argument("--epochs", type=int, default=60)
     p.add_argument("--out", type=Path, default=ROOT / "reports" / "speed_v3_eval.json")
     p.add_argument("--weights", type=Path, default=ROOT / "models" / "speed_estimator_v3_weights.json")
+    p.add_argument("--heldout-dir", type=Path, default=DATA / "heldout_weights")
     args = p.parse_args(argv)
     drives = [load_drive(n) for n in available_drives()]
     if args.command == "evaluate":
@@ -305,6 +327,9 @@ def main(argv=None) -> int:
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
         print(json.dumps({k: result[k] for k in ("speed_rmse", "drift_pct_median", "drift_pct_pass10")}, indent=1))
+    elif args.command == "export-heldout":
+        for name, path in export_heldout(drives, args.heldout_dir, args.hidden, args.epochs).items():
+            print("wrote", path)
     else:
         data = [build_samples(d) for d in drives]
         model = train_mlp(np.vstack([d["x"] for d in data]), np.concatenate([d["y"] for d in data]),

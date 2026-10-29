@@ -260,3 +260,20 @@ Parallel-road fixture: HMM 39/40 on the true road against 38/40 for greedy (a mi
 
 Bug found and fixed on the way: the greedy `MapMatcher` threw a null-pointer error when every candidate score underflowed to
 zero (for example after an impossible jump from the last match); it now reports LOW_CONFIDENCE. Regression test added.
+
+## 2026-10-29 — Engine-level held-out evaluation of speed correction v3
+
+For each of the 11 IO-VNBD drives the weights were retrained on the other 10 and the engine was run on the held-out drive
+(vehicle-frame input, `ekf_nhc_v3_heldout` arm). Median drift, in-sample v3 vs held-out v3 (EKF+NHC / hold-last-GNSS for reference):
+
+| Scenario | EKF+NHC | hold-last-GNSS | v3 in-sample | v3 held-out |
+|---|---|---|---|---|
+| 50 m | 13.8 % | 18.1 % | 13.8 % | 13.4 % |
+| 30 s | 42.1 % | 53.3 % | 23.1 % | 24.4 % |
+| 60 s | 83.6 % | 71.5 % | 24.4 % | 24.0 % |
+| 1 km | 122.7 % | 68.7 % | 26.3 % | 27.3 % |
+
+Reading: the held-out numbers match the in-sample ones within about 1 point, so the engine gain is not an in-sample artefact.
+v3 still halves hold-last-GNSS drift at 30 s and cuts it by about a factor of three at 60 s and 1 km. It does NOT meet the
+PS target of under 10 %: the median is 24-27 % on the outage windows. Limits: 11 drives of one dataset, phone-class
+data with the VBOX yaw rate and acceleration as the vehicle-frame input, no on-device or field drive.

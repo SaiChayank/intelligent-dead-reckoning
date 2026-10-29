@@ -105,6 +105,8 @@ class FusionNavigationEngine(
     private val initialHeadingRad: Double? = null,
     private val publicationIntervalNs: Long = DEFAULT_PUBLICATION_INTERVAL_NS,
     private val roadGraph: RoadGraph? = null,
+    /** Weights for [FusionConfig.speedCorrectionEnabled]; null loads the packaged resource. Tests and evaluations inject their own. */
+    private val speedCorrectionModel: SpeedCorrectionModel? = null,
 ) : NavigationEngine {
 
     private val filter = GnssInsEkf(config)
@@ -144,7 +146,7 @@ class FusionNavigationEngine(
 
     private val speedTracker: OutageSpeedTracker? by lazy {
         if (!config.speedCorrectionEnabled) null else try {
-            OutageSpeedTracker(SpeedCorrectionModel.fromResource())
+            OutageSpeedTracker(speedCorrectionModel ?: SpeedCorrectionModel.fromResource())
         } catch (_: Exception) {
             null
         }

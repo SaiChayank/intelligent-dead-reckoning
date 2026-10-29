@@ -66,7 +66,7 @@ def session_info(conv: dict) -> dict:
     return info
 ORIGIN_NS = 1_000_000_000
 
-ARMS = ("ins", "ekf_nhc", "ekf_nhc_ai", "ekf_nhc_v3", "app")
+ARMS = ("ins", "ekf_nhc", "ekf_nhc_ai", "ekf_nhc_v3", "ekf_nhc_v3_heldout", "app")
 BASELINE = "hold_gnss"
 ARMS_REPORT = ARMS + (BASELINE,)
 ARM_LABELS = {
@@ -74,7 +74,8 @@ ARM_LABELS = {
     "ins": "INS only (no constraints)",
     "ekf_nhc": "EKF + NHC/ZUPT",
     "ekf_nhc_ai": "EKF + NHC/ZUPT + Model A v1",
-    "ekf_nhc_v3": "EKF + NHC/ZUPT + speed correction v3",
+    "ekf_nhc_v3": "EKF + NHC/ZUPT + speed correction v3 (in-sample weights)",
+    "ekf_nhc_v3_heldout": "EKF + NHC/ZUPT + speed correction v3 (held-out weights)",
     "app": "App configuration",
 }
 
@@ -317,7 +318,7 @@ def _plt():
     return plt
 
 
-ARM_COLORS = {BASELINE: "#7f7f7f", "ins": "#d1495b", "ekf_nhc": "#edae49", "ekf_nhc_ai": "#00798c", "ekf_nhc_v3": "#2a9d8f", "app": "#30638e"}
+ARM_COLORS = {BASELINE: "#7f7f7f", "ins": "#d1495b", "ekf_nhc": "#edae49", "ekf_nhc_ai": "#00798c", "ekf_nhc_v3": "#2a9d8f", "ekf_nhc_v3_heldout": "#6a4c93", "app": "#30638e"}
 
 
 def plot_drive(seq: str, truth: dict, navs: dict[str, dict], outages: list[tuple[int, int]],
@@ -409,8 +410,18 @@ def eligible_drives() -> list[tuple[str, dict]]:
     return out
 
 
-def plan_all() -> tuple[list[dict], dict]:
+HELDOUT_ARM = "ekf_nhc_v3_heldout"
+
+
+def heldout_weights(seq: str) -> Path:
+    """Weights trained without this drive: `python training/speed_v3.py export-heldout`."""
+    return DATA / "heldout_weights" / f"speed_v3_without_{seq}.json"
+
+
+def plan_all(arms: tuple[str, ...] | None = None) -> tuple[list[dict], dict]:
+    """Engine jobs. `arms` restricts the run to those arms (the app-calibrator probe is then skipped)."""
     jobs, plan = [], {}
+    chosen = tuple(a for a in ARMS if arms is None or a in arms)
     for seq, conv in eligible_drives():
         cal = session_info(conv)["batch_calibration"]
         session = DATA / seq / f"iovnbd-{seq}-{INPUTS[INPUT]['suffix']}"
@@ -420,8 +431,9 @@ def plan_all() -> tuple[list[dict], dict]:
                          "reasons": [session_info(conv).get("detail")]}
             continue
         # The app's own calibrator on every drive, no outages: does it reach VALID?
-        jobs.append({"session": session.as_posix(), "output": (run_dir / "app_calibrator.csv").as_posix(),
-                     "arm": "app", "outages_ns": [], "calibration": None})
+        if arms is None:
+            jobs.append({"session": session.as_posix(), "output": (run_dir / "app_calibrator.csv").as_posix(),
+                         "arm": "app", "outages_ns": [], "calibration": None})
         if cal["status"] != "valid":
             plan[seq] = {"skipped": "batch calibration failed", "reasons": cal.get("reasons")}
             continue
@@ -432,11 +444,22 @@ def plan_all() -> tuple[list[dict], dict]:
         for sc in SCENARIOS:
             outages = plan_outages(truth, fixes, sc, start_after)
             plan[seq][sc.name] = outages
-            for arm in ARMS:
-                jobs.append({"session": session.as_posix(),
-                             "output": (run_dir / f"{sc.name}__{arm}.csv").as_posix(),
-                             "arm": arm, "outages_ns": [[str(s), str(e)] for s, e in outages],
-                             "calibration": calibration_job(seq, cal)})
+            for arm in chosen:
+                job = {"session": session.as_posix(),
+                       "output": (run_dir / f"{sc.name}__{arm}.csv").as_posix(),
+                       "arm": arm, "outages_ns": [[str(s), str(e)] for s, e in outages],
+                       "calibration": calibration_job(seq, cal)}
+                if arm == HELDOUT_ARM:
+                    if INPUT != "vehicle":
+                        continue                       # v3 needs the vehicle-frame input it was trained on
+                    weights = heldout_weights(seq)
+                    if not weights.is_file():
+                        if arms is None:
+                            print(f"note: no held-out weights for {seq}; skipping {HELDOUT_ARM} there")
+                            continue
+                        raise SystemExit(f"missing {weights}: run `python training/speed_v3.py export-heldout` first")
+                    job["speed_model"] = weights.as_posix()
+                jobs.append(job)
     return jobs, plan
 
 
@@ -604,17 +627,28 @@ def main(argv=None) -> int:
     p.add_argument("command", choices=["run", "score"])
     p.add_argument("--input", choices=sorted(INPUTS), default="phone")
     p.add_argument("--java-home", default=os.environ.get("JAVA_HOME"))
+    p.add_argument("--arms", help="comma-separated arm ids to run (results are merged into the existing file)")
     args = p.parse_args(argv)
     use_input(args.input)
     jobs_path = DATA / f"jobs_{INPUT}.json"
     results_path = DATA / f"results_{INPUT}.json"
     plan_path = DATA / f"plan_{INPUT}.json"
     if args.command == "run":
-        jobs, plan = plan_all()
+        subset = tuple(a.strip() for a in args.arms.split(",")) if args.arms else None
+        if subset and (unknown := set(subset) - set(ARMS)):
+            raise SystemExit(f"unknown arms: {sorted(unknown)}")
+        jobs, plan = plan_all(subset)
         jobs_path.write_text(json.dumps({"jobs": jobs}), encoding="utf-8")
         plan_path.write_text(json.dumps(plan), encoding="utf-8")
         print(f"{len(jobs)} engine runs planned")
-        run_edge(jobs_path, results_path, args.java_home)
+        if subset and results_path.is_file():
+            part = results_path.with_name(results_path.stem + "_part.json")
+            run_edge(jobs_path, part, args.java_home)
+            merged = {r["output"]: r for r in json.loads(results_path.read_text(encoding="utf-8"))["results"]}
+            merged.update({r["output"]: r for r in json.loads(part.read_text(encoding="utf-8"))["results"]})
+            results_path.write_text(json.dumps({"results": list(merged.values())}), encoding="utf-8")
+        else:
+            run_edge(jobs_path, results_path, args.java_home)
     plan = json.loads(plan_path.read_text(encoding="utf-8"))
     results = json.loads(results_path.read_text(encoding="utf-8"))["results"]
     summary = score_all(plan, results)

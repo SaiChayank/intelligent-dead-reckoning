@@ -9,11 +9,12 @@ Every number here is read from a file in `reports/` by `tools/build_claims.py`. 
 | INS only (no constraints) | 13 % (37%) | 43 % (8%) | 84 % (3%) | 112 % (2%) |
 | EKF + NHC/ZUPT | 14 % (33%) | 42 % (6%) | 84 % (3%) | 123 % (3%) |
 | EKF + NHC/ZUPT + Model A v1 | 14 % (33%) | 44 % (7%) | 223 % (1%) | 420 % (3%) |
-| EKF + NHC/ZUPT + speed correction v3 | 14 % (37%) | 23 % (20%) | 24 % (17%) | 26 % (17%) |
+| EKF + NHC/ZUPT + speed correction v3 (in-sample weights) | 14 % (37%) | 23 % (20%) | 24 % (17%) | 26 % (17%) |
+| EKF + NHC/ZUPT + speed correction v3 (held-out weights) | 13 % (36%) | 24 % (17%) | 24 % (16%) | 27 % (12%) |
 | App configuration | 32 % (21%) | 767 % (0%) | 1169 % (0%) | 1407 % (1%) |
 | Baseline: hold last GNSS velocity | 18 % (39%) | 53 % (6%) | 71 % (3%) | 69 % (2%) |
 
-_The v3 row uses weights trained on these same drives (in-sample, optimistic). The held-out figures are in the speed model table below._
+_The in-sample v3 row uses weights trained on these same drives (optimistic). The held-out row retrains without the drive being run, so it is the one to quote._
 
 **IO-VNBD, phone IMU export** (13 IO-VNBD drives, 13.2 h, 444 km). Median drift as a percentage of distance travelled in the outage, and the share of outages under the 10 % gate. GNSS-aided error while fixes are available: EKF + NHC/ZUPT 1.81 m median, App configuration 0.88 m median.
 

@@ -7,6 +7,7 @@ import com.intelligentdeadreckoning.app.calibration.StationaryThresholds
 import com.intelligentdeadreckoning.app.fusion.FusionConfig
 import com.intelligentdeadreckoning.app.fusion.FusionNavigationEngine
 import com.intelligentdeadreckoning.app.fusion.GeodeticAnchor
+import com.intelligentdeadreckoning.app.fusion.SpeedCorrectionModel
 import com.intelligentdeadreckoning.app.fusion.Geodesy
 import com.intelligentdeadreckoning.app.navigation.CalibratingFusionEngine
 import com.intelligentdeadreckoning.app.navigation.ENGINE_OUTPUT_CONTRACT_VERSION
@@ -58,6 +59,9 @@ object IovnbdEval {
         /** Constraints plus the v3 learned outage speed correction (training/speed_v3.py). */
         EKF_NHC_V3("ekf_nhc_v3"),
 
+        /** The v3 correction with weights trained WITHOUT the drive being run (the job names the file). */
+        EKF_NHC_V3_HELDOUT("ekf_nhc_v3_heldout"),
+
         /** Exactly the configuration the app runs (see CalibratingFusionEngine). */
         APP("app");
 
@@ -66,6 +70,7 @@ object IovnbdEval {
             EKF_NHC -> FusionConfig()
             EKF_NHC_AI -> FusionConfig(aiSpeedEstimationEnabled = true)
             EKF_NHC_V3 -> FusionConfig(speedCorrectionEnabled = true)
+            EKF_NHC_V3_HELDOUT -> FusionConfig(speedCorrectionEnabled = true)
             APP -> FusionConfig(
                 aiSpeedEstimationEnabled = true,
                 adaptiveNoiseScalingEnabled = true,
@@ -102,6 +107,8 @@ object IovnbdEval {
         val outagesNs: List<Outage>,
         /** Null runs the app's own in-motion calibrator (with the IO-VNBD rest profile). */
         val calibration: BatchCalibration?,
+        /** Weights file for the v3 correction; null uses the packaged weights (in-sample for these drives). */
+        val speedModel: Path? = null,
     )
 
     /**
@@ -198,6 +205,8 @@ object IovnbdEval {
         val inputHeader = Header(sessionId, Source.REPLAY_REAL, "1.0.0")
         val outputHeader = Header(sessionId, Source.REPLAY_REAL, ENGINE_OUTPUT_CONTRACT_VERSION)
         val config = job.arm.config().forIovnbd()
+        require(job.arm != Arm.EKF_NHC_V3_HELDOUT || job.speedModel != null) { "held-out arm needs a speed_model file" }
+        val speedModel = job.speedModel?.let { Files.newInputStream(it).use(SpeedCorrectionModel::fromStream) }
         val engine = CalibratingFusionEngine(
             calibrator = job.calibration?.let { ReleasedCalibration(it) }
                 ?: CalibrationNavigationEngine(IOVNBD_MOUNT, IOVNBD_STATIONARY),
@@ -206,6 +215,7 @@ object IovnbdEval {
                 initialHeadingRad = heading,
                 publicationIntervalNs = PUBLICATION_INTERVAL_NS,
                 config = config,
+                speedCorrectionModel = speedModel,
             )
         },
         )
@@ -340,6 +350,7 @@ object IovnbdEval {
                     val a = pair.asJsonArray
                     Outage(a[0].asString.toLong(), a[1].asString.toLong())
                 },
+                speedModel = o.get("speed_model")?.takeUnless { it.isJsonNull }?.asString?.let { Paths.get(it) },
                 calibration = o.get("calibration")?.takeUnless { it.isJsonNull }?.asJsonObject?.let { c ->
                     val q = c.getAsJsonArray("q_vehicle_from_device_wxyz").map { it.asDouble }
                     val b = c.getAsJsonArray("gyro_bias_rad_s").map { it.asDouble }
