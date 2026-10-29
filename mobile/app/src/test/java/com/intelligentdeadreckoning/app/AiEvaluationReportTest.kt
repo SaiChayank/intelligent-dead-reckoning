@@ -7,6 +7,7 @@ import com.intelligentdeadreckoning.contracts.evaluation.v1.ArmStatus
 import com.intelligentdeadreckoning.contracts.evaluation.v1.EvaluationCodec
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -30,21 +31,26 @@ class AiEvaluationReportTest {
 
         val aiArm = report.arms.first { it.armId == ArmId.FUSION_AI }
         assertEquals(ArmStatus.EVALUATED, aiArm.status)
-        assertNotNull(aiArm.accuracy)
         val accuracy = aiArm.accuracy!!
 
-        // Problem Statement mandate: dead reckoning drift < 10%
-        assertTrue("Drift must be < 10%, was ${accuracy.driftPercent}%", accuracy.driftPercent!! < 10.0)
-        assertEquals(1.44, accuracy.driftPercent!!, 0.01)
-        assertEquals(3.46, accuracy.finalPositionErrorM!!, 0.01)
+        // The numbers are measured by SyntheticOutageMeasurementTest, so check consistency, not constants:
+        // drift is end error over outage distance, and the outage is the scripted 20 s / 240 m.
         assertEquals(240.0, accuracy.outageDistanceM!!, 0.01)
         assertEquals(20.0, accuracy.outageDurationS!!, 0.01)
+        assertEquals(100.0 * accuracy.finalPositionErrorM!! / accuracy.outageDistanceM!!, accuracy.driftPercent!!, 0.01)
+        // A drift this low would mean the measurement window included the first returning GNSS fix again.
+        assertTrue("drift ${accuracy.driftPercent}% is implausibly low", accuracy.driftPercent!! > 10.0)
 
-        // Verify timing
-        assertNotNull(aiArm.timing)
+        // Unmeasured values stay absent: no inference latency or memory is claimed.
         val timing = aiArm.timing!!
-        assertTrue("Inference latency p50 must be sub-millisecond (< 1.0 ms), was ${timing.inferenceLatencyP50Ms} ms",
-            timing.inferenceLatencyP50Ms!! < 1.0)
+        assertNull(timing.inferenceLatencyP50Ms)
+        assertNull(timing.memoryPeakMb)
+        assertEquals(10.0, timing.outputHz!!, 1.0)
+
+        // Map matching was not scored on this drive and must say so rather than show a number.
+        val mapArm = report.arms.first { it.armId == ArmId.FUSION_MAP_MATCH }
+        assertEquals(ArmStatus.NOT_RUN, mapArm.status)
+        assertNull(mapArm.accuracy)
 
         // Verify EvaluationSurface table rendering
         val table = EvaluationSurface.table(report)
@@ -52,7 +58,7 @@ class AiEvaluationReportTest {
         val driftRow = table.first { it.label.contains("Drift") }
         val aiDriftReading = driftRow.readings[ArmId.FUSION_AI]
         assertNotNull(aiDriftReading)
-        assertTrue("Rendered reading should contain 1.44%", aiDriftReading!!.contains("1.44"))
+        assertTrue("Rendered reading should show the measured drift", aiDriftReading!!.contains("%.1f".format(accuracy.driftPercent!!).take(2)))
 
         // Verify EvaluationSurface report reading
         val available = EvaluationSurface.read("hyderabad_ai_evaluation.json", ReportOrigin.INSTALLED, jsonText)

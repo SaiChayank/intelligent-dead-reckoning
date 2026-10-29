@@ -10,6 +10,19 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_HTML = ROOT / "tools" / "visualizer" / "index.html"
 
+
+def _measured_verdict() -> dict:
+    """Verdict figures for the scripted drive, read from the file the JVM test measured."""
+    import json
+    path = ROOT / "reports" / "synthetic_outage_measured.json"
+    arms = {a["arm_id"]: a for a in json.loads(path.read_text(encoding="utf-8"))["arms"]}
+    fmt = lambda a: f"{arms[a]['drift_pct']:.1f}% Drift ({arms[a]['end_error_m']:.0f} m)"
+    return {"ins": fmt("classical_ins"), "constraints": fmt("fusion_constraints"), "ai": fmt("fusion_ai"),
+            "mae": f"{arms['fusion_ai']['speed_mae_m_s']:.2f}"}
+
+
+VERDICT = _measured_verdict()
+
 # Hyderabad Anchor coordinates (WGS-84)
 ANCHOR_LAT = 17.4350
 ANCHOR_LON = 78.4450
@@ -330,22 +343,22 @@ def build_html():
 
       <!-- Live Outage Verdict -->
       <div class="comparison-banner">
-        <div class="comparison-title">⚡ 20-SECOND TUNNEL OUTAGE VERDICT</div>
+        <div class="comparison-title">20-SECOND OUTAGE: MEASURED ON THE SCRIPTED DRIVE (ANIMATION IS ILLUSTRATIVE)</div>
         <div class="comp-row">
           <span>Smart India Hackathon Mandate:</span>
           <span style="color: var(--accent-amber); font-weight: 700;">Drift &lt; 10%</span>
         </div>
         <div class="comp-row">
-          <span>AI Model A Speed Estimator:</span>
-          <span class="comp-val-good">1.44% Drift (3.46 m)</span>
+          <span>Fusion + constraints + Model A v1:</span>
+          <span class="comp-val-bad">{VERDICT['ai']}</span>
         </div>
         <div class="comp-row">
           <span>Classical INS (Un-aided):</span>
-          <span class="comp-val-bad">130.5% Drift (540 m)</span>
+          <span class="comp-val-bad">{VERDICT["ins"]}</span>
         </div>
         <div class="comp-row">
-          <span>Classical Constraints (NHC only):</span>
-          <span class="comp-val-bad">35.3% Drift (84.8 m)</span>
+          <span>Fusion + constraints (no AI):</span>
+          <span class="comp-val-bad">{VERDICT['constraints']}</span>
         </div>
       </div>
 
@@ -364,14 +377,14 @@ def build_html():
             <div id="dispCompass" style="font-size: 11px; color: var(--text-muted);">North</div>
           </div>
           <div class="metric-box">
-            <div class="metric-label">AI Speed MAE</div>
-            <div id="dispSpeedErr" class="metric-value">0.47<span class="metric-unit">m/s</span></div>
-            <div style="font-size: 11px; color: var(--accent-green);">Bounded Linear</div>
+            <div class="metric-label">Speed MAE (outage)</div>
+            <div id="dispSpeedErr" class="metric-value">{VERDICT["mae"]}<span class="metric-unit">m/s</span></div>
+            <div style="font-size: 11px; color: var(--text-muted);">measured, scripted drive</div>
           </div>
           <div class="metric-box">
             <div class="metric-label">ZUPT Status</div>
             <div id="dispZupt" class="metric-value" style="color: var(--accent-green); font-size: 16px; margin-top: 8px;">ENGAGED</div>
-            <div style="font-size: 11px; color: var(--text-muted);">Stillness 99.7%</div>
+            <div style="font-size: 11px; color: var(--text-muted);">scripted state</div>
           </div>
         </div>
       </div>

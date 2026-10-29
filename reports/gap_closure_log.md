@@ -131,3 +131,58 @@ Python 326 unittest tests (5 skipped) and 374 pytest tests pass; mobile 424 and 
 lint and assembleDebug pass; hygiene check clean. One existing test asserted the stale README sentence
 "no model has been trained or approved"; it now checks the formal-gate statement instead.
 Not run: the on-device suite (9 failures earlier, phone not connected).
+
+## Phase 2 engine-level check: `ekf_nhc_v3` arm (vehicle input, 2026-10-29)
+
+The v3 correction was switched on in the real engine (`speedCorrectionEnabled`) and run through the Phase 1
+harness on the 11 vehicle-input drives (`reports/iovnbd_eval/vehicle/`). Median drift, share under 10 % in brackets:
+
+| Outage | EKF + NHC/ZUPT | + v3 correction | Hold last GNSS velocity |
+|---|---:|---:|---:|
+| 50 m | 13.8 % (33 %) | 13.8 % (37 %) | 18.1 % (39 %) |
+| 30 s | 42.1 % (6 %) | 23.1 % (20 %) | 53.3 % (6 %) |
+| 60 s | 83.6 % (3 %) | 24.4 % (17 %) | 71.5 % (3 %) |
+| 1 km | 122.7 % (3 %) | 26.3 % (17 %) | 68.7 % (2 %) |
+
+Gate B4 at engine level (beats the best non-AI arm): passed. The 10 % gate on the median: not met.
+
+Caveat that bounds this result: the weights the engine loads were trained on all 11 drives, so the engine
+numbers above are in-sample for those drives and optimistic. The clean held-out evidence is the leave-one-drive-out
+Python result in `reports/speed_v3_eval.json` (median drift 12 % at 30 s, 17 % at 60 s). The engine also restarted
+after a filter failure 300 times across this arm's runs (110 for the plain constraints arm); outages overlapping a
+failure are counted as failed, and none were in this run.
+
+## Integrity finding: the shipped evaluation report was typed in (2026-10-29)
+
+`tools/generate_ai_evaluation_report.py` writes numbers typed into its source (for example 84.821405 m and 35.34 %
+for the constraints arm, 540.06 m for INS, 0.03 m for the map arm, sub-millisecond latencies), and
+`AiEvaluationReportTest` asserts those same constants. The README, the final report and the pitch deck quoted them.
+The project's own measurement (`AiDeadReckoningDriftTest`, scripted drive) gives 3.46 m (1.44 %) with the AI model
+on AND 3.46 m (1.44 %) with it off, so on that scenario the AI adds nothing and the typed "classical" figures
+(84.8 m, 56.7 m, 540 m) have no measurement behind them. Remediation in this branch: the README is rewritten from
+generated files (`tools/build_claims.py`); the shipped report is regenerated from measured arm results.
+
+## Integrity remediation completed (2026-10-29)
+
+What was wrong, all fixed on this branch:
+1. The 1.44 % / 3.46 m headline was an artifact: the old test's outage window included the state published at
+   t = 50.0 s, which already contains the first returning GNSS fix. Measured before that fix
+   (`SyntheticOutageMeasurementTest`, `reports/synthetic_outage_measured.json`) the scripted drive gives:
+   INS 310.9 m (129.5 %), fusion / fusion + constraints / fusion + Model A v1 all 73.7 m (30.7 %). The AI model
+   adds nothing there, and the PS gate is not met. `AiDeadReckoningDriftTest` now asserts a regression bound and that
+   a too-low drift (window including the fix) fails.
+2. The shipped `evaluation_report.json` was typed into `tools/generate_ai_evaluation_report.py` (84.8 m, 540 m, 0.03 m,
+   latencies). It is now generated from the measured file; unmeasured fields are null and the map-matching arm is
+   `not_run`. `AiEvaluationReportTest` checks consistency instead of constants.
+3. `tools/process_field_drive.py` simulated its own drive with an invented speed error and printed a PASS
+   certificate for any input. It now reports only facts in the recording (counts, rates, GNSS gaps) and says drift is
+   not evaluated. The embedded certificate in `pitch.html` (0.03 %, "323.7x margin") is removed.
+4. README, final report, both pitch decks, the visualizer, the KML exporter text and the field protocol no longer carry
+   the typed numbers. README results come from `tools/build_claims.py`; `tests/test_claims.py` fails if they go stale.
+   Unmeasured device claims (120 Hz, CPU < 2.8 %, > 65 % battery saving, CI all green, "certified on OnePlus") were
+   replaced by "not measured". Stale `reports/exports/*.kml|gpx` demo files were deleted.
+Residual: the system-architecture diagrams in the deck and report still show the v1 CNN box as the speed model, and
+the deck text under "Key Mathematical" still describes v1 in places; the diagram labels are not yet updated.
+
+Verification after this change: Python 329 unittest (5 skipped), 377 pytest, hygiene clean; mobile JVM, lint and
+assembleDebug pass; edge tests pass. Not run: on-device suite (phone not connected; 9 failures earlier).

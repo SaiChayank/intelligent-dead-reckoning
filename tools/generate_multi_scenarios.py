@@ -4,7 +4,7 @@ Generates two challenging evaluation scenarios conforming to Recording Contract 
 1. 'urban-canyon-multipath': High-rise canyon with severe multipath reflections and satellite occlusion.
    Proves NIS chi-squared innovation gating and dead reckoning bridging.
 2. 'stop-and-go-outage': Flyover underpass congestion with crawling and complete stops.
-   Proves Model A stillness detection (99.7% accuracy) and Zero Velocity Updates (ZUPT).
+   Exercises stillness handling and Zero Velocity Updates (ZUPT) on scripted data; it makes no accuracy claim.
 """
 import gzip
 import json

@@ -152,10 +152,10 @@ def generate_kml(
       </Placemark>
 
       <Placemark>
-        <name>2. AI Model A Dead Reckoning (1.44% Drift)</name>
+        <name>2. Illustrative dead-reckoning track (scripted, not measured)</name>
         <description>
-          15-State ES-EKF aided by Model A 1D-CNN forward speed updates and ZUPT stillness detection.
-          Maintains lane accuracy through the 20s tunnel outage without wheel sensors or OBD-II.
+          Illustrative track drawn by the demo generator with a small scripted offset. It is NOT the output
+          of the navigation engine and carries no accuracy claim.
         </description>
         <styleUrl>#modelAStyle</styleUrl>
         <LineString>
@@ -227,8 +227,7 @@ def generate_kml(
         <name>Tunnel Exit (GNSS Recovered)</name>
         <description>
           t={outage_end_s:.1f}s: GNSS signal restored.
-          Model A end error: 3.46 m (1.44% drift).
-          Classical INS end error: 540.06 m.
+          Demo tracks are scripted illustrations; no errors are claimed here.
         </description>
         <Point>
           <coordinates>{tunnel_exit[1]:.7f},{tunnel_exit[0]:.7f},{tunnel_exit[2]:.2f}</coordinates>
@@ -394,7 +393,7 @@ def simulate_trajectories(
         lat_c, lon_c, alt_c = geodetic_from_enu(anchor_lat, anchor_lon, anchor_alt, east_classical, north_classical)
         classical_pts.append((lat_c, lon_c, alt_c, t))
 
-        # 4. Model A AI-ML Trajectory (Speed MAE ~ 0.47 m/s, bounds error within 3.46 m over 240 m)
+        # 4. Illustrative track with a small scripted offset (not an engine output)
         if not is_outage:
             east_model_a = east_truth
             north_model_a = north_truth

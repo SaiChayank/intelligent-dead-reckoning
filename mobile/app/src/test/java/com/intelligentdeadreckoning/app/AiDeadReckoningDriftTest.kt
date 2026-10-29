@@ -12,10 +12,13 @@ import java.util.Random
 import kotlin.math.hypot
 
 /**
- * Benchmark test for Smart India Hackathon #26168 (ISRO / Department of Space):
- * Verifies that during a 20-second complete GNSS outage (tunnel scenario, 240 m driven),
- * the AI Forward Speed Estimator (Model A) constrains dead reckoning drift to strictly < 10%
- * of distance traveled, without any vehicle OBD-II/CAN bus dependencies.
+ * Regression guard for the scripted 20-second GNSS outage (240 m driven). It measures the drift the
+ * engine really has at the end of the outage, and it does NOT claim the PS #26168 gate (under 10 %).
+ *
+ * History: an earlier version of this test reported 1.44 % because its outage window included the
+ * state published at t = 50.0 s, which already contains the first returning GNSS fix (about 3 m of
+ * GPS noise). Measured strictly before that fix, the engine drifts about 30 % on this scenario with or
+ * without the AI model (see SyntheticOutageMeasurementTest and reports/synthetic_outage_measured.json).
  */
 class AiDeadReckoningDriftTest {
 
@@ -117,7 +120,7 @@ class AiDeadReckoningDriftTest {
                 val pos = nav.position_enu_m ?: continue
                 publishedCount++
                 val curTimeS = (rec.event.t_ns - originNs) / 1e9
-                if (curTimeS >= ScriptedDrive.OUTAGE_FROM_S && curTimeS <= ScriptedDrive.OUTAGE_TO_S) {
+                if (curTimeS >= ScriptedDrive.OUTAGE_FROM_S && curTimeS < ScriptedDrive.OUTAGE_TO_S) {
                     val truthPos = ScriptedDrive.position(curTimeS)
                     val origin = anchorEnu ?: Vector3(0.0, 0.0, 0.0)
                     val filterX = origin.x + pos.x
@@ -142,7 +145,7 @@ class AiDeadReckoningDriftTest {
     )
 
     @Test
-    fun aiForwardSpeedConstrainsOutageDriftStrictlyUnderTenPercent() {
+    fun outageDriftIsMeasuredBeforeTheFirstReturningFixAndStaysBounded() {
         val aiRun = runOutageSimulation(aiEnabled = true)
 
         println(
@@ -156,14 +159,19 @@ class AiDeadReckoningDriftTest {
         )
 
         assertTrue("Evaluation must publish navigation states", aiRun.publishedCount > 500)
+        // Regression bound, not the PS gate: the measured value is about 31 %.
         assertTrue(
-            "Dead reckoning drift during GNSS outage must be strictly < 10% of distance traveled (was ${aiRun.driftPercentage}%)",
-            aiRun.driftPercentage < 10.0,
+            "Outage drift regressed past 40 % (was ${aiRun.driftPercentage}%)",
+            aiRun.driftPercentage < 40.0,
+        )
+        assertTrue(
+            "A measured drift this low means the window includes the returning fix again (was ${aiRun.driftPercentage}%)",
+            aiRun.driftPercentage > 10.0,
         )
     }
 
     @Test
-    fun aiAssistanceSignificantlyImprovesOutageAccuracyOverBaseline() {
+    fun aiModelDoesNotWorsenOutageAccuracyComparedWithTheConstraintsBaseline() {
         val baseline = runOutageSimulation(aiEnabled = false)
         val aiRun = runOutageSimulation(aiEnabled = true)
 
@@ -177,10 +185,10 @@ class AiDeadReckoningDriftTest {
             ),
         )
 
-        // Verify AI dead reckoning drift is strictly under the 10% requirement
+        // The model is not expected to help on this constant-speed scenario; it must not hurt.
         assertTrue(
-            "AI dead reckoning drift (${aiRun.driftPercentage}%) must be < 10%",
-            aiRun.driftPercentage < 10.0,
+            "AI drift (${aiRun.driftPercentage}%) is worse than the baseline (${baseline.driftPercentage}%)",
+            aiRun.driftPercentage <= baseline.driftPercentage + 1.0,
         )
     }
 }

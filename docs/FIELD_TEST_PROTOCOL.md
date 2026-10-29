@@ -50,18 +50,17 @@ You can test the system either during a natural outage (underpass, flyover tunne
 
 2. **In-Tunnel Dead Reckoning**:
    - The map displays **`INTELLIGENT DEAD RECKONING ACTIVE`**.
-   - Watch the speed readout: Model A estimates forward speed from tire and road vibration harmonics.
+   - Watch the speed readout. The shipped Model A v1 is trained on synthetic data and is known to be unreliable on real drives; record what you see rather than assuming it is right.
    - Watch road snap: Map-matching heading constraints keep the vehicle on the road centerline.
 
 3. **Convergence & Benchmark Evaluation**:
    - At the end of the 30 seconds (or upon exiting the tunnel), authoritative GNSS fixes resume.
    - The HUD banner displays **`GNSS RECOVERED · POST-OUTAGE CONVERGENCE`**.
-   - The **`FIELD DRIFT BENCHMARK REPORT`** card appears showing:
-     - **Duration**: `30.0 s`
-     - **Distance**: (e.g. `418.5 m`)
-     - **Final Drift Error**: (e.g. `11.8 m`)
-     - **Drift Ratio**: (e.g. `2.82%`)
-     - **Status Badge**: `PASSED (< 10%)`
+   - The **`FIELD DRIFT BENCHMARK REPORT`** card appears and shows the duration, distance, final drift error and
+     drift ratio the engine measured against the GNSS fixes it withheld. **Write the numbers down as they appear.**
+     The card shows whether the run is under the 10 % gate; it is not a pass or fail until the drive has been
+     scored against the withheld fixes with the evaluation harness (field-drive scoring is not implemented yet, see
+     `reports/gap_closure_log.md`).
 
 ---
 

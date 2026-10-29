@@ -1,0 +1,47 @@
+# Results, generated from result files
+
+Every number here is read from a file in `reports/` by `tools/build_claims.py`. Nothing is on a device or in a vehicle yet. IO-VNBD GNSS is the VBOX receiver at 1 Hz (the phone logged GPS only about every 9 s).
+
+**IO-VNBD, vehicle-frame inertial input (external-IMU case)** (11 IO-VNBD drives, 13.9 h, 462 km). Median drift as a percentage of distance travelled in the outage, and the share of outages under the 10 % gate. GNSS-aided error while fixes are available: EKF + NHC/ZUPT 1.39 m median, App configuration 0.92 m median.
+
+| Arm | 50 m outage | 30 s outage | 60 s outage | 1 km outage |
+|---|---:|---:|---:|---:|
+| INS only (no constraints) | 13 % (37%) | 43 % (8%) | 84 % (3%) | 112 % (2%) |
+| EKF + NHC/ZUPT | 14 % (33%) | 42 % (6%) | 84 % (3%) | 123 % (3%) |
+| EKF + NHC/ZUPT + Model A v1 | 14 % (33%) | 44 % (7%) | 223 % (1%) | 420 % (3%) |
+| EKF + NHC/ZUPT + speed correction v3 | 14 % (37%) | 23 % (20%) | 24 % (17%) | 26 % (17%) |
+| App configuration | 32 % (21%) | 767 % (0%) | 1169 % (0%) | 1407 % (1%) |
+| Baseline: hold last GNSS velocity | 18 % (39%) | 53 % (6%) | 71 % (3%) | 69 % (2%) |
+
+_The v3 row uses weights trained on these same drives (in-sample, optimistic). The held-out figures are in the speed model table below._
+
+**IO-VNBD, phone IMU export** (13 IO-VNBD drives, 13.2 h, 444 km). Median drift as a percentage of distance travelled in the outage, and the share of outages under the 10 % gate. GNSS-aided error while fixes are available: EKF + NHC/ZUPT 1.81 m median, App configuration 0.88 m median.
+
+| Arm | 50 m outage | 30 s outage | 60 s outage | 1 km outage |
+|---|---:|---:|---:|---:|
+| INS only (no constraints) | 19 % (26%) | 70 % (2%) | 133 % (1%) | 183 % (2%) |
+| EKF + NHC/ZUPT | 19 % (26%) | 75 % (3%) | 125 % (1%) | 177 % (2%) |
+| EKF + NHC/ZUPT + Model A v1 | 19 % (24%) | 75 % (3%) | 129 % (1%) | 409 % (3%) |
+| App configuration | 28 % (25%) | 771 % (1%) | 1944 % (0%) | 2292 % (2%) |
+| Baseline: hold last GNSS velocity | 16 % (41%) | 49 % (7%) | 68 % (4%) | 70 % (2%) |
+
+**Speed model v3** (learned correction of integrated acceleration, vehicle-frame inertial input, leave-one-drive-out over 11 drives):
+
+| | Hold last speed | Integrated acceleration | Learned v3 |
+|---|---:|---:|---:|
+| Speed RMSE, all horizons (m/s) | 4.785 | 4.273 | 2.554 |
+| Median drift over 30 s outages (%) | 22.07 | 17.8 | 12.0 |
+| Median drift over 60 s outages (%) | 29.24 | 29.61 | 17.36 |
+| Outages under 10 % drift, 30 s | 27% | 30% | 42% |
+| Outages under 10 % drift, 60 s | 14% | 14% | 25% |
+
+**Learned GNSS trust** (research artifact, not in the engine; leave-one-drive-out, 6283 phone fixes): rank correlation with true fix error 0.28 (reported accuracy: 0.048); mean absolute error 2.487 m (reported accuracy: 2.638 m).
+
+**Scripted synthetic drive** (70 s scripted drive: straight cruise at 12 m/s with one turn, 20 s GNSS outage, seeded noise and fixed sensor biases). Measured by the JVM test `SyntheticOutageMeasurementTest`; this is a straight cruise, so it says little about real roads.
+
+| Arm | End error (m) | Drift (%) | Max error (m) |
+|---|---:|---:|---:|
+| Classical INS (one alignment fix, then no GNSS) | 310.87 | 129.53 | 310.87 |
+| Classical fusion (GNSS+INS filter, no motion constraints) | 73.68 | 30.70 | 73.68 |
+| Fusion + vehicle-motion constraints | 73.68 | 30.70 | 73.68 |
+| Fusion + constraints + Model A v1 forward speed | 73.68 | 30.70 | 73.68 |

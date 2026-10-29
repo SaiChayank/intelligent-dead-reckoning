@@ -1,4 +1,4 @@
-# Intelligent Dead Reckoning — Complete Prototype & Evaluation Report
+# Intelligent Dead Reckoning: Prototype & Evaluation Report (corrected)
 
 **Smart India Hackathon #26168**
 *AI-ML based Intelligent Dead Reckoning system for seamless navigation — ISRO / Department of Space*
@@ -7,19 +7,25 @@
 
 ## 1. Executive Summary
 
-This project delivers a **100% offline, standalone AI-ML Intelligent Dead Reckoning (IDR) navigation system** executing on commercial off-the-shelf Android smartphones and edge targets. It eliminates all dependency on vehicle OBD-II, wheel speed sensors, or CAN-bus data while achieving seamless, high-accuracy lane-level vehicular navigation through extended GNSS denial scenarios (e.g., tunnels, urban canyons, flyovers, dense foliage).
+An offline Android app and edge engine that tracks a vehicle through GNSS outages using the phone IMU: a
+15-state error-state EKF with zero-velocity and non-holonomic constraints, automatic mount calibration, a
+learned outage speed correction (Model A v3), offline map display and road matching. It needs no OBD-II, wheel
+sensor or network permission.
 
-### Key Performance Highlights Against PS Mandates
+**Status against the PS #26168 benchmark (drift under 10 % of distance in an outage): not met.** This report
+replaces an earlier version whose headline numbers (1.44 % drift, 24x margin, 0.28 ms latency, 417 tests)
+were typed in rather than measured; the correction is recorded in `reports/gap_closure_log.md`.
 
-| Requirement | PS Mandate | Prototype Result | Status |
-| :--- | :--- | :--- | :--- |
-| **External Sensor Independence** | Zero OBD-II / CAN-bus / wheel-encoder dependency | Standalone Phone IMU (accelerometer + gyroscope) + GNSS | **PASSED** |
-| **Dead Reckoning Drift** | **$< 10\%$ of distance traveled** during GNSS outages | **$1.44\%$ drift** ($3.46\text{ m}$ error over $240\text{ m}$ tunnel outage) | **EXCEEDED (24x better)** |
-| **In-Cabin Calibration** | Auto phone-to-vehicle alignment | Real-time gravity tilt leveling + PCA forward-axis discovery | **PASSED** |
-| **AI Speed Estimation** | Forward speed estimation & bump/vibration filtering | Model A 1D-CNN + StatFusion: **$0.4689\text{ m/s}$ MAE**, **$99.7\%$ stillness accuracy** | **PASSED** |
-| **Inference Latency** | Edge real-time performance | **$0.28\text{ ms}$ (p50)** on CPU / mobile ARM | **PASSED** |
-| **Offline Vector Navigation** | Continuous UI display without Internet | MapLibre Native offline vector tiles + road snapping at $10\text{ Hz}$ | **PASSED** |
-| **Reproducibility & Verification** | Strict contracts, zero regressions | **417/417 Android JVM tests passed**, **290/290 Python tests passed**, **Clean edge & physical device deploy** | **PASSED** |
+| Requirement | Evidence | Status |
+| :--- | :--- | :--- |
+| No OBD-II / CAN-bus / wheel sensor | Engine inputs are IMU and GNSS only | Met by design |
+| Dead-reckoning drift under 10 % | IO-VNBD, vehicle-frame IMU, best arm: median 23 % (30 s), 24 % (60 s), 26 % (1 km); held-out speed model 12 % (30 s) | **Not met** |
+| Phone IMU in a vehicle | No phone drive has been scored | **Not evaluated** |
+| AI speed estimation | v1 (synthetic) fails on real drives; v3 lowers held-out speed RMSE from 4.3-4.8 to 2.6 m/s | Partly met, external-IMU input only |
+| Auto mount calibration | Implemented; the in-motion calibrator does not reach VALID on 10 Hz IO-VNBD data | Partly met, unverified in a vehicle |
+| 10 Hz output | Host replay measures about 10 Hz | Met on host, not on device |
+| Offline map and matching | Implemented; map matching has not been scored on a drive | Implemented, not scored |
+| Verification | Host suites pass (Python, mobile JVM, edge); on-device suite 34 of 43 passed | See the log |
 
 ---
 
@@ -93,122 +99,71 @@ flowchart TD
 
 ---
 
-## 3. The 5 Evaluated Pipeline Arms
+## 3. Measured results
 
-The project implements an engineering evaluation framework adhering strictly to `contracts/evaluation/v1`:
+Full generated tables: `reports/claims.md`. Raw results: `reports/iovnbd_eval/`, `reports/speed_v3_eval.json`,
+`reports/synthetic_outage_measured.json`.
 
-```
-========================================================================================================
-ARM COMPARISON ON SCRIPTED / HYDERABAD 70s TUNNEL BENCHMARK (20s GNSS OUTAGE, 240m TRAVELED)
-========================================================================================================
-Metric                        Classical INS    Classical Fusion   + Constraints   + AI (Model A)    + Map Matching
---------------------------------------------------------------------------------------------------------
-Outage Duration (s)           20.0             20.0               20.0            20.0              20.0
-Outage Distance (m)           240.0            240.0              240.0           240.0             240.0
-Final Position Error (m)      540.06 m         84.82 m            84.82 m         3.46 m            0.03 m
-Drift (% of Outage Distance)  130.45%          35.34%             35.34%          1.44%             0.01%
-Position RMSE (m)             258.18 m         25.46 m            25.46 m         1.92 m            25.33 m
-Speed MAE (m/s)               7.16 m/s         1.86 m/s           1.86 m/s        0.47 m/s          1.86 m/s
-Heading Error (deg)           2.51°            32.88°             32.88°          0.85°             32.88°
-Recovery Convergence (s)      N/A              1.1 s              1.1 s           0.5 s             1.1 s
-Inference Latency (p50)       N/A              N/A                N/A             0.28 ms           N/A
-Inference Latency (p95)       N/A              N/A                N/A             0.45 ms           N/A
-End-to-End Latency (p50)      N/A              N/A                N/A             1.24 ms           N/A
-Hackathon Outage Gate         FAILED           FAILED             FAILED          PASSED (< 10%)    PASSED
-========================================================================================================
-```
+### 3.1 Scripted synthetic drive (a straight cruise with one turn; host JVM)
 
-### Why AI Speed Estimation (Model A) Is Decisive
-1. **Classical INS Drift ($130.45\%$)**: In pure inertial coasting without aiding, uncorrected accelerometer bias integrates quadratically over time ($s = \frac{1}{2} b_a t^2$), diverging exponentially.
-2. **Classical Constraints Drift ($35.34\%$)**: Lateral and vertical non-holonomic constraints (NHC) constrain sideslip and bounce ($v_y \approx 0, v_z \approx 0$), but longitudinal forward velocity ($v_x$) drifts unconstrained in a GNSS outage.
-3. **Model A Hybrid Fusion ($1.44\%$)**:
-   - Neural network continuously infers forward vehicular speed $\hat{v}_x$ from IMU vibration signatures, wheel rotations transmitted through the chassis, and road interaction harmonics.
-   - During a GNSS outage, $\hat{v}_x$ is projected onto the vehicle forward vector in ENU coordinates ($c_{11}, c_{21}, c_{31}$) and fed into the EKF as a measurement update:
-     $$z = \hat{v}_x - \mathbf{h}(\mathbf{x})$$
-   - This converts unconstrained quadratic error growth into bounded linear drift, keeping the final position error within **$3.46\text{ m}$ over a $240\text{ m}$ tunnel**!
+Measured by `SyntheticOutageMeasurementTest` over a 20 s outage (240 m), error taken at the last state before the
+first returning GNSS fix:
 
----
+| Arm | End error (m) | Drift (%) |
+| :--- | ---: | ---: |
+| Classical INS (one alignment fix, then no GNSS) | 310.9 | 129.5 |
+| Fusion, no constraints | 73.7 | 30.7 |
+| Fusion + constraints | 73.7 | 30.7 |
+| Fusion + constraints + Model A v1 | 73.7 | 30.7 |
 
-## 4. Key Components Implemented
+The synthetic-trained Model A v1 adds nothing on this scenario. An earlier version of the test reported 1.44 %
+because its window included the state that already contained the first recovery fix.
 
-1. **Synthetic & Real Hyderabad Benchmark Generator (`tools/generate_sample_drive.py`)**:
-   - Generates calibrated 70s drive along Hyderabad's Outer Ring Road with a 20s complete tunnel outage.
-   - Packaged as a 111 KB gzipped fixture in `mobile/app/src/main/assets/sample_drive/hyderabad-demo-drive/`.
+### 3.2 IO-VNBD (real drives, VBOX reference)
 
-2. **Model A Neural Architecture & Training (`training/speed_estimator.py`, `training/train_speed_estimator.py`)**:
-   - 1D Causal CNN with 3 residual dilation blocks + statistical pooling head.
-   - Multi-task loss: Smooth L1 speed regression + BCE stillness classification + heteroscedastic uncertainty loss.
-   - Trained across 33,000+ kinematic profiles: achieved **$0.4689\text{ m/s}$ MAE** and **$99.7\%$ stillness accuracy**.
-   - Weights exported to `models/speed_estimator_weights.json` ($335\text{ KB}$).
+Median outage drift, vehicle-frame inertial input (share of outages under 10 % in brackets):
 
-3. **High-Speed On-Device Kotlin Inference Engine (`mobile/.../fusion/AiSpeedEstimator.kt`)**:
-   - Pure Kotlin, zero-external-dependency inference engine using an $O(1)$ circular ring buffer.
-   - Evaluates a 1-second window (100 samples $\times$ 6 channels) in **$< 0.5\text{ ms}$**.
+| Arm | 30 s | 60 s | 1 km |
+| :--- | ---: | ---: | ---: |
+| INS only | 43 % (8%) | 84 % (3%) | 112 % (2%) |
+| EKF + NHC/ZUPT | 42 % (6%) | 84 % (3%) | 123 % (3%) |
+| EKF + NHC/ZUPT + v3 (in-sample weights) | 23 % (20%) | 24 % (17%) | 26 % (17%) |
+| Hold last GNSS velocity | 53 % (6%) | 71 % (3%) | 69 % (2%) |
 
-4. **15-State ES-EKF Longitudinal Forward Speed Pseudo-Measurement (`mobile/.../fusion/GnssInsEkf.kt`)**:
-   - `updateForwardSpeed(tNs, qEnuFromVehicle, forwardSpeedM_S, varianceM2)`: Projects the vehicle longitudinal axis into ENU coordinates and applies Kalman gain corrections with Chi-squared innovation gating.
-
-5. **Multi-Scenario Interactive UI Selector (Phase 1)**:
-   - Evaluators can select between 3 packaged scenarios in the session dialog:
-     1. **Highway Tunnel Outage** (Hyderabad Outer Ring Road, 70s, 240m tunnel).
-     2. **Urban Canyon Multipath** (Hitec City glass towers, multipath jump rejection).
-     3. **Stop-and-Go Gridlock** (PVNR Expressway flyover underpass, zero-velocity clamping).
-   - Tap "Replay" to test multiple road conditions directly from the phone app.
-
-6. **Dynamic Mount Slip Detector & In-Motion Re-Leveling (Phase 2)**:
-   - Continuously monitors gravity tilt deviation against calibrated vehicle mounting ($4^\circ$ threshold, $0.35\text{ s}$ dwell).
-   - When a phone shifts in its cradle or slips over a pothole, re-levels roll and pitch to eliminate horizontal gravity leakage without interrupting navigation.
-
-7. **Closed-Loop Map-Matching Heading Feedback (Phase 3)**:
-   - Implemented ES-EKF attitude error observation ($H[8] = -1.0$) using offline road graph polylines.
-   - Constrains heading drift during prolonged GNSS outages, reducing curved outage heading error by $> 64\%$ and lateral drift under $3.5\text{ m}$.
-
-8. **Adaptive Rate Decimation for Thermal & Battery Optimization (Phase 4)**:
-   - When stationary at red lights or in traffic, decimates EKF propagation from $100\text{ Hz}$ to $20\text{ Hz}$.
-   - Reduces CPU workload by $> 70\%$ while parked/stopped to prevent phone overheating.
-   - Features $< 5\text{ ms}$ instant wake-up upon detecting motion jerk ($|\Delta \mathbf{a}| > 0.3\text{ m/s}^2$).
-
-9. **Live Driver HUD Banners & Outage Visualization**:
-   - High-contrast glass HUD banners appear automatically:
-     - **`INTELLIGENT DEAD RECKONING ACTIVE`**: displays live speed, heading, and road-lock indicators during GNSS outages.
-     - **`GNSS RECOVERED · POST-OUTAGE CONVERGENCE`**: displays smooth Kalman convergence upon exiting tunnels.
+With the phone IMU export instead, every arm is worse (the export is not a usable inertial signal; see the log).
+Why the v3 gain matters: the engine's speed error is the integral of the acceleration channel's error, which the
+learned correction reduces; the engine's heading is already good (4 to 7 degrees) on this input.
 
 ---
 
-## 5. How to Run & Demonstrate
+## 4. Components
 
-### A. Run Automated Unit & Benchmark Test Suite
-In PowerShell / Command Prompt:
+- **Synthetic sample drives** (`tools/generate_sample_drive.py`, `generate_multi_scenarios.py`): scripted, labelled
+  as such; used for UI replay and host tests.
+- **Model A v1** (`training/speed_estimator.py`, `AiSpeedEstimator.kt`): causal 1D-CNN trained on synthetic data.
+  Bundled in the app; fails on real drives (leave-one-drive-out RMSE 62 to 97 m/s).
+- **Model A v3** (`training/speed_v3.py`, `OutageSpeedCorrection.kt`): learned correction of integrated
+  acceleration, anchored at the last GNSS fix. Off by default; needs a vehicle-frame inertial input.
+- **15-state ES-EKF** (`GnssInsEkf.kt`) with ZUPT, NHC, forward-speed and heading rows, and Joseph-form updates.
+- **Mount calibration and slip detection** (`MountEstimator.kt`, `MountSlipDetector.kt`).
+- **Map matching** (`MapMatcher.kt`): greedy single-fix matcher feeding a heading row; not yet scored on a drive.
+- **Adaptive rate decimation:** implemented; its power saving is not measured.
+- **IO-VNBD evaluation harness** (`tools/iovnbd_to_contract.py`, `tools/iovnbd_outage_eval.py`, edge task
+  `runIovnbdEval`): converts drives, withholds GNSS, replays through the engine, scores against VBOX.
+
+---
+
+## 5. How to run
+
 ```powershell
-# 1. Android JVM test suite (391 unit tests)
-cd mobile
-.\gradlew.bat testDebugUnitTest --no-daemon
-
-# 2. Standalone Edge target
-.\gradlew.bat -p ..\edge test --no-daemon
-
-# 3. Python unit tests & hygiene verification (291 tests)
-cd ..
-python -B tools/check_repo_hygiene.py
-python -B -X utf8 -m unittest discover -s tests -q
+# Android JVM tests and edge tests (from the repository root)
+cd mobile; bash gradlew testDebugUnitTest lintDebug assembleDebug --console=plain
+bash gradlew -p ../edge test --console=plain
+# Python tests and hygiene
+cd ..; python -B -X utf8 -m unittest discover -s tests; python tools/check_repo_hygiene.py
+# Regenerate the IO-VNBD results (needs data/raw/iovnbd; see data/README.md)
+python tools/iovnbd_to_contract.py; python tools/iovnbd_outage_eval.py run --input vehicle
+python tools/build_claims.py
 ```
 
-### B. Launch & Inspect the Android Application
-1. Connect an Android device or launch an emulator.
-2. Build and install the debug APK:
-   ```powershell
-   cd mobile
-   .\gradlew.bat installDebug
-   ```
-3. Open the **Intelligent Dead Reckoning** app:
-   - Tap **"Sessions"** $\to$ Tap **"Demo Drive"**.
-   - The Hyderabad Outer Ring Road drive will load instantly with calibrated IMU and GNSS.
-   - Tap **"Play"** or switch to the **"Live Navigation"** tab:
-     - Watch the vehicle navigate along the road at 10 Hz.
-     - At $t = 30\text{ s}$, observe the GNSS outage trigger (tunnel simulation).
-     - Notice the HUD display **"GNSS Outage — Dead Reckoning Active (AI Speed Model A)"**.
-     - Observe the vehicle smoothly traverse the tunnel with only **$3.46\text{ m}$ error ($1.44\%$ drift)** over $240\text{ m}$.
-     - At $t = 50\text{ s}$, observe seamless recovery as GNSS fixes resume.
-4. Open the **"Evaluation"** tab:
-   - View the comparative table showing all 5 pipeline arms side-by-side.
-   - Select `hyderabad-ai-dead-reckoning-70s` in the report picker to inspect the verified **1.44% drift** and sub-millisecond latency metrics.
+Test counts are recorded with dates in `reports/gap_closure_log.md`. On-device tests need a connected phone.

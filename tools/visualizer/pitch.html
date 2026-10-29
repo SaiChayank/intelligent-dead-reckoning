@@ -444,7 +444,7 @@
         <span style="color:var(--accent-cyan);">🌐</span> 3D Satellite Map
       </a>
       <button class="btn" onclick="openCertModal()">
-        <span style="color:var(--accent-green);">📜</span> Certificate
+        <span style="color:var(--accent-green);">📋</span> Method
       </button>
       <button class="btn btn-primary" onclick="toggleFullScreen()">
         <span>⛶</span> Fullscreen
@@ -474,14 +474,14 @@
             <div class="metric-sub">Maximum allowable drift ratio relative to distance traveled.</div>
           </div>
           <div class="card-metric">
-            <div class="metric-label">IDR Achieved Drift</div>
-            <div class="metric-val green">1.76% – 3.12%</div>
-            <div class="metric-sub">Over 3.2x to 5.7x tighter precision than SIH requirement.</div>
+            <div class="metric-label">Measured Median Drift</div>
+            <div class="metric-val red">23% – 26%</div>
+            <div class="metric-sub">Best arm, 30 s to 1 km outages, IO-VNBD with a vehicle-frame IMU. The 10% gate is not met.</div>
           </div>
           <div class="card-metric">
-            <div class="metric-label">Inference Frequency</div>
-            <div class="metric-val">100 Hz</div>
-            <div class="metric-sub">Causal on-device 1D-CNN execution with &lt; 2.8% CPU load.</div>
+            <div class="metric-label">Engine Output Rate</div>
+            <div class="metric-val">~10 Hz</div>
+            <div class="metric-sub">Measured on a host replay. CPU, power and on-device rate are not measured yet.</div>
           </div>
           <div class="card-metric">
             <div class="metric-label">Network Dependency</div>
@@ -730,55 +730,55 @@
           </thead>
           <tbody>
             <tr>
-              <td><strong>Raw IMU Double Integration</strong></td>
-              <td>284.5 m</td>
-              <td>420.0 m</td>
-              <td style="color:var(--accent-red); font-weight:700;">67.7%</td>
-              <td><span class="pill-fail">FAILED</span></td>
-              <td>Unusable (Cubic growth)</td>
+              <td><strong>INS only (no constraints)</strong></td>
+              <td>116 m</td>
+              <td>270 m</td>
+              <td style="color:var(--accent-red); font-weight:700;">43%</td>
+              <td><span class="pill-fail">NOT MET</span> (8% of outages under 10%)</td>
+              <td>219 outages</td>
             </tr>
             <tr>
-              <td><strong>Classical ES-EKF + NHC (v_y = v_z = 0)</strong></td>
-              <td>56.7 m</td>
-              <td>420.0 m</td>
-              <td style="color:var(--accent-red); font-weight:700;">13.5%</td>
-              <td><span class="pill-fail">FAILED</span></td>
-              <td>Exceeds 10% limit</td>
+              <td><strong>ES-EKF + NHC/ZUPT</strong></td>
+              <td>116 m</td>
+              <td>261 m</td>
+              <td style="color:var(--accent-red); font-weight:700;">42%</td>
+              <td><span class="pill-fail">NOT MET</span> (6% of outages under 10%)</td>
+              <td>212 outages</td>
             </tr>
             <tr class="highlight">
-              <td><strong>IDR: ES-EKF + AI Model A Speed Estimator</strong></td>
-              <td><strong>13.1 m</strong></td>
-              <td>420.0 m</td>
-              <td style="color:var(--accent-green); font-weight:700;">3.12%</td>
-              <td><span class="pill-pass">PASSED</span></td>
-              <td><strong>3.2x better than mandate</strong></td>
+              <td><strong>ES-EKF + NHC/ZUPT + speed correction v3 (in-sample weights)</strong></td>
+              <td>58 m</td>
+              <td>264 m</td>
+              <td style="color:var(--accent-red); font-weight:700;">23%</td>
+              <td><span class="pill-fail">NOT MET</span> (20% of outages under 10%)</td>
+              <td>207 outages</td>
             </tr>
-            <tr class="highlight">
-              <td><strong>IDR: Model A + Closed-Loop Heading (H[8])</strong></td>
-              <td><strong>7.4 m</strong></td>
-              <td>420.0 m</td>
-              <td style="color:var(--accent-green); font-weight:700;">1.76%</td>
-              <td><span class="pill-pass">PASSED</span></td>
-              <td><strong>5.7x better than mandate</strong></td>
+            <tr>
+              <td><strong>Baseline: hold last GNSS velocity</strong></td>
+              <td>142 m</td>
+              <td>270 m</td>
+              <td style="color:var(--accent-red); font-weight:700;">53%</td>
+              <td><span class="pill-fail">NOT MET</span> (6% of outages under 10%)</td>
+              <td>221 outages</td>
             </tr>
           </tbody>
         </table>
 
         <div class="grid-3" style="margin-top: 14px;">
           <div class="card-metric">
-            <div class="metric-label">SIH Mandatory Tolerance</div>
-            <div class="metric-val red">42.0 m</div>
-            <div class="metric-sub">Max allowable drift on 420 m drive.</div>
+            <div class="metric-label">SIH Tolerance, median 30 s outage</div>
+            <div class="metric-val red">26 m</div>
+            <div class="metric-sub">10% of the 264 m median outage distance.</div>
           </div>
           <div class="card-metric">
-            <div class="metric-label">IDR Peak Observed Drift</div>
-            <div class="metric-val green">7.4 m</div>
-            <div class="metric-sub">Measured at tunnel exit point.</div>
+            <div class="metric-label">Median End Error (best arm)</div>
+            <div class="metric-val red">58 m</div>
+            <div class="metric-sub">At the end of a 30 s outage; weights are in-sample.</div>
           </div>
           <div class="card-metric">
             <div class="metric-label">Compliance Status</div>
-            <div class="metric-val green">100% PASS</div>
-            <div class="metric-sub">Certified across all test drive sessions.</div>
+            <div class="metric-val red">NOT MET</div>
+            <div class="metric-sub">No vehicle or on-device drive has been scored yet.</div>
           </div>
         </div>
       </div>
@@ -793,22 +793,22 @@
           <div class="card-metric">
             <div class="metric-label">Test Device</div>
             <div class="metric-val">OnePlus</div>
-            <div class="metric-sub">CPH2585 · Android 14 / 15</div>
+            <div class="metric-sub">CPH2585 · Android 16 (API 36)</div>
           </div>
           <div class="card-metric">
             <div class="metric-label">Screen Refresh Rate</div>
-            <div class="metric-val green">120 Hz</div>
-            <div class="metric-sub">Fluid MapLibre vector map rendering.</div>
+            <div class="metric-val">not measured</div>
+            <div class="metric-sub">Offline MapLibre map is implemented; frame rate has not been measured.</div>
           </div>
           <div class="card-metric">
             <div class="metric-label">CPU Consumption</div>
-            <div class="metric-val green">&lt; 2.8%</div>
-            <div class="metric-sub">During continuous 100 Hz EKF execution.</div>
+            <div class="metric-val">not measured</div>
+            <div class="metric-sub">No on-device CPU or power profile has been taken.</div>
           </div>
           <div class="card-metric">
             <div class="metric-label">Standstill Decimation</div>
             <div class="metric-val">100 &rarr; 20 Hz</div>
-            <div class="metric-sub">Saves &gt; 65% battery during red lights.</div>
+            <div class="metric-sub">Implemented in the engine; the saving is not measured.</div>
           </div>
         </div>
 
@@ -869,9 +869,9 @@
         <div class="grid-2">
           <div>
             <div class="card-metric" style="margin-bottom: 12px;">
-              <div class="metric-label">GitHub Actions CI Status</div>
-              <div class="metric-val green">100% ALL GREEN</div>
-              <div class="metric-sub">Android JVM, Lint, APK builds, and Python test suites pass completely.</div>
+              <div class="metric-label">Local test status</div>
+              <div class="metric-val">Host suites pass</div>
+              <div class="metric-sub">Python, mobile JVM and edge suites pass locally; on the phone 34 of 43 tests passed and 9 fail (not yet investigated).</div>
             </div>
             <div class="card-metric">
               <div class="metric-label">Contract Integrity</div>
@@ -881,16 +881,16 @@
           </div>
           <div>
             <div class="formula-badge">
-              <strong>Official Compliance Statement:</strong><br>
-              The Intelligent Dead Reckoning system has satisfied all requirements of <strong>Problem Statement #26168</strong> posed by <strong>ISRO / Department of Space</strong>:
+              <strong>Status against Problem Statement #26168:</strong><br>
+              The mandate (drift under 10% of distance in a GNSS outage) is <strong style="color:var(--accent-red);">not yet met</strong> on any drive.
               <br><br>
-              &bull; Maximum Drift: <strong>1.76% – 3.12%</strong> (Mandate &lt; 10%) &mdash; <strong style="color:var(--accent-green);">PASSED</strong><br>
-              &bull; Zero Hardware Modifications &bull; 100% Offline Autonomy<br>
-              &bull; Certified on Commercial OnePlus Hardware
+              &bull; IO-VNBD, vehicle-frame IMU, best arm: median drift 23% to 26%<br>
+              &bull; Not yet scored on a phone in a vehicle<br>
+              &bull; No network permission; offline map implemented
             </div>
             <div style="display:flex; gap: 12px; margin-top: 14px;">
               <button class="btn btn-primary" onclick="openCertModal()" style="padding: 10px 18px; font-size: 13px;">
-                📜 View Official Compliance Certificate
+                📋 How these numbers were measured
               </button>
               <a href="index.html" class="btn" style="padding: 10px 18px; font-size: 13px;">
                 🌐 Launch 3D Trajectory Map
@@ -920,32 +920,18 @@
   <div class="modal-backdrop" id="certModal" onclick="closeCertModal(event)">
     <div class="modal-card" onclick="event.stopPropagation()">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="color: var(--accent-cyan); font-size: 16px;">Official SIH #26168 Qualification Certificate</h3>
+        <h3 style="color: var(--accent-cyan); font-size: 16px;">How these numbers were measured</h3>
         <button class="btn" onclick="closeCertModal()">✕ Close</button>
       </div>
       <div class="box-code" style="font-size: 12px; max-height: 400px; overflow-y: auto;">
-+=============================================================================+
-|            SMART INDIA HACKATHON 2026 - PROBLEM STATEMENT #26168            |
-|               INTELLIGENT DEAD RECKONING QUALIFICATION CERTIFICATE          |
-|                 Ministry / Organization: ISRO / Dept of Space               |
-+=============================================================================+
-  Session Identifier   : hyderabad-demo-drive
-  Total Duration       : 70.0 s
-  IMU Records Ingested : 14,002
-  GNSS Fixes Processed : 51
-  Outage Test Window   : 20.0 s
-  Outage Distance Run  : 241.2 m
-+-----------------------------------------------------------------------------+
-  BENCHMARK METRICS EVALUATION:
-  ---------------------------------------------------------------------------
-  Methodology              Final Drift Error (m)   Drift Ratio (%)   Status
-  ---------------------------------------------------------------------------
-  Classical Inertial INS          24.36 m            10.10 %     FAILED
-  AI Model A (1D-CNN + NHC)        0.07 m             0.03 %     PASSED (&lt;10%)
-+-----------------------------------------------------------------------------+
-  OFFICIAL RESULT: [PASS] COMPLIANT WITH ISRO / SIH #26168 MANDATE (&lt; 10% DRIFT)
-  Safety Margin : 323.7x lower drift than mandatory limit
-+=============================================================================+
+No certificate is issued. Figures come from reports/iovnbd_eval (tools/iovnbd_outage_eval.py):
+  - Data: IO-VNBD drives with a VBOX reference; GNSS is the VBOX receiver at 1 Hz.
+  - Inertial input: VBOX vehicle-frame yaw rate and acceleration (external-IMU case).
+  - Outages are withheld GNSS intervals; drift is the position error at the end of
+    the outage divided by the distance travelled in it. Gate: under 10 %.
+  - The v3 speed correction weights were trained on these drives (in-sample).
+    Held-out numbers are in reports/speed_v3_eval.json.
+  - Nothing has been scored on a phone in a vehicle.
       </div>
     </div>
   </div>

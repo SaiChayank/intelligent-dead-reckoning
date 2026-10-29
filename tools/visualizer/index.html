@@ -177,22 +177,22 @@
 
       <!-- Live Outage Verdict -->
       <div class="comparison-banner">
-        <div class="comparison-title">⚡ 20-SECOND TUNNEL OUTAGE VERDICT</div>
+        <div class="comparison-title">20-SECOND OUTAGE: MEASURED ON THE SCRIPTED DRIVE (ANIMATION IS ILLUSTRATIVE)</div>
         <div class="comp-row">
           <span>Smart India Hackathon Mandate:</span>
           <span style="color: var(--accent-amber); font-weight: 700;">Drift &lt; 10%</span>
         </div>
         <div class="comp-row">
-          <span>AI Model A Speed Estimator:</span>
-          <span class="comp-val-good">1.44% Drift (3.46 m)</span>
+          <span>Fusion + constraints + Model A v1:</span>
+          <span class="comp-val-bad">30.7% Drift (74 m)</span>
         </div>
         <div class="comp-row">
           <span>Classical INS (Un-aided):</span>
-          <span class="comp-val-bad">130.5% Drift (540 m)</span>
+          <span class="comp-val-bad">129.5% Drift (311 m)</span>
         </div>
         <div class="comp-row">
-          <span>Classical Constraints (NHC only):</span>
-          <span class="comp-val-bad">35.3% Drift (84.8 m)</span>
+          <span>Fusion + constraints (no AI):</span>
+          <span class="comp-val-bad">30.7% Drift (74 m)</span>
         </div>
       </div>
 
@@ -211,14 +211,14 @@
             <div id="dispCompass" style="font-size: 11px; color: var(--text-muted);">North</div>
           </div>
           <div class="metric-box">
-            <div class="metric-label">AI Speed MAE</div>
-            <div id="dispSpeedErr" class="metric-value">0.47<span class="metric-unit">m/s</span></div>
-            <div style="font-size: 11px; color: var(--accent-green);">Bounded Linear</div>
+            <div class="metric-label">Speed MAE (outage)</div>
+            <div id="dispSpeedErr" class="metric-value">1.02<span class="metric-unit">m/s</span></div>
+            <div style="font-size: 11px; color: var(--text-muted);">measured, scripted drive</div>
           </div>
           <div class="metric-box">
             <div class="metric-label">ZUPT Status</div>
             <div id="dispZupt" class="metric-value" style="color: var(--accent-green); font-size: 16px; margin-top: 8px;">ENGAGED</div>
-            <div style="font-size: 11px; color: var(--text-muted);">Stillness 99.7%</div>
+            <div style="font-size: 11px; color: var(--text-muted);">scripted state</div>
           </div>
         </div>
       </div>
