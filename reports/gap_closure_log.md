@@ -290,3 +290,19 @@ the noisy GNSS course. Result, held-out v3: worse. Median drift 28.8 % at 30 s (
 
 Not yet tried: smoothing the GNSS course over the last ~10 s before an outage, raising rather than lowering the gyro noise,
 gyro scale-factor estimation. The 10 % target is still not met.
+
+## 2026-10-29 — Saved mount calibration for cold starts (Phase 5 remainder)
+
+`SavedCalibration.kt` keeps the last valid mount (rotation, gyro bias) per device. `CalibratingFusionEngine` loads it for
+real sessions only and, as a prior, starts fusion at the first accurate GNSS fix with a course (accuracy <= 15 m, speed
+>= 3 m/s, enough satellites) instead of waiting for the live calibrator and a second fix. Rejected: another device, older than
+30 days, future-dated, confidence < 0.5, improper rotation, gyro bias > 0.2 rad/s. Dropped while running if the live mount
+differs by more than 20 degrees or expires; pending or agreeing live results leave the filter alone. Valid live mounts are
+saved once per id; a failing save never stops navigation. Replays never read or write the store.
+
+Tests: `SavedCalibrationTest` (12) and `ColdStartReplayTest`: on the scripted drive the real engine gives its first position
+at 1.0 s with a saved mount and none in the first 30 s without one (synthetic input, host JVM). Full suites green: mobile
+unit tests, lint, assembleDebug, edge tests, Python unittest, repo hygiene.
+
+Not verified: any real device, real remounting, and how far a saved mount stays valid in practice. The 30-day age and 20-degree
+disagreement limits are chosen, not measured. It does not give a position without any GNSS fix: the origin still comes from GNSS.

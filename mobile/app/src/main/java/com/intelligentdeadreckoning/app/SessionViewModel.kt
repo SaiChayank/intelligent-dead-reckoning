@@ -79,7 +79,10 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
      *  sensor rate regardless. Calibration is estimated causally in the current session;
      *  fusion waits for valid mounting and measured forward course. Field qualification is pending. */
     private val navigation = NavigationRuntime(
-        CalibratingFusionEngine(),
+        CalibratingFusionEngine(
+            store = com.intelligentdeadreckoning.app.calibration.FileCalibrationStore(File(application.noBackupFilesDir, "calibration")),
+            deviceKey = "${android.os.Build.MANUFACTURER}_${android.os.Build.MODEL}",
+        ),
         viewModelScope, SystemClock::elapsedRealtimeNanos,
     )
     val navigationState = navigation.state
