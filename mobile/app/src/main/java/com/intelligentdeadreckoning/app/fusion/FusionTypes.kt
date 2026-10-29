@@ -224,6 +224,27 @@ data class FusionConfig(
     val speedCorrectionSigmaM_S: Double = 3.0,
 
     // ---------------------------------------------------------------------------------------
+    // Hidden-Markov map matching and cross-track feedback
+    // ---------------------------------------------------------------------------------------
+    /** Use the HMM matcher (HmmMapMatcher) instead of the greedy matcher for the map feedback path. */
+    val hmmMapMatchingEnabled: Boolean = false,
+
+    /** Feed the signed distance to the matched road back as a position row along the road normal. */
+    val mapCrossTrackEnabled: Boolean = false,
+
+    /** Minimum HMM confidence (posterior share of the best edge) for a cross-track update. */
+    val mapCrossTrackMinConfidence: Double = 0.8,
+
+    /** Cross-track variance, m^2: covers lane offset from the centreline and road geometry error. */
+    val mapCrossTrackVarianceM2: Double = 25.0,
+
+    /** A cross-track residual larger than this is refused rather than gated, metres. */
+    val mapCrossTrackMaxResidualM: Double = 30.0,
+
+    /** Minimum time between cross-track updates, seconds. */
+    val mapCrossTrackUpdateIntervalS: Double = 1.0,
+
+    // ---------------------------------------------------------------------------------------
     // Pothole and bump suppression
     // ---------------------------------------------------------------------------------------
     /**

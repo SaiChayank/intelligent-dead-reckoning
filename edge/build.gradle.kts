@@ -18,6 +18,7 @@ kotlin {
             "**/app/fusion/**",
             "**/app/matching/RoadGraph.kt",
             "**/app/matching/MapMatcher.kt",
+            "**/app/matching/HmmMapMatcher.kt",
             "**/app/matching/MapMatchTypes.kt",
             "**/app/calibration/**",
             "**/app/acquisition/GnssQuality.kt",

@@ -57,6 +57,18 @@ _The v3 row uses weights trained on these same drives (in-sample, optimistic). T
 | Outages under 10 % drift, 30 s | 27% | 30% | 42% |
 | Outages under 10 % drift, 60 s | 14% | 14% | 25% |
 
+**Map matching on real Hyderabad road geometry** (10 routes from the shipped OSM graph). Simulated vehicle at 12 m/s (constant speed) on routes built from the shipped real Hyderabad OSM road graph; truth is the centreline with rounded corners shifted right by the lane offset of each condition; synthetic sensors with declared noise and biases; 1 Hz GNSS with 3 m noise withheld for a 30 s and a 60 s outage; three noise seeds. Median drift as a percentage of outage distance (share of outages under 10 %); `lane6m` puts the true lane 6 m from the mapped centreline.
+
+| Arm | lane1.5m: 30 s | lane1.5m: 60 s | lane6m: 30 s | lane6m: 60 s |
+|---|---:|---:|---:|---:|
+| Constraints only (no map) | 13.6 % (33%) | 33.1 % (3%) | 15.1 % (37%) | 31.6 % (7%) |
+| Greedy matcher, heading feedback | 12.4 % (37%) | 32.1 % (3%) | 11.9 % (37%) | 31.2 % (7%) |
+| HMM matcher, heading feedback | 12.0 % (40%) | 31.8 % (3%) | 11.8 % (40%) | 31.4 % (7%) |
+| HMM matcher, heading + cross-track | 4.0 % (90%) | 4.6 % (67%) | 6.7 % (67%) | 4.1 % (63%) |
+| HMM matcher, cross-track only | 4.9 % (90%) | 5.1 % (67%) | 7.6 % (67%) | 5.3 % (60%) |
+
+_Synthetic motion at constant speed along real road geometry, not a recorded drive._
+
 **Learned GNSS trust** (research artifact, not in the engine; leave-one-drive-out, 6283 phone fixes): rank correlation with true fix error 0.28 (reported accuracy: 0.048); mean absolute error 2.487 m (reported accuracy: 2.638 m).
 
 **Scripted synthetic drive** (70 s scripted drive: straight cruise at 12 m/s with one turn, 20 s GNSS outage, seeded noise and fixed sensor biases). Measured by the JVM test `SyntheticOutageMeasurementTest`; this is a straight cruise, so it says little about real roads.

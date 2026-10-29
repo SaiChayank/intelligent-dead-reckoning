@@ -24,7 +24,7 @@ were typed in rather than measured; the correction is recorded in `reports/gap_c
 | AI speed estimation | v1 (synthetic) fails on real drives; v3 lowers held-out speed RMSE from 4.3-4.8 to 2.6 m/s | Partly met, external-IMU input only |
 | Auto mount calibration | Implemented; the in-motion calibrator does not reach VALID on 10 Hz IO-VNBD data | Partly met, unverified in a vehicle |
 | 10 Hz output | Host replay measures about 10 Hz | Met on host, not on device |
-| Offline map and matching | Implemented; map matching has not been scored on a drive | Implemented, not scored |
+| Offline map and matching | HMM matcher with cross-track feedback scored on synthetic motion over real Hyderabad roads: median drift 4-5 % against about 21 % with no map; not a recorded drive | Implemented; not verified in a vehicle |
 | Verification | Host suites pass (Python, mobile JVM, edge); on-device suite 34 of 43 passed | See the log |
 
 ---
@@ -146,7 +146,7 @@ learned correction reduces; the engine's heading is already good (4 to 7 degrees
   acceleration, anchored at the last GNSS fix. Off by default; needs a vehicle-frame inertial input.
 - **15-state ES-EKF** (`GnssInsEkf.kt`) with ZUPT, NHC, forward-speed and heading rows, and Joseph-form updates.
 - **Mount calibration and slip detection** (`MountEstimator.kt`, `MountSlipDetector.kt`).
-- **Map matching** (`MapMatcher.kt`): greedy single-fix matcher feeding a heading row; not yet scored on a drive.
+- **Map matching** (`HmmMapMatcher.kt`): online fixed-lag HMM matcher with a cross-track position row in the EKF (off by default); the greedy `MapMatcher.kt` feeds a heading row. Scored on synthetic motion over the real Hyderabad road graph (`reports/map_matching_eval.json`); no recorded drive yet.
 - **Adaptive rate decimation:** implemented; its power saving is not measured.
 - **IO-VNBD evaluation harness** (`tools/iovnbd_to_contract.py`, `tools/iovnbd_outage_eval.py`, edge task
   `runIovnbdEval`): converts drives, withholds GNSS, replays through the engine, scores against VBOX.

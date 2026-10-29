@@ -64,7 +64,7 @@ def build(measured: dict) -> dict:
         "arm_id": "fusion_map_match", "label": "Fusion + offline map matching",
         "implementation": {"name": "MapMatcher over the bundled Hyderabad road graph", "version": "1.1.0"},
         "status": "not_run",
-        "reason": "The scripted drive has no road geometry; map matching has not been scored on any drive.",
+        "reason": "The scripted drive has no road geometry, so map matching is not scored here. It is scored on routes over the real Hyderabad road graph in reports/map_matching_eval.json (synthetic motion, not a recorded drive).",
         "accuracy": None, "timing": None,
     })
     return {

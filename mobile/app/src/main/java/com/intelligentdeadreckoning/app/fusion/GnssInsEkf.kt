@@ -644,6 +644,39 @@ class GnssInsEkf(val config: FusionConfig = FusionConfig()) {
         )
     }
 
+    /**
+     * Map-matching cross-track feedback: the horizontal position along the road normal.
+     *
+     * A matched road gives the line the vehicle is on, so the component of position perpendicular to the road
+     * is observed (the component along the road is not, and is left alone). The row is the unit road normal
+     * `(nEast, nNorth)` on the east/north position states; [residualM] is `n . (matched point - filter position)`,
+     * so a positive residual moves the filter toward the road along the normal. The variance must cover the
+     * lane offset from the centreline and the road geometry error, which is why it is a few metres.
+     */
+    fun updateCrossTrack(
+        tNs: Long,
+        normalEast: Double,
+        normalNorth: Double,
+        residualM: Double,
+        varianceM2: Double,
+    ): GnssUpdateOutcome = guarded {
+        val norm = kotlin.math.hypot(normalEast, normalNorth)
+        if (!norm.isFinite() || kotlin.math.abs(norm - 1.0) > 1e-6) {
+            return@guarded GnssUpdateOutcome.refused(GnssUpdateResult.REJECTED_INVALID, 1)
+        }
+        val row = DoubleArray(DIM)
+        row[IDX_POS + 0] = normalEast
+        row[IDX_POS + 1] = normalNorth
+        applyRows(
+            tNs,
+            resetsRejectionSpan = false,
+            rows = arrayListOf(row),
+            residuals = doubleArrayOf(residualM),
+            variances = doubleArrayOf(varianceM2),
+            countAsConstraint = true,
+        )
+    }
+
     /** A 1x15 selection row that picks the three velocity components along [axisEnu]. */
     private fun velocityRow(axisEnu: DoubleArray): DoubleArray = DoubleArray(DIM).also {
         it[IDX_VEL] = axisEnu[0]

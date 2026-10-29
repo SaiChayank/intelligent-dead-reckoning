@@ -132,7 +132,9 @@ class MapMatcher(
         // Absolute fit is expressed by distanceToEdgeM and bounded by the
         // uncertainty-scaled search radius.
         val confidence = if (totalScore > 0.0) bestScore / totalScore else 0.0
-        val best = bestProjection!!
+        // Every score can underflow to exactly zero (for example after an impossible jump from the last match);
+        // then no candidate won and nothing can be reported as matched.
+        val best = bestProjection ?: return result(MapMatchStatus.LOW_CONFIDENCE, candidates = scored)
         if (confidence < config.minConfidence) {
             return result(
                 MapMatchStatus.LOW_CONFIDENCE,

@@ -11,6 +11,8 @@ import com.intelligentdeadreckoning.app.calibration.quaternionAboutZ
 import com.intelligentdeadreckoning.app.calibration.rotate
 import com.intelligentdeadreckoning.app.calibration.times
 import com.intelligentdeadreckoning.app.calibration.toRotationMatrix
+import com.intelligentdeadreckoning.app.matching.HmmMapMatcher
+import com.intelligentdeadreckoning.app.matching.HmmMatchResult
 import com.intelligentdeadreckoning.app.matching.MapMatchResult
 import com.intelligentdeadreckoning.app.matching.MapMatchStatus
 import com.intelligentdeadreckoning.app.matching.MapMatcher
@@ -159,6 +161,13 @@ class FusionNavigationEngine(
     private var relevelCount: Int = 0
 
     private val mapMatcher: MapMatcher? = roadGraph?.let { MapMatcher(it) }
+    private val hmmMatcher: HmmMapMatcher? =
+        if (config.hmmMapMatchingEnabled) roadGraph?.let { HmmMapMatcher(it) } else null
+    private var lastCrossTrackNs: Long = 0L
+    private var crossTrackAcceptedCount: Long = 0L
+
+    /** Cross-track rows accepted by the filter (see [FusionConfig.mapCrossTrackEnabled]). */
+    val crossTrackAcceptedUpdates: Long get() = crossTrackAcceptedCount
     private var lastMapHeadingUpdateNs: Long = 0L
     private var mapHeadingAcceptedCount: Long = 0L
 
@@ -231,6 +240,8 @@ class FusionNavigationEngine(
         aiSpeedEstimator?.reset()
         lastAiSpeedUpdateNs = 0L
         speedTracker?.reset()
+        hmmMatcher?.reset()
+        lastCrossTrackNs = 0L
         lastSpeedCorrectionNs = 0L
         verticalAccelIndex = 0
         verticalAccelCount = 0
@@ -382,6 +393,8 @@ class FusionNavigationEngine(
         aiSpeedEstimator?.reset()
         lastAiSpeedUpdateNs = 0L
         speedTracker?.reset()
+        hmmMatcher?.reset()
+        lastCrossTrackNs = 0L
         lastSpeedCorrectionNs = 0L
         relevelCount = 0
         mountSlipDetector?.reset()
@@ -757,6 +770,37 @@ class FusionNavigationEngine(
                 "Applied closed-loop map-matching heading feedback: residual ${"%.2f".format(Locale.ROOT, Math.toDegrees(residual))} deg, " +
                     "confidence ${"%.2f".format(Locale.ROOT, confidence)} (update #$mapHeadingAcceptedCount).",
             )
+            return true
+        }
+        return false
+    }
+
+    /**
+     * Cross-track feedback from the HMM matcher: the filter's position is pulled toward the matched road along
+     * the road normal. Only during GNSS degradation, only while moving, only for a confident match and a
+     * residual small enough to be a lane or geometry offset rather than a wrong road.
+     */
+    fun acceptCrossTrack(hmm: HmmMatchResult): Boolean {
+        if (!config.mapCrossTrackEnabled || !filter.aligned || solution.status != FusionStatus.RUNNING) return false
+        val result = hmm.result
+        if (result.status != MapMatchStatus.MATCHED || result.confidence < config.mapCrossTrackMinConfidence) return false
+        val tNs = result.timestampNs
+        val gnssStalenessS = lastAcceptedGnssNs?.let { (tNs - it) / 1e9 } ?: Double.POSITIVE_INFINITY
+        if (gnssStalenessS < config.mapHeadingMinGnssStalenessS) return false
+        val speed = solution.velocityEnuM_S.let { sqrt(it.x * it.x + it.y * it.y) }
+        if (speed < config.mapHeadingMinSpeedM_S) return false
+        if ((tNs - lastCrossTrackNs) < (config.mapCrossTrackUpdateIntervalS * 1e9).toLong()) return false
+        val correction = hmm.crossTrackCorrectionM ?: return false
+        val nEast = hmm.roadNormalEast ?: return false
+        val nNorth = hmm.roadNormalNorth ?: return false
+        if (abs(correction) > config.mapCrossTrackMaxResidualM) return false
+        val outcome = filter.updateCrossTrack(tNs, nEast, nNorth, correction, config.mapCrossTrackVarianceM2)
+        if (outcome.result != GnssUpdateResult.REJECTED_GATE &&
+            outcome.result != GnssUpdateResult.REJECTED_INVALID &&
+            outcome.result != GnssUpdateResult.REJECTED_ILL_CONDITIONED
+        ) {
+            lastCrossTrackNs = tNs
+            crossTrackAcceptedCount++
             return true
         }
         return false
@@ -1278,11 +1322,11 @@ class FusionNavigationEngine(
 
         // ---- Closed-Loop Map-Matching Heading Feedback (Phase 3) -------------------------
         // Constrains heading drift during GNSS outages when matched to a road segment.
-        if (config.mapHeadingFeedbackEnabled &&
+        if ((config.mapHeadingFeedbackEnabled || config.mapCrossTrackEnabled) &&
             mounting != null &&
             !zuptEngaged &&
             solution.status != FusionStatus.FAILED &&
-            mapMatcher != null
+            (mapMatcher != null || hmmMatcher != null)
         ) {
             val geodetic = solution.geodetic
             if (geodetic != null) {
@@ -1290,16 +1334,31 @@ class FusionNavigationEngine(
                 val qEnuVeh = solution.qEnuFromDevice * mounting.conjugate()
                 val cVeh = qEnuVeh.toRotationMatrix()
                 val headingRad = atan2(cVeh[0], cVeh[3]).let { if (it < 0.0) it + 2.0 * Math.PI else it }
-                val match = mapMatcher.match(
-                    timestampNs = tNs,
-                    latitudeDeg = geodetic.latitudeDeg,
-                    longitudeDeg = geodetic.longitudeDeg,
-                    headingRad = headingRad,
-                    accuracy95M = 15.0,
-                    speedM_S = speed,
-                )
-                if (acceptMapMatch(match)) {
-                    appliedAny = true
+                if (hmmMatcher != null) {
+                    // Position uncertainty grows while GNSS is absent, so the matcher's search widens with it.
+                    val stalenessS = lastAcceptedGnssNs?.let { (tNs - it) / 1e9 } ?: 0.0
+                    val hmm = hmmMatcher.step(
+                        timestampNs = tNs,
+                        latitudeDeg = geodetic.latitudeDeg,
+                        longitudeDeg = geodetic.longitudeDeg,
+                        headingRad = headingRad,
+                        accuracy95M = (15.0 + stalenessS).coerceAtMost(40.0),
+                        speedM_S = speed,
+                    )
+                    if (acceptMapMatch(hmm.result)) appliedAny = true
+                    if (acceptCrossTrack(hmm)) appliedAny = true
+                } else {
+                    val match = mapMatcher!!.match(
+                        timestampNs = tNs,
+                        latitudeDeg = geodetic.latitudeDeg,
+                        longitudeDeg = geodetic.longitudeDeg,
+                        headingRad = headingRad,
+                        accuracy95M = 15.0,
+                        speedM_S = speed,
+                    )
+                    if (acceptMapMatch(match)) {
+                        appliedAny = true
+                    }
                 }
             }
         }

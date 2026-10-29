@@ -8,6 +8,7 @@ Sources (each section is omitted, with a note, when its file is missing; nothing
   reports/speed_v3_eval.json                         speed model v3, leave-one-drive-out
   reports/gnss_trust_eval.json                       learned GNSS trust study
   reports/synthetic_outage_measured.json             scripted synthetic drive, measured by the JVM test
+  reports/map_matching_eval.json                     map matching on real Hyderabad road geometry (JVM test)
 
 The README block between the CLAIMS markers is replaced; everything else in the README is hand-written.
 """
@@ -93,6 +94,29 @@ def synthetic_section() -> list[str]:
     return lines + [""]
 
 
+def map_matching_section() -> list[str]:
+    s = load(REPORTS / "map_matching_eval.json")
+    if s is None:
+        return ["_Map matching: no measured file (reports/map_matching_eval.json)._", ""]
+    conditions = sorted({a["condition"] for a in s["arms"]})
+    lines = [f"**Map matching on real Hyderabad road geometry** ({len(s['routes'])} routes from the shipped OSM graph). "
+             f"{s['description']}. Median drift as a percentage of outage distance (share of outages under 10 %); "
+             "`lane6m` puts the true lane 6 m from the mapped centreline.", "",
+             "| Arm | " + " | ".join(f"{c}: 30 s | {c}: 60 s" for c in conditions) + " |",
+             "|---|" + "---:|---:|" * len(conditions)]
+    labels = {}
+    for a in s["arms"]:
+        labels.setdefault(a["arm_id"], a["label"])
+    for arm_id, label in labels.items():
+        cells = []
+        for c in conditions:
+            a = next(x for x in s["arms"] if x["arm_id"] == arm_id and x["condition"] == c)
+            cells += [f"{a['drift_pct_median_30s']:.1f} % ({a['share_under_10pct_30s']:.0%})",
+                      f"{a['drift_pct_median_60s']:.1f} % ({a['share_under_10pct_60s']:.0%})"]
+        lines.append(f"| {label} | " + " | ".join(cells) + " |")
+    return lines + ["", "_Synthetic motion at constant speed along real road geometry, not a recorded drive._", ""]
+
+
 def gnss_trust_section() -> list[str]:
     s = load(REPORTS / "gnss_trust_eval.json")
     if s is None:
@@ -110,7 +134,7 @@ def build() -> str:
              "about every 9 s).", ""]
     parts += iovnbd_table("vehicle", "IO-VNBD, vehicle-frame inertial input (external-IMU case)")
     parts += iovnbd_table("phone", "IO-VNBD, phone IMU export")
-    parts += speed_v3_section() + gnss_trust_section() + synthetic_section()
+    parts += speed_v3_section() + map_matching_section() + gnss_trust_section() + synthetic_section()
     return "\n".join(parts).rstrip() + "\n"
 
 
@@ -129,6 +153,11 @@ def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     p.add_argument("--check", action="store_true")
     args = p.parse_args(argv)
+    if not args.check:
+        for built, record in (("map_matching_measured.json", "map_matching_eval.json"),):
+            source = ROOT / "mobile" / "app" / "build" / built
+            if source.is_file():
+                (REPORTS / record).write_bytes(source.read_bytes())
     claims = build()
     readme = refreshed_readme(claims)
     claims_path = REPORTS / "claims.md"

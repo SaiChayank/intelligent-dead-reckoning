@@ -230,3 +230,33 @@ vertical channel, so the benefit on real roads is untested. Idle-vibration detec
 - On-device suite: 9 of 43 failures from the first run are uninvestigated (phone not connected).
 - Phase 7: field drives and real 100 Hz data.
 - Diagram labels in the deck and report still show the v1 CNN as the speed model.
+
+## Phase 4: HMM map matching and cross-track feedback (2026-10-29)
+
+Built: `HmmMapMatcher.kt` (online fixed-lag HMM: emission from distance and heading, transition from route-distance
+consistency and road topology, forward filter for the confidence, Viterbi back-pointers for a 5-step lagged path,
+columns added only after 5 m of movement); `GnssInsEkf.updateCrossTrack` (a position row along the road normal);
+engine hooks `acceptCrossTrack`, flags `hmmMapMatchingEnabled` and `mapCrossTrackEnabled` (both off by default;
+cross-track needs confidence 0.8, a residual under 30 m, GNSS staleness and speed gates, 25 m^2 variance).
+
+Evaluation (`HyderabadMapMatchingEvalTest`, `reports/map_matching_eval.json`): a simulated 12 m/s vehicle on 10 routes built
+from the shipped real Hyderabad OSM graph (2.9-4.5 km each), truth = centreline with rounded corners and a lane offset, a 30 s
+and a 60 s GNSS outage, three sensor-noise seeds: 60 outages per arm. Median drift (share of outages under 10 %):
+
+| Arm | lane offset 1.5 m | lane offset 6 m |
+|---|---:|---:|
+| Constraints only | 21.0 % (18 %) | 21.4 % (22 %) |
+| Greedy matcher, heading | 18.4 % (20 %) | 18.7 % (22 %) |
+| HMM matcher, heading | 18.0 % (22 %) | 19.4 % (23 %) |
+| HMM, heading + cross-track | 4.1 % (78 %) | 5.1 % (65 %) |
+| HMM, cross-track only | 4.9 % (78 %) | 6.9 % (63 %) |
+
+Reading: the HMM matcher's heading feedback is no better than the greedy matcher's (within noise); the cross-track row is
+what removes the drift, because the lateral error is observable from the road while the along-road error is not. Gate
+(matched arm beats the unmatched arm): met in this setting. Limits: the motion is synthetic, constant speed, and follows the
+road within a lane offset, so the along-road error (bias integration only) is easier than in traffic; the map is the same
+OSM geometry the route was built from; no recorded drive and no on-device run. Because of that the flags stay off by default.
+Parallel-road fixture: HMM 39/40 on the true road against 38/40 for greedy (a mild case).
+
+Bug found and fixed on the way: the greedy `MapMatcher` threw a null-pointer error when every candidate score underflowed to
+zero (for example after an impossible jump from the last match); it now reports LOW_CONFIDENCE. Regression test added.
