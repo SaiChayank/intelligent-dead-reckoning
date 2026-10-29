@@ -110,6 +110,16 @@ class IovnbdEvalTest {
     }
 
     @Test
+    fun tightVelocityArmsChangeOnlyTheVelocityWeighting() {
+        assertEquals(null, IovnbdEval.Arm.EKF_NHC.config().gnssVelocitySigmaM_S)
+        assertEquals(0.2, IovnbdEval.Arm.EKF_NHC_VEL.config().gnssVelocitySigmaM_S!!, 0.0)
+        assertFalse(IovnbdEval.Arm.EKF_NHC_VEL.config().speedCorrectionEnabled)
+        val both = IovnbdEval.Arm.EKF_NHC_V3_HELDOUT_VEL.config()
+        assertTrue(both.speedCorrectionEnabled)
+        assertEquals(0.2, both.gnssVelocitySigmaM_S!!, 0.0)
+    }
+
+    @Test
     fun armsDifferOnlyWhereIntended() {
         assertFalse(IovnbdEval.Arm.INS.config().motionConstraintsEnabled)
         assertTrue(IovnbdEval.Arm.EKF_NHC.config().motionConstraintsEnabled)

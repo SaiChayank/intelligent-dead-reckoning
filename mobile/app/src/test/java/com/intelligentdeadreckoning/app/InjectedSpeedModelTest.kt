@@ -52,8 +52,8 @@ class InjectedSpeedModelTest {
     }
 
     /** End-of-outage error of one scripted run; the same noise sequence every time. */
-    private fun endError(model: SpeedCorrectionModel?): Double {
-        val engine = FusionNavigationEngine(config = FusionConfig(speedCorrectionEnabled = true), speedCorrectionModel = model)
+    private fun endError(model: SpeedCorrectionModel?, config: FusionConfig = FusionConfig(speedCorrectionEnabled = true)): Double {
+        val engine = FusionNavigationEngine(config = config, speedCorrectionModel = model)
         engine.initialize(
             EngineSession(header, "inject-session", originNs),
             record(originNs, "cal", CalibrationResult("cal", CalibrationStatus.VALID, Quaternion(1.0, 0.0, 0.0, 0.0),
@@ -94,6 +94,15 @@ class InjectedSpeedModelTest {
             }
         }
         return last
+    }
+
+    @Test
+    fun theGnssVelocitySigmaSettingReachesTheFilter() {
+        val legacy = endError(null)
+        val tight = endError(null, FusionConfig(speedCorrectionEnabled = true, gnssVelocitySigmaM_S = 0.2))
+        println("outage end error: legacy velocity weighting %.3f m, sigma 0.2 m/s %.3f m".format(legacy, tight))
+        assertTrue("the setting changed nothing ($legacy vs $tight)", kotlin.math.abs(legacy - tight) > 0.01)
+        assertEquals(null, FusionConfig().gnssVelocitySigmaM_S)
     }
 
     @Test

@@ -62,6 +62,12 @@ object IovnbdEval {
         /** The v3 correction with weights trained WITHOUT the drive being run (the job names the file). */
         EKF_NHC_V3_HELDOUT("ekf_nhc_v3_heldout"),
 
+        /** EKF + NHC with the GNSS velocity trusted to [VELOCITY_SIGMA_M_S] instead of the position accuracy. */
+        EKF_NHC_VEL("ekf_nhc_vel"),
+
+        /** Held-out v3 correction plus the tighter GNSS velocity weighting. */
+        EKF_NHC_V3_HELDOUT_VEL("ekf_nhc_v3_heldout_vel"),
+
         /** Exactly the configuration the app runs (see CalibratingFusionEngine). */
         APP("app");
 
@@ -71,6 +77,8 @@ object IovnbdEval {
             EKF_NHC_AI -> FusionConfig(aiSpeedEstimationEnabled = true)
             EKF_NHC_V3 -> FusionConfig(speedCorrectionEnabled = true)
             EKF_NHC_V3_HELDOUT -> FusionConfig(speedCorrectionEnabled = true)
+            EKF_NHC_VEL -> FusionConfig(gnssVelocitySigmaM_S = VELOCITY_SIGMA_M_S)
+            EKF_NHC_V3_HELDOUT_VEL -> FusionConfig(speedCorrectionEnabled = true, gnssVelocitySigmaM_S = VELOCITY_SIGMA_M_S)
             APP -> FusionConfig(
                 aiSpeedEstimationEnabled = true,
                 adaptiveNoiseScalingEnabled = true,
@@ -81,6 +89,8 @@ object IovnbdEval {
         }
 
         companion object {
+            /** Chosen from a sweep over 1.0, 0.5, 0.2 and 0.1 m/s on these drives (see reports/gap_closure_log.md). */
+            const val VELOCITY_SIGMA_M_S = 0.2
             fun of(id: String): Arm = entries.firstOrNull { it.id == id }
                 ?: throw IllegalArgumentException("unknown arm '$id' (expected ${entries.joinToString { it.id }})")
         }
@@ -205,7 +215,7 @@ object IovnbdEval {
         val inputHeader = Header(sessionId, Source.REPLAY_REAL, "1.0.0")
         val outputHeader = Header(sessionId, Source.REPLAY_REAL, ENGINE_OUTPUT_CONTRACT_VERSION)
         val config = job.arm.config().forIovnbd()
-        require(job.arm != Arm.EKF_NHC_V3_HELDOUT || job.speedModel != null) { "held-out arm needs a speed_model file" }
+        require((job.arm != Arm.EKF_NHC_V3_HELDOUT && job.arm != Arm.EKF_NHC_V3_HELDOUT_VEL) || job.speedModel != null) { "held-out arm needs a speed_model file" }
         val speedModel = job.speedModel?.let { Files.newInputStream(it).use(SpeedCorrectionModel::fromStream) }
         val engine = CalibratingFusionEngine(
             calibrator = job.calibration?.let { ReleasedCalibration(it) }

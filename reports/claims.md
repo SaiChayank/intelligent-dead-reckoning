@@ -11,6 +11,8 @@ Every number here is read from a file in `reports/` by `tools/build_claims.py`. 
 | EKF + NHC/ZUPT + Model A v1 | 14 % (33%) | 44 % (7%) | 223 % (1%) | 420 % (3%) |
 | EKF + NHC/ZUPT + speed correction v3 (in-sample weights) | 14 % (37%) | 23 % (20%) | 24 % (17%) | 26 % (17%) |
 | EKF + NHC/ZUPT + speed correction v3 (held-out weights) | 13 % (36%) | 24 % (17%) | 24 % (16%) | 27 % (12%) |
+| EKF + NHC/ZUPT + tight GNSS velocity (0.2 m/s) | 7 % (64%) | 38 % (6%) | 81 % (2%) | 115 % (3%) |
+| EKF + NHC/ZUPT + v3 (held-out) + tight GNSS velocity | 7 % (65%) | 21 % (18%) | 23 % (16%) | 24 % (14%) |
 | App configuration | 32 % (21%) | 767 % (0%) | 1169 % (0%) | 1407 % (1%) |
 | Baseline: hold last GNSS velocity | 18 % (39%) | 53 % (6%) | 71 % (3%) | 69 % (2%) |
 

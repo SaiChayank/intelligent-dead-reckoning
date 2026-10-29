@@ -66,7 +66,7 @@ def session_info(conv: dict) -> dict:
     return info
 ORIGIN_NS = 1_000_000_000
 
-ARMS = ("ins", "ekf_nhc", "ekf_nhc_ai", "ekf_nhc_v3", "ekf_nhc_v3_heldout", "app")
+ARMS = ("ins", "ekf_nhc", "ekf_nhc_ai", "ekf_nhc_v3", "ekf_nhc_v3_heldout", "ekf_nhc_vel", "ekf_nhc_v3_heldout_vel", "app")
 BASELINE = "hold_gnss"
 ARMS_REPORT = ARMS + (BASELINE,)
 ARM_LABELS = {
@@ -76,6 +76,8 @@ ARM_LABELS = {
     "ekf_nhc_ai": "EKF + NHC/ZUPT + Model A v1",
     "ekf_nhc_v3": "EKF + NHC/ZUPT + speed correction v3 (in-sample weights)",
     "ekf_nhc_v3_heldout": "EKF + NHC/ZUPT + speed correction v3 (held-out weights)",
+    "ekf_nhc_vel": "EKF + NHC/ZUPT + tight GNSS velocity (0.2 m/s)",
+    "ekf_nhc_v3_heldout_vel": "EKF + NHC/ZUPT + v3 (held-out) + tight GNSS velocity",
     "app": "App configuration",
 }
 
@@ -318,7 +320,7 @@ def _plt():
     return plt
 
 
-ARM_COLORS = {BASELINE: "#7f7f7f", "ins": "#d1495b", "ekf_nhc": "#edae49", "ekf_nhc_ai": "#00798c", "ekf_nhc_v3": "#2a9d8f", "ekf_nhc_v3_heldout": "#6a4c93", "app": "#30638e"}
+ARM_COLORS = {BASELINE: "#7f7f7f", "ins": "#d1495b", "ekf_nhc": "#edae49", "ekf_nhc_ai": "#00798c", "ekf_nhc_v3": "#2a9d8f", "ekf_nhc_v3_heldout": "#6a4c93", "ekf_nhc_vel": "#8d6a9f", "ekf_nhc_v3_heldout_vel": "#1b9e77", "app": "#30638e"}
 
 
 def plot_drive(seq: str, truth: dict, navs: dict[str, dict], outages: list[tuple[int, int]],
@@ -410,7 +412,7 @@ def eligible_drives() -> list[tuple[str, dict]]:
     return out
 
 
-HELDOUT_ARM = "ekf_nhc_v3_heldout"
+HELDOUT_ARMS = ("ekf_nhc_v3_heldout", "ekf_nhc_v3_heldout_vel")
 
 
 def heldout_weights(seq: str) -> Path:
@@ -449,13 +451,13 @@ def plan_all(arms: tuple[str, ...] | None = None) -> tuple[list[dict], dict]:
                        "output": (run_dir / f"{sc.name}__{arm}.csv").as_posix(),
                        "arm": arm, "outages_ns": [[str(s), str(e)] for s, e in outages],
                        "calibration": calibration_job(seq, cal)}
-                if arm == HELDOUT_ARM:
+                if arm in HELDOUT_ARMS:
                     if INPUT != "vehicle":
                         continue                       # v3 needs the vehicle-frame input it was trained on
                     weights = heldout_weights(seq)
                     if not weights.is_file():
                         if arms is None:
-                            print(f"note: no held-out weights for {seq}; skipping {HELDOUT_ARM} there")
+                            print(f"note: no held-out weights for {seq}; skipping {arm} there")
                             continue
                         raise SystemExit(f"missing {weights}: run `python training/speed_v3.py export-heldout` first")
                     job["speed_model"] = weights.as_posix()

@@ -228,6 +228,12 @@ data class FusionConfig(
     // ---------------------------------------------------------------------------------------
     /** Use the HMM matcher (HmmMapMatcher) instead of the greedy matcher for the map feedback path. */
     val hmmMapMatchingEnabled: Boolean = false,
+    /**
+     * One-sigma uncertainty of the GNSS velocity (speed and course), m/s. Null keeps the legacy rule of reusing the
+     * fix's horizontal position accuracy, which is metres and so makes a 10 Hz course almost unusable for heading.
+     * Chosen, not measured, until a field drive says otherwise.
+     */
+    val gnssVelocitySigmaM_S: Double? = null,
 
     /** Feed the signed distance to the matched road back as a position row along the road normal. */
     val mapCrossTrackEnabled: Boolean = false,

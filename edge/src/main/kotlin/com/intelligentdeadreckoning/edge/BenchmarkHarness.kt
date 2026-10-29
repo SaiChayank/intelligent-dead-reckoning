@@ -24,6 +24,7 @@ object BenchmarkHarness {
         val profileWindow: Int = 20_000,
         val profile: Boolean = true,
         val paceAtSourceClock: Boolean = true,
+        val fusion: com.intelligentdeadreckoning.app.fusion.FusionConfig = EdgeProfiles.default,
     )
 
     private data class InputInfo(val header: Header, val calibration: Record, val firstNs: Long, val lastNs: Long, val count: Long)
@@ -58,6 +59,7 @@ object BenchmarkHarness {
             publicationIntervalNs = config.publicationIntervalNs,
             latencyWindow = config.profileWindow,
             profile = config.profile,
+            config = config.fusion,
         )
         check(runtime.start(info.header, info.calibration.event.t_ns, info.calibration)) { "edge runtime refused header/calibration" }
         fun collect() {
@@ -182,11 +184,12 @@ object BenchmarkHarness {
 
 fun main(args: Array<String>) {
     require(args.isNotEmpty() && args[0].isNotBlank()) {
-        "Usage: gradle -p edge runEdgeBenchmark -Pinput=path/to/input.jsonl -Poutput=path/to/report.json [-Preference=path/to/reference.jsonl]"
+        "Usage: gradle -p edge runEdgeBenchmark -Pinput=path/to/input.jsonl -Poutput=path/to/report.json [-Preference=path/to/reference.jsonl] [-Pprofile=default|external-imu]"
     }
     val input = Path.of(args[0])
     val output = Path.of(args.getOrNull(1)?.takeIf(String::isNotBlank) ?: "edge-profile.json")
     val reference = args.getOrNull(2)?.takeIf(String::isNotBlank)?.let(Path::of)
-    BenchmarkHarness.run(input, output, reference)
+    val profile = args.getOrNull(3)?.takeIf(String::isNotBlank) ?: "default"
+    BenchmarkHarness.run(input, output, reference, BenchmarkHarness.Config(fusion = EdgeProfiles.byName(profile)))
     println("Edge benchmark report written: $output")
 }

@@ -1076,7 +1076,8 @@ class FusionNavigationEngine(
 
         val speed = payload.speed_m_s
         if (speed != null && speed.isFinite() && speed >= 0.0) {
-            val speedVariance = maxOf(accuracy * accuracy, SPEED_VARIANCE_FLOOR_M2_S2)
+            val speedVariance = config.gnssVelocitySigmaM_S?.let { it * it }
+                ?: maxOf(accuracy * accuracy, SPEED_VARIANCE_FLOOR_M2_S2)
             val course = payload.bearing_deg
             val outcome = if (course != null && course.isFinite()) {
                 filter.updateGnssCourseVelocity(tNs, speed, course, speedVariance)

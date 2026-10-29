@@ -333,6 +333,40 @@
         "pass_rate_end_error_lt_5m": 0.363,
         "dr_declared_after_s_median": 2.04
       },
+      "ekf_nhc_vel": {
+        "planned": 248,
+        "scored": 240,
+        "engine_failed": 0,
+        "not_navigating_at_start": 8,
+        "no_solution_in_outage": 0,
+        "median_distance_m": 50.5,
+        "median_duration_s": 5.5,
+        "drift_pct_median": 6.63,
+        "drift_pct_p90": 34.33,
+        "end_error_m_median": 3.34,
+        "end_error_m_p90": 17.31,
+        "pass_rate_drift_lt_10pct": 0.642,
+        "pass_rate_incl_failures": 0.642,
+        "pass_rate_end_error_lt_5m": 0.642,
+        "dr_declared_after_s_median": 2.04
+      },
+      "ekf_nhc_v3_heldout_vel": {
+        "planned": 248,
+        "scored": 237,
+        "engine_failed": 0,
+        "not_navigating_at_start": 11,
+        "no_solution_in_outage": 0,
+        "median_distance_m": 50.5,
+        "median_duration_s": 5.5,
+        "drift_pct_median": 6.74,
+        "drift_pct_p90": 28.12,
+        "end_error_m_median": 3.43,
+        "end_error_m_p90": 14.11,
+        "pass_rate_drift_lt_10pct": 0.65,
+        "pass_rate_incl_failures": 0.65,
+        "pass_rate_end_error_lt_5m": 0.65,
+        "dr_declared_after_s_median": 2.04
+      },
       "app": {
         "planned": 248,
         "scored": 237,
@@ -453,6 +487,40 @@
         "pass_rate_end_error_lt_100m": 0.117,
         "dr_declared_after_s_median": 2.04
       },
+      "ekf_nhc_vel": {
+        "planned": 147,
+        "scored": 141,
+        "engine_failed": 0,
+        "not_navigating_at_start": 6,
+        "no_solution_in_outage": 0,
+        "median_distance_m": 1000.6,
+        "median_duration_s": 102.5,
+        "drift_pct_median": 115.03,
+        "drift_pct_p90": 446.02,
+        "end_error_m_median": 1150.86,
+        "end_error_m_p90": 4463.81,
+        "pass_rate_drift_lt_10pct": 0.028,
+        "pass_rate_incl_failures": 0.028,
+        "pass_rate_end_error_lt_100m": 0.028,
+        "dr_declared_after_s_median": 2.04
+      },
+      "ekf_nhc_v3_heldout_vel": {
+        "planned": 147,
+        "scored": 138,
+        "engine_failed": 0,
+        "not_navigating_at_start": 9,
+        "no_solution_in_outage": 0,
+        "median_distance_m": 1000.6,
+        "median_duration_s": 103.0,
+        "drift_pct_median": 24.3,
+        "drift_pct_p90": 52.56,
+        "end_error_m_median": 243.06,
+        "end_error_m_p90": 525.99,
+        "pass_rate_drift_lt_10pct": 0.145,
+        "pass_rate_incl_failures": 0.145,
+        "pass_rate_end_error_lt_100m": 0.145,
+        "dr_declared_after_s_median": 2.04
+      },
       "app": {
         "planned": 147,
         "scored": 137,
@@ -568,6 +636,38 @@
         "pass_rate_incl_failures": 0.172,
         "dr_declared_after_s_median": 2.05
       },
+      "ekf_nhc_vel": {
+        "planned": 221,
+        "scored": 208,
+        "engine_failed": 0,
+        "not_navigating_at_start": 13,
+        "no_solution_in_outage": 0,
+        "median_distance_m": 264.6,
+        "median_duration_s": 30.0,
+        "drift_pct_median": 37.91,
+        "drift_pct_p90": 111.5,
+        "end_error_m_median": 108.56,
+        "end_error_m_p90": 235.88,
+        "pass_rate_drift_lt_10pct": 0.062,
+        "pass_rate_incl_failures": 0.062,
+        "dr_declared_after_s_median": 2.04
+      },
+      "ekf_nhc_v3_heldout_vel": {
+        "planned": 221,
+        "scored": 209,
+        "engine_failed": 0,
+        "not_navigating_at_start": 12,
+        "no_solution_in_outage": 0,
+        "median_distance_m": 263.5,
+        "median_duration_s": 30.0,
+        "drift_pct_median": 21.3,
+        "drift_pct_p90": 60.77,
+        "end_error_m_median": 55.96,
+        "end_error_m_p90": 138.89,
+        "pass_rate_drift_lt_10pct": 0.177,
+        "pass_rate_incl_failures": 0.177,
+        "dr_declared_after_s_median": 2.04
+      },
       "app": {
         "planned": 221,
         "scored": 206,
@@ -681,6 +781,38 @@
         "pass_rate_incl_failures": 0.163,
         "dr_declared_after_s_median": 2.04
       },
+      "ekf_nhc_vel": {
+        "planned": 192,
+        "scored": 188,
+        "engine_failed": 0,
+        "not_navigating_at_start": 4,
+        "no_solution_in_outage": 0,
+        "median_distance_m": 538.5,
+        "median_duration_s": 60.0,
+        "drift_pct_median": 80.59,
+        "drift_pct_p90": 212.16,
+        "end_error_m_median": 418.73,
+        "end_error_m_p90": 1015.59,
+        "pass_rate_drift_lt_10pct": 0.016,
+        "pass_rate_incl_failures": 0.016,
+        "dr_declared_after_s_median": 2.04
+      },
+      "ekf_nhc_v3_heldout_vel": {
+        "planned": 192,
+        "scored": 183,
+        "engine_failed": 0,
+        "not_navigating_at_start": 9,
+        "no_solution_in_outage": 0,
+        "median_distance_m": 538.2,
+        "median_duration_s": 60.0,
+        "drift_pct_median": 22.63,
+        "drift_pct_p90": 76.07,
+        "end_error_m_median": 133.13,
+        "end_error_m_p90": 325.01,
+        "pass_rate_drift_lt_10pct": 0.164,
+        "pass_rate_incl_failures": 0.164,
+        "dr_declared_after_s_median": 2.04
+      },
       "app": {
         "planned": 192,
         "scored": 173,
@@ -740,6 +872,16 @@
       "median_m": 1.31,
       "p95_m": 4.77
     },
+    "ekf_nhc_vel": {
+      "samples": 235105,
+      "median_m": 0.73,
+      "p95_m": 3.74
+    },
+    "ekf_nhc_v3_heldout_vel": {
+      "samples": 227529,
+      "median_m": 0.71,
+      "p95_m": 3.7
+    },
     "app": {
       "samples": 203593,
       "median_m": 0.92,
@@ -752,6 +894,8 @@
     "ekf_nhc": 110,
     "ekf_nhc_ai": 365,
     "ekf_nhc_v3": 300,
-    "ekf_nhc_v3_heldout": 287
+    "ekf_nhc_v3_heldout": 287,
+    "ekf_nhc_vel": 179,
+    "ekf_nhc_v3_heldout_vel": 317
   }
 }
