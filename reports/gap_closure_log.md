@@ -357,3 +357,17 @@ Safety check (`ParkedOutageTest`): a parked vehicle over a 90 s outage reaches 2
 Caveat: the IO-VNBD outages all start at speed >= 5 m/s, so a vehicle that stops mid-outage is covered only by the parked
 synthetic test, not by recorded data. The edge `external-imu` profile turns the option on; the phone app default is unchanged.
 The 10 % target is still not met for outages longer than a few seconds.
+
+## 2026-10-29 — Two-wheeler profile, and an open high-yaw-rate failure
+
+`VehicleProfile` (mobile `fusion/VehicleProfile.kt`) adds a TWO_WHEELER set of NHC gate and variance settings (min speed 1 m/s,
+yaw-rate gate 0.9 rad/s, forward-acceleration gate 1.2 m/s^2, dwell 2 s, lateral/vertical variances 0.25/0.5, bump threshold
+5 m/s^2) and leaves CAR as the default. The values are CHOSEN, not measured; no two-wheeler recording exists here. Tests cover the
+configuration only. `FusionNavigationEngine.nhcAcceptedUpdates` is a new counter.
+
+A synthetic leaning-turn simulation (14 m/s, 20 m radius, coordinated lean) was tried and dropped. Control runs, 30 s outage
+inside a sustained circle, default and two-wheeler profile alike: yaw rate 0.2 and 0.4 rad/s end error about 1.2 m; 0.5 rad/s about 830 m,
+0.6 about 910 m, 0.7 about 720-1390 m, 0.9 about 880 m. Level and leaning circles gave the same errors to within a few metres, so
+the failure is not about lean and the test could not show the profile helps. OPEN: the engine's position diverges on sustained
+circles at 0.5 rad/s or more (a tight turn at 14 m/s) even with the filter fused beforehand. Not diagnosed: it may be the
+engine, the synthetic IMU conventions, or both. Worth a look before any claim about hard turns or two-wheelers.

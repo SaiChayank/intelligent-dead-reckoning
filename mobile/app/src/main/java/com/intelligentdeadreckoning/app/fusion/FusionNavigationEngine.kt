@@ -154,6 +154,10 @@ class FusionNavigationEngine(
     private var lastSpeedCorrectionNs: Long = 0L
     private var bumpUntilNs: Long = 0L
     private var bumpSuppressedCount: Long = 0L
+    private var nhcAcceptedCount: Long = 0L
+
+    /** Non-holonomic constraint updates the filter accepted. */
+    val nhcAcceptedUpdates: Long get() = nhcAcceptedCount
 
     /** Speed pseudo-measurements withheld because a vertical shock was recent (see [FusionConfig.bumpSuppressionEnabled]). */
     val bumpSuppressedUpdates: Long get() = bumpSuppressedCount
@@ -1248,6 +1252,7 @@ class FusionNavigationEngine(
                 outcome.result != GnssUpdateResult.REJECTED_ILL_CONDITIONED
             ) {
                 appliedAny = true
+                nhcAcceptedCount++
             } else {
                 nhcSuspendedUntilNs = tNs + (config.nhcBackoffS * 1e9).toLong()
             }
