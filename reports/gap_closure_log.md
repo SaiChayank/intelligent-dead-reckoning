@@ -338,3 +338,22 @@ Verdict: no magnetometer heading aid is built; it stays unused in the engine, on
 Speed correction: v3 needs vehicle-frame inertial data, so the phone app keeps it off. The edge engine gets
 `EdgeProfiles.externalVehicleImu` (v3 plus 0.2 m/s), chosen with `-Pprofile=external-imu` on the benchmark. Not evaluated on a
 real external IMU; the measured evidence is the IO-VNBD vehicle-frame input only.
+
+## 2026-10-29 — NHC kept active through GNSS outages
+
+Finding: `FusionNavigationEngine` stood the non-holonomic constraints down once the newest accepted fix was older than
+`nhcMaxGnssAgeS` (3 s), so during an outage the filter had no sideways-motion constraint, consistent with the cross-track
+error exceeding the along-track error. New option `FusionConfig.nhcActiveDuringOutage` (off by default) keeps the NHC on; the
+ZUPT, the 2 m/s speed floor and the benign-dynamics dwell still gate it.
+
+Held-out v3 + 0.2 m/s velocity weighting, median drift 50 m / 30 s / 60 s / 1 km, pass rate under 10 % in brackets:
+
+| | 50 m | 30 s | 60 s | 1 km |
+|---|---:|---:|---:|---:|
+| NHC stood down after 3 s | 6.7 (65 %) | 21.3 (18 %) | 22.6 (16 %) | 24.3 (15 %) |
+| NHC active through the outage | 6.9 (64 %) | 18.4 (24 %) | 18.6 (22 %) | 19.8 (20 %) |
+
+Safety check (`ParkedOutageTest`): a parked vehicle over a 90 s outage reaches 2.94 m from the start with and without the option.
+Caveat: the IO-VNBD outages all start at speed >= 5 m/s, so a vehicle that stops mid-outage is covered only by the parked
+synthetic test, not by recorded data. The edge `external-imu` profile turns the option on; the phone app default is unchanged.
+The 10 % target is still not met for outages longer than a few seconds.

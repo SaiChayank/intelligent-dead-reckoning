@@ -35,6 +35,7 @@ Every number here is read from a file in `reports/` by `tools/build_claims.py`. 
 | EKF + NHC/ZUPT + speed correction v3 (held-out weights) | 13 % (36%) | 24 % (17%) | 24 % (16%) | 27 % (12%) |
 | EKF + NHC/ZUPT + tight GNSS velocity (0.2 m/s) | 7 % (64%) | 38 % (6%) | 81 % (2%) | 115 % (3%) |
 | EKF + NHC/ZUPT + v3 (held-out) + tight GNSS velocity | 7 % (65%) | 21 % (18%) | 23 % (16%) | 24 % (14%) |
+| EKF + NHC through outages + v3 (held-out) + tight GNSS velocity | 7 % (64%) | 18 % (24%) | 19 % (22%) | 20 % (20%) |
 | App configuration | 32 % (21%) | 767 % (0%) | 1169 % (0%) | 1407 % (1%) |
 | Baseline: hold last GNSS velocity | 18 % (39%) | 53 % (6%) | 71 % (3%) | 69 % (2%) |
 
@@ -125,7 +126,7 @@ log). Drift scoring for IO-VNBD is `tools/iovnbd_outage_eval.py`; scoring field 
 
 ### 4. SIH #26168 Official Technical Defense Deck
 - **Web Slideshow**: Open `http://localhost:8080/pitch.html` (or via `tools/launch_showcase.py`) for a 10-slide dark-mode deck with keyboard navigation (`←`/`→`/`Space`), fullscreen toggle, and certificate modal.
-- **Defense Brief**: [`reports/sih_hackathon_pitch_deck.md`](reports/sih_hackathon_pitch_deck.md) covers full 15-state ES-EKF math, Somigliana formulas, 1D-CNN vibration receptive fields, and thermal profiling.
+- **Defense Brief**: [`reports/sih_hackathon_pitch_deck.md`](reports/sih_hackathon_pitch_deck.md) covers full 15-state ES-EKF math, Somigliana formulas, the synthetic-trained 1D-CNN (Model A v1, which does not transfer to real drives; the measured speed model is the v3 MLP, see the status block above), and thermal profiling.
 
 ### 5. In-Car Field Driving Protocol
 Step-by-step instructions for physical vehicle road tests: [`docs/FIELD_TEST_PROTOCOL.md`](docs/FIELD_TEST_PROTOCOL.md).
@@ -178,7 +179,7 @@ $env:GRADLE_USER_HOME = "$PWD\.gradle-user-home"
 ├── reports/            # SIH Pitch Deck, benchmark data, and exported KML/GPX tracks
 ├── tests/              # Python unit tests: codecs, strapdown INS, IO-VNBD harness, models
 ├── tools/              # Showcase launcher, telemetry pull, visualizer builder, and hygiene gates
-└── training/           # Model A 1D-CNN forward speed estimator & frame kinematics
+└── training/           # Model A v1 (synthetic 1D-CNN) and v3 (MLP) speed models, frame kinematics
 ```
 
 ---

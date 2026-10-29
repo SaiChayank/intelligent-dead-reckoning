@@ -8,14 +8,16 @@ import org.junit.Test
 
 class EdgeProfilesTest {
     @Test
-    fun theDefaultProfileIsTheShippedEngineSettingsAndTheExternalImuProfileAddsTwoThings() {
+    fun theDefaultProfileIsTheShippedEngineSettingsAndTheExternalImuProfileAddsThreeThings() {
         val default = EdgeProfiles.byName("default")
         assertFalse(default.speedCorrectionEnabled)
         assertNull(default.gnssVelocitySigmaM_S)
         val external = EdgeProfiles.byName("external-imu")
         assertTrue(external.speedCorrectionEnabled)
         assertEquals(0.2, external.gnssVelocitySigmaM_S!!, 0.0)
-        assertEquals(default.copy(speedCorrectionEnabled = true, gnssVelocitySigmaM_S = 0.2), external)
+        assertTrue(external.nhcActiveDuringOutage)
+        assertFalse(default.nhcActiveDuringOutage)
+        assertEquals(default.copy(speedCorrectionEnabled = true, gnssVelocitySigmaM_S = 0.2, nhcActiveDuringOutage = true), external)
     }
 
     @Test

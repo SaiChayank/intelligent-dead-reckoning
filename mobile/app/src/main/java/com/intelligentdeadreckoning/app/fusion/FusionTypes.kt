@@ -229,6 +229,13 @@ data class FusionConfig(
     /** Use the HMM matcher (HmmMapMatcher) instead of the greedy matcher for the map feedback path. */
     val hmmMapMatchingEnabled: Boolean = false,
     /**
+     * Keep the non-holonomic constraints active for the whole GNSS outage instead of standing them down once the
+     * newest fix is older than [nhcMaxGnssAgeS]. The stand-down was added so a parked vehicle is not constrained
+     * along a corrupted attitude; the ZUPT, the speed floor and the benign-dynamics dwell still guard that here.
+     * Off by default; measured on IO-VNBD in reports/gap_closure_log.md.
+     */
+    val nhcActiveDuringOutage: Boolean = false,
+    /**
      * One-sigma uncertainty of the GNSS velocity (speed and course), m/s. Null keeps the legacy rule of reusing the
      * fix's horizontal position accuracy, which is metres and so makes a 10 Hz course almost unusable for heading.
      * Chosen, not measured, until a field drive says otherwise.

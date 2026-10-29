@@ -68,6 +68,9 @@ object IovnbdEval {
         /** Held-out v3 correction plus the tighter GNSS velocity weighting. */
         EKF_NHC_V3_HELDOUT_VEL("ekf_nhc_v3_heldout_vel"),
 
+        /** The previous arm with the NHC kept active through the whole outage instead of standing down after 3 s. */
+        EKF_NHC_V3_HELDOUT_VEL_NHCOUT("ekf_nhc_v3_heldout_vel_nhcout"),
+
         /** Exactly the configuration the app runs (see CalibratingFusionEngine). */
         APP("app");
 
@@ -79,6 +82,9 @@ object IovnbdEval {
             EKF_NHC_V3_HELDOUT -> FusionConfig(speedCorrectionEnabled = true)
             EKF_NHC_VEL -> FusionConfig(gnssVelocitySigmaM_S = VELOCITY_SIGMA_M_S)
             EKF_NHC_V3_HELDOUT_VEL -> FusionConfig(speedCorrectionEnabled = true, gnssVelocitySigmaM_S = VELOCITY_SIGMA_M_S)
+            EKF_NHC_V3_HELDOUT_VEL_NHCOUT -> FusionConfig(
+                speedCorrectionEnabled = true, gnssVelocitySigmaM_S = VELOCITY_SIGMA_M_S, nhcActiveDuringOutage = true,
+            )
             APP -> FusionConfig(
                 aiSpeedEstimationEnabled = true,
                 adaptiveNoiseScalingEnabled = true,
@@ -200,6 +206,8 @@ object IovnbdEval {
      */
     val IOVNBD_MOUNT = MountThresholds(maxGravitySpreadM_S2 = 0.10, maxYawRateRad_S = 0.08)
 
+    private val HELDOUT_ARMS = setOf(Arm.EKF_NHC_V3_HELDOUT, Arm.EKF_NHC_V3_HELDOUT_VEL, Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT)
+
     private fun FusionConfig.forIovnbd(): FusionConfig = copy(
         stationaryMinSamples = 15,
         stationaryAccelStdNormM_S2 = 0.25,
@@ -215,7 +223,7 @@ object IovnbdEval {
         val inputHeader = Header(sessionId, Source.REPLAY_REAL, "1.0.0")
         val outputHeader = Header(sessionId, Source.REPLAY_REAL, ENGINE_OUTPUT_CONTRACT_VERSION)
         val config = job.arm.config().forIovnbd()
-        require((job.arm != Arm.EKF_NHC_V3_HELDOUT && job.arm != Arm.EKF_NHC_V3_HELDOUT_VEL) || job.speedModel != null) { "held-out arm needs a speed_model file" }
+        require(job.arm !in HELDOUT_ARMS || job.speedModel != null) { "held-out arm needs a speed_model file" }
         val speedModel = job.speedModel?.let { Files.newInputStream(it).use(SpeedCorrectionModel::fromStream) }
         val engine = CalibratingFusionEngine(
             calibrator = job.calibration?.let { ReleasedCalibration(it) }

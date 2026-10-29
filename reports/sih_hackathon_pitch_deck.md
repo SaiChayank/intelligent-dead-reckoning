@@ -32,11 +32,11 @@ In automotive navigation, satellite denial in urban canyons, multi-level flyover
                      ┌─────────────────────────────┴────────────────────────────┐
                      ▼                                                          ▼
        ┌───────────────────────────┐                              ┌───────────────────────────┐
-       │   15-STATE ERROR-STATE    │                              │     AI MODEL A (1D-CNN)   │
-       │   EXTENDED KALMAN FILTER  │                              │   FORWARD SPEED ESTIMATOR │
-       │  Somigliana Gravity Model │                              │ Tire & Road Harmonics     │
-       │  WGS-84 Ellipsoid Geodesy │                              │ 100-sample Sliding Window │
-       │  Non-Holonomic (vy=vz=0)  │                              │ Causal Pure-Math Inference│
+       │   15-STATE ERROR-STATE    │                              │    MODEL A v1 (1D-CNN)    │
+       │   EXTENDED KALMAN FILTER  │                              │   SYNTHETIC-TRAINED ONLY  │
+       │  Somigliana Gravity Model │                              │   Fails on real drives;   │
+       │  WGS-84 Ellipsoid Geodesy │                              │   measured model is the   │
+       │  Non-Holonomic (vy=vz=0)  │                              │     v3 MLP, see Status    │
        └─────────────┬─────────────┘                              └─────────────┬─────────────┘
                      │                                                          │
                      │  ◄──────────────── Speed Pseudo-Measurement (vx) ────────┘

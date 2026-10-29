@@ -1231,7 +1231,7 @@ class FusionNavigationEngine(
             (tNs - nhcBenignSinceNs!!) >= (config.nhcDwellS * 1e9).toLong()
         if (mounting != null &&
             speed >= config.nhcMinSpeedM_S &&
-            gnssFresh &&
+            (gnssFresh || config.nhcActiveDuringOutage) &&
             dwellSatisfied &&
             tNs >= nhcSuspendedUntilNs
         ) {

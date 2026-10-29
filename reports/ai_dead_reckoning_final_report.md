@@ -45,10 +45,13 @@ flowchart TD
         QCAL["q_vehicle_from_device"]
     end
 
-    subgraph AI_Engine ["Model A: AI Speed & Motion Filter"]
+    subgraph AI_Engine ["Model A v1 (synthetic-trained vibration CNN, not validated on real drives) and outage speed correction v3"]
         RING["100-Sample Sliding Ring Buffer\n(1.0s @ 100 Hz in Vehicle Frame)"]
         CNN["Causal 1D Convolutional Neural Network\n(Kernel 3, Dilations 1, 2, 4)"]
         STAT["Statistical Feature Extractor\n(Mean, Var, Energy, RMS)"]
+        V3["Outage speed correction v3
+(MLP on 9 causal features at 10 Hz,
+vehicle-frame inertial input)"]
         HEADS["Multi-Head Output:\n1. Forward Speed v_x\n2. Uncertainty sigma_v\n3. Stillness Probability p_stop"]
     end
 
@@ -85,6 +88,7 @@ flowchart TD
 
     HEADS --> ZUPT
     HEADS --> AI_UPD
+    V3 --> AI_UPD
     GPS --> GNSS_UPD
 
     PROP --> STATE

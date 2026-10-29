@@ -126,10 +126,10 @@
   - Hyperparameters: Learning rate = 0.002, Batch size = 32, Seed = 42, Adam optimizer with cosine annealing.
   - **Performance Numbers Clarification**: Because all 12 drives were included in the training set for the exported model, there is no unseen drive. All reported generalization metrics and uncertainty bands are taken directly from the **12-fold LOGO cross-validation evaluation**, not from this full-data fit.
 - **Export Artifacts**:
-  - **New Versioned Weights**: [models/speed_estimator_v2_invariant_weights.json](file:///c:/Users/Saich/OneDrive/Desktop/Intelligent%20Dead%20Reckoning/models/speed_estimator_v2_invariant_weights.json)
+  - **New Versioned Weights**: [models/speed_estimator_v2_invariant_weights.json](../models/speed_estimator_v2_invariant_weights.json)
   - **SHA-256**: `0af1f6e7cd242872e6b962d782f5912e78e749f8757292cb76d60b2768a550d1`
-  - **Existing Weights Preserved**: [models/speed_estimator_weights.json](file:///c:/Users/Saich/OneDrive/Desktop/Intelligent%20Dead%20Reckoning/models/speed_estimator_weights.json) (v1 6-channel synthetic model) is completely unchanged and continues to match Android assets.
-  - **Manifest**: [models/ai_model_manifest.json](file:///c:/Users/Saich/OneDrive/Desktop/Intelligent%20Dead%20Reckoning/models/ai_model_manifest.json) updated to version 2.0.0 with both artifacts, headline LOGO metrics, and honest limitations.
+  - **Existing Weights Preserved**: [models/speed_estimator_weights.json](../models/speed_estimator_weights.json) (v1 6-channel synthetic model) is completely unchanged and continues to match Android assets.
+  - **Manifest**: [models/ai_model_manifest.json](../models/ai_model_manifest.json) updated to version 2.0.0 with both artifacts, headline LOGO metrics, and honest limitations.
 - **Channel Change & Parity Status**:
   - The exported model changes input channels from 6 vehicle-frame channels (`[ax, ay, az, gx, gy, gz]`) to 4 heading-invariant channels (`[a_horiz, a_vert, a_norm, a_vert_bandpower]`).
   - Per Rule 1 and Step 5, Kotlin feature extraction has **not** been modified and requires explicit review/approval before touching Android or Kotlin code.

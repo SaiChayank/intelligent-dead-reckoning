@@ -5,7 +5,7 @@ import com.intelligentdeadreckoning.app.fusion.FusionConfig
 /**
  * Fusion settings for the edge engine, by the kind of inertial source it is fed.
  *
- * The learned speed correction (v3) and the tight GNSS-velocity weighting were measured on a vehicle-frame inertial
+ * The learned speed correction (v3), the tight GNSS-velocity weighting and NHC through outages were measured on a vehicle-frame inertial
  * input (the IO-VNBD external-IMU case) and help there (reports/iovnbd_eval/vehicle). On a phone accelerometer
  * export the same correction has no support, so the phone app keeps them off and only this profile switches them on.
  */
@@ -18,7 +18,11 @@ object EdgeProfiles {
 
     /** A vehicle-mounted external IMU whose axes are already vehicle-aligned. */
     val externalVehicleImu: FusionConfig
-        get() = FusionConfig(speedCorrectionEnabled = true, gnssVelocitySigmaM_S = GNSS_VELOCITY_SIGMA_M_S)
+        get() = FusionConfig(
+            speedCorrectionEnabled = true,
+            gnssVelocitySigmaM_S = GNSS_VELOCITY_SIGMA_M_S,
+            nhcActiveDuringOutage = true,
+        )
 
     fun byName(name: String): FusionConfig = when (name) {
         "default" -> default
