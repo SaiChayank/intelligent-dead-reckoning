@@ -46,6 +46,9 @@ import kotlin.math.atan2
 import kotlin.math.sin
 import kotlin.math.sqrt
 
+/** Publication cadence of [FusionNavigationEngine]: 10 Hz, the PS #26168 mobile output rate. */
+const val DEFAULT_PUBLICATION_INTERVAL_NS = 100_000_000L
+
 /**
  * The production GNSS/INS fusion engine: the classical filter behind the frozen [NavigationEngine].
  *
@@ -80,7 +83,7 @@ import kotlin.math.sqrt
  *
  * ## Publication
  *
- * [NavigationState] and [Confidence] are published at a fixed 5 Hz cadence and immediately on any
+ * [NavigationState] and [Confidence] are published at a fixed 10 Hz cadence (the PS #26168 rate) and immediately on any
  * change of status. The state changes on every inertial sample, so publishing per sample would
  * record the filter's internal rate rather than the solution. Diagnostics are published when
  * something happens, with refusals and rejections rate-limited to one per second carrying a count,
@@ -98,7 +101,7 @@ class FusionNavigationEngine(
      * heading variance of half a turn rather than pretending to know which way the vehicle points.
      */
     private val initialHeadingRad: Double? = null,
-    private val publicationIntervalNs: Long = 200_000_000L,
+    private val publicationIntervalNs: Long = DEFAULT_PUBLICATION_INTERVAL_NS,
     private val roadGraph: RoadGraph? = null,
 ) : NavigationEngine {
 

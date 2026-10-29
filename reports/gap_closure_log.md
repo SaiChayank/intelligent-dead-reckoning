@@ -186,3 +186,29 @@ the deck text under "Key Mathematical" still describes v1 in places; the diagram
 
 Verification after this change: Python 329 unittest (5 skipped), 377 pytest, hygiene clean; mobile JVM, lint and
 assembleDebug pass; edge tests pass. Not run: on-device suite (phone not connected; 9 failures earlier).
+
+## Phase 5: 10 Hz output and the GNSS-loss transition (2026-10-29)
+
+`FusionNavigationEngine` now defaults to a 10 Hz publication interval (`DEFAULT_PUBLICATION_INTERVAL_NS`); the app's
+`CalibratingFusionEngine` already used 100 ms. `PublicationRateTest` (default constructor, scripted drive with a 20 s outage)
+measures 10.00 Hz, a longest publication gap of 0.110 s through the outage, and dead reckoning declared 2.01 s after
+the last accepted fix. Position output is continuous across the loss; the 2 s is the engine's stale bound before it
+labels the mode `dr`, not a processing delay. The PS asks for the switch "within milliseconds"; the output has no gap,
+but the mode label lags by the stale bound. Not done in this block: persisted per-device mount calibration for cold
+starts inside a tunnel, and the magnetometer heading aid (both still open).
+
+## Phase 6: edge engine, external IMU and 200 Hz (2026-10-29)
+
+- `tools/external_imu_to_contract.py`: CSV external-IMU log (declared units, mount quaternion, gyro bias, optional GNSS
+  with accuracy and satellites) to a contract 1.1.0 stream with a VALID calibration record. Units and mount are declared,
+  never guessed; it refuses non-increasing time, a non-unit quaternion and undeclared units.
+- `tools/generate_fog_200hz.py`: SYNTHETIC 200 Hz drive with a stated tactical-grade noise profile (no real FOG data exists
+  here). Scripted straight cruise with one turn and a 20 s GNSS outage.
+- Edge benchmark on that drive, real-time paced (`reports/edge_200hz_synthetic.json`): 14,000 accelerometer and 14,000
+  gyroscope samples admitted at 200.00 Hz and processed at 200.02 Hz, 702 navigation states, no drops (ingress queue
+  high-water 8 of 1024), 2.2 % of one core, per-sample queue-to-completion latency 33 us median, 192 us at p99,
+  `sustained_200_hz_met: true`. Navigation accuracy was not scored in this run (no reference supplied).
+  Host numbers on this Windows machine; not an edge board, no thermal or power data, and not real FOG hardware.
+  A first run published only 2 states because the synthetic fixes had no satellite count and the engine's GNSS quality
+  gate refused them; the adapter and generator now carry `satellites`.
+- Two-wheeler profile: not done.
