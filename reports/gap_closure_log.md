@@ -277,3 +277,16 @@ Reading: the held-out numbers match the in-sample ones within about 1 point, so 
 v3 still halves hold-last-GNSS drift at 30 s and cuts it by about a factor of three at 60 s and 1 km. It does NOT meet the
 PS target of under 10 %: the median is 24-27 % on the outage windows. Limits: 11 drives of one dataset, phone-class
 data with the VBOX yaw rate and acceleration as the vehicle-frame input, no on-device or field drive.
+
+## 2026-10-29 — Residual drift after v3: where it comes from, and one negative result
+
+Split of the held-out v3 end error (median over outages, vehicle input): 30 s outages 41 m across the road vs 30 m along it;
+60 s outages 91 m vs 61 m. Heading (cross-track) is now the larger term, and heading is already 3.5-5.9 degrees off when an
+outage starts (Phase 1 diagnosis).
+
+Tried: lowering the gyroscope noise density from 0.005 to 0.0005 so the filter trusts the (clean, VBOX) yaw rate more than
+the noisy GNSS course. Result, held-out v3: worse. Median drift 28.8 % at 30 s (was 24.4 %), 33.0 % at 60 s (was 24.0 %),
+31.7 % at 1 km (was 27.3 %), and fewer outages scored (172 vs 209 at 30 s). Reverted; nothing from it is in the code.
+
+Not yet tried: smoothing the GNSS course over the last ~10 s before an outage, raising rather than lowering the gyro noise,
+gyro scale-factor estimation. The 10 % target is still not met.
