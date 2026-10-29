@@ -212,3 +212,21 @@ starts inside a tunnel, and the magnetometer heading aid (both still open).
   A first run published only 2 states because the synthetic fixes had no satellite count and the engine's GNSS quality
   gate refused them; the adapter and generator now carry `satellites`.
 - Two-wheeler profile: not done.
+
+## B5: pothole and bump suppression (2026-10-29)
+
+`FusionConfig.bumpSuppressionEnabled` (off by default) with a 3 m/s^2 vertical-force threshold and a 0.5 s hold: while a
+vertical shock is recent, the Model A v1 and v3 speed pseudo-measurements are withheld. `BumpSuppressionTest` on the
+scripted drive: one 6 m/s^2 shock during the outage withholds 51 update attempts (0.5 s at 100 Hz); a 1.5 m/s^2 bump
+withholds none; disabled suppression withholds none. Not evaluated on real bumps: IO-VNBD is 10 Hz and carries no usable
+vertical channel, so the benefit on real roads is untested. Idle-vibration detection is not added.
+
+## Not done at the end of this session
+
+- Phase 4: HMM map matching and a cross-track position feedback (the greedy matcher is unchanged and unscored on any drive).
+- Phase 5 remainder: persisted per-device mount calibration for cold starts, magnetometer heading aid.
+- Phase 6 remainder: two-wheeler constraint profile; accuracy scoring of the 200 Hz synthetic run.
+- v3 trained on, and evaluated in the engine on, the same drives; a held-out engine evaluation (train on 10, run on 1) is open.
+- On-device suite: 9 of 43 failures from the first run are uninvestigated (phone not connected).
+- Phase 7: field drives and real 100 Hz data.
+- Diagram labels in the deck and report still show the v1 CNN as the speed model.

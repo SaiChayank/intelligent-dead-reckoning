@@ -148,6 +148,11 @@ class FusionNavigationEngine(
         }
     }
     private var lastSpeedCorrectionNs: Long = 0L
+    private var bumpUntilNs: Long = 0L
+    private var bumpSuppressedCount: Long = 0L
+
+    /** Speed pseudo-measurements withheld because a vertical shock was recent (see [FusionConfig.bumpSuppressionEnabled]). */
+    val bumpSuppressedUpdates: Long get() = bumpSuppressedCount
 
     private val mountSlipDetector: MountSlipDetector? =
         if (config.mountSlipDetectionEnabled) MountSlipDetector(config) else null
@@ -486,6 +491,13 @@ class FusionNavigationEngine(
             val gy = m[3] * gyro.second.x + m[4] * gyro.second.y + m[5] * gyro.second.z
             val gz = m[6] * gyro.second.x + m[7] * gyro.second.y + m[8] * gyro.second.z
             aiSpeedEstimator?.acceptSample(Vector3(ax, ay, az), Vector3(gx, gy, gz))
+        }
+        if (mounting != null && config.bumpSuppressionEnabled) {
+            val m = mounting.toRotationMatrix()
+            val zForce = m[6] * accel.second.x + m[7] * accel.second.y + m[8] * accel.second.z
+            if (abs(zForce - STANDARD_GRAVITY_M_S2) > config.bumpVerticalThresholdM_S2) {
+                bumpUntilNs = tNs + (config.bumpHoldS * 1e9).toLong()
+            }
         }
         if (mounting != null && config.speedCorrectionEnabled) {
             val m = mounting.toRotationMatrix()
@@ -1205,7 +1217,9 @@ class FusionNavigationEngine(
                 (tNs - lastAcceptedGnssNs!!) >= (config.aiSpeedMinGnssStalenessS * 1e9).toLong()
             val aiDue = (tNs - lastAiSpeedUpdateNs) >= (config.aiSpeedUpdateIntervalS * 1e9).toLong()
 
-            if (gnssOutage && aiDue) {
+            if (gnssOutage && aiDue && bumpHeld(tNs)) {
+                // a recent vertical shock: withhold this speed update
+            } else if (gnssOutage && aiDue) {
                 val est = aiSpeedEstimator?.estimate()
                 if (est != null && !est.isStationary) {
                     attemptedAny = true
@@ -1239,7 +1253,9 @@ class FusionNavigationEngine(
         ) {
             val gnssOutage = (tNs - lastAcceptedGnssNs!!) >= (config.aiSpeedMinGnssStalenessS * 1e9).toLong()
             val due = (tNs - lastSpeedCorrectionNs) >= (config.speedCorrectionUpdateIntervalS * 1e9).toLong()
-            if (gnssOutage && due) {
+            if (gnssOutage && due && bumpHeld(tNs)) {
+                // a recent vertical shock: withhold this speed update
+            } else if (gnssOutage && due) {
                 val est = speedTracker?.estimate(config.speedCorrectionMinOutageS)
                 if (est != null) {
                     attemptedAny = true
@@ -1292,6 +1308,13 @@ class FusionNavigationEngine(
         // keeps refusing must be re-offered at the cadence rate, not hammered at sample rate.
         if (attemptedAny) lastConstraintNs = tNs
         announceConstraintOutcome(solution)
+    }
+
+    /** True while a recent vertical shock holds speed pseudo-measurements back; counts each withheld update. */
+    private fun bumpHeld(tNs: Long): Boolean {
+        if (!config.bumpSuppressionEnabled || tNs >= bumpUntilNs) return false
+        bumpSuppressedCount++
+        return true
     }
 
     /** A fresh accepted fix with real speed contradicts a stationary claim. */
@@ -1545,6 +1568,7 @@ class FusionNavigationEngine(
     private companion object {
         /** Acquisition requests 100 Hz on both sensors; this tolerates jitter between streams. */
         const val MAX_PAIR_SKEW_NS = 30_000_000L
+        const val STANDARD_GRAVITY_M_S2 = 9.80665
         const val UNMATCHED_WARN = 100L
         const val REJECTION_DIAGNOSTIC_NS = 1_000_000_000L
         const val DEFAULT_FRESHNESS_NS = 3_000_000_000L

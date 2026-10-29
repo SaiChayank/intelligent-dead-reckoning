@@ -224,6 +224,22 @@ data class FusionConfig(
     val speedCorrectionSigmaM_S: Double = 3.0,
 
     // ---------------------------------------------------------------------------------------
+    // Pothole and bump suppression
+    // ---------------------------------------------------------------------------------------
+    /**
+     * Suppress learned and AI speed pseudo-measurements for a short hold after a vertical shock. A pothole
+     * or kerb strike is vertical specific force the vehicle did not intend as forward motion; the PS asks
+     * the engine to filter such non-navigation motion.
+     */
+    val bumpSuppressionEnabled: Boolean = false,
+
+    /** Vertical specific force this far from standard gravity counts as a shock, m/s^2. */
+    val bumpVerticalThresholdM_S2: Double = 3.0,
+
+    /** How long speed pseudo-measurements stay suppressed after a shock, seconds. */
+    val bumpHoldS: Double = 0.5,
+
+    // ---------------------------------------------------------------------------------------
     // Model B: Adaptive Process Noise & Vibration Filtering
     // ---------------------------------------------------------------------------------------
     /** Master switch for Model B adaptive vibration-aware process noise scaling. */
