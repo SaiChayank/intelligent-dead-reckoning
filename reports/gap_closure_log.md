@@ -607,3 +607,17 @@ Result: no asymmetry. Worst outage error per seed ranges from 9 m to 362 m for B
 the 41 m / 9 m pair was one seed's noise. With `gnssVelocitySigmaM_S = 0.2` the worst over 12 seeds is 10.7 m (+0.7), 5.1 m (-0.7), 8.8 m (+1.0),
 4.4 m (-1.0). So the gate-only configuration is noise-sensitive, not direction-sensitive, and the tight velocity weighting is what makes turns safe.
 Two new tests assert both statements. Also checked: `edge/bin/` is untracked and gitignored (0 tracked files), so that older item is closed.
+
+## 2026-10-30 N2: richer speed-correction features (proxy evaluation, IO-VNBD, vehicle-frame IMU) - MARGINAL, NOT SHIPPED
+
+Question: can a better speed estimator move the drift toward 10 %? The speed part is about 80 % of the engine drift (T4 decomposition).
+Added six causal features known at outage start (`training/speed_v4_experiment.py`): accelerometer bias estimated over the 20 s of
+GNSS-aided driving before the outage, the bias-corrected integral, 5 s and 10 s fix-speed trends, lowest fix speed in 10 s, mean pre-outage acceleration.
+Protocol fixed first: feature sets compared by leave-one-drive-out on the 6 development drives only (v3 / +bias / +all six), then the best set and v3
+were trained on the development drives and scored once on the 5 held-out drives (`reports/n2_speed_features_heldout.json`).
+Development: median drift 11.6 / 16.9 % (v3), 11.3 / 16.4 % (+bias), 10.7 / 15.9 % (all) at 30 / 60 s.
+Held-out (trained on development drives only): v3 11.8 / 16.8 %, all six 10.8 / 15.6 %; paired median change -0.55 pp (95 % CI -0.86 to -0.34, 968 outages)
+at 30 s and -0.47 pp (-0.68 to -0.30, 958) at 60 s. Speed RMSE 2.45 -> 2.33 m/s.
+Reading: the gain is real but about one percentage point. This proxy dead-reckons along the last fix course plus integrated yaw and sits well under the
+engine's 17-24 % held-out medians, so the engine would not approach 10 %. Not ported to Kotlin and not shipped; the shipped v3 stays. Two causality/bias tests
+in `tests/test_speed_v4_experiment.py`. Conclusion for the 10 % target is unchanged: speed information from a 10 Hz vehicle IMU is the limit.
