@@ -7,9 +7,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Only the configuration is tested. A synthetic leaning-turn simulation was tried and dropped: at sustained yaw rates of
- * 0.5 rad/s and above the engine's outage error was 800-1400 m for level and leaning circles alike and for both
- * profiles, so that test could not show the profile helps (see reports/gap_closure_log.md, open item).
+ * Only the configuration is tested. A synthetic leaning-turn simulation was tried and dropped because it could not show the
+ * profile helps; its large errors at 0.5 rad/s and above did not reproduce in the later HardTurnSweepTest (see the T3 entry
+ * in reports/gap_closure_log.md).
  */
 class VehicleProfileTest {
     @Test

@@ -439,3 +439,36 @@ a literal 200.0 cut-off (other runs 200.01-200.02; about 1 % of one core in all 
 shortfall. Open: the fragility to an undeclared bias with the legacy velocity weighting remains in the engine; the real-sensor
 equivalent of a declared bias (a calibrated accelerometer bias) is not available here. Tests at this commit: Python unittest 339
 (5 skipped), pytest 387 passed / 5 skipped, mobile 463 passed, edge 20 passed, hygiene clean.
+
+## 2026-10-30 - T3: hard turns on sustained circles (SYNTHETIC)
+
+Result: NEGATIVE RESULT on the original claim, PARTIAL on mechanism. The earlier "divergence at yaw rates of 0.5 rad/s and above"
+(entry "Two-wheeler profile, and an open high-yaw-rate failure", 800-1400 m) did NOT reproduce in a controlled, cross-checked sweep.
+I could not recover why that test failed (it is deleted); treat that earlier number as unreliable.
+
+`HardTurnSweepTest` (host JVM, physically consistent body-frame circle: specific force (0, v*w, g), gyro (0, 0, w), 14 m/s, 30 s
+straight then a sustained circle, GNSS withheld 35-65 s, 2 m fix noise, heading supplied, declared zero accelerometer bias; negative
+yaw rate = right turn). Additional variants run and not tabulated here: heading not supplied (88-200 m for every rate with the
+default; the T1 option removes it), four times the sensor noise (same pattern as below). Worst horizontal error during the outage,
+metres, generated from `reports/hard_turn_sweep.json` (`gradlew testDebugUnitTest --tests *HardTurnSweepTest`, written to
+`mobile/app/build/hard_turn_sweep.json`):
+
+| Configuration | -0.7 | -0.3 | +0.2 | +0.3 | +0.4 | +0.5 | +0.6 | +0.7 | +0.8 | +1.0 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| default | 44 | 191 | 260 | 262 | 200 | 50 | 49 | 48 | 47 | 45 |
+| velocity_sigma_0.2 | 3 | 6 | 4 | 3 | 4 | 6 | 7 | 7 | 8 | 8 |
+| nhc_yaw_gate_2.0 | 41 | 191 | 260 | 262 | 200 | 37 | 22 | 9 | 6 | 8 |
+| velocity_sigma_0.2_and_nhc_yaw_gate_2.0 | 7 | 6 | 4 | 3 | 4 | 4 | 3 | 3 | 3 | 3 |
+
+Reading (synthetic):
+- Mechanism at low yaw rates (0.2-0.4 rad/s): the legacy GNSS velocity variance (position accuracy squared, about 3 m/s one-sigma)
+  lets heading and speed wander (heading 13-24 degrees off, speed up to 19 m/s at the end of the outage). `gnssVelocitySigmaM_S` = 0.2
+  brings every rate to under 15 m (pinned by a test).
+- Mechanism at 0.5 rad/s and above: the NHC yaw-rate gate (`nhcMaxYawRateRad_S` = 0.5) switches the sideways constraint off in
+  tight turns; the default sits at 45-50 m there and a gate of 2.0 reduces it as the rate rises. Together with the 0.2 m/s weighting
+  the sweep stays at 3-7 m.
+- No new flag: both settings already exist and default to the old behaviour. The gate value 2.0 is NOT adopted anywhere; it is
+  measured on this synthetic sweep only, and the gate exists to protect against skids and sideslip that the sweep does not contain.
+- Unexplained: a right turn at -0.7 rad/s with only the raised gate gave 41 m against 9 m for the left turn at +0.7.
+- Tests at this commit: Python unittest 339 (5 skipped), pytest 387 passed / 5 skipped, mobile 467 passed, edge 20 passed, hygiene clean.
+- Not done: no recorded hard-turn drive, and the two-wheeler profile is still unvalidated.
