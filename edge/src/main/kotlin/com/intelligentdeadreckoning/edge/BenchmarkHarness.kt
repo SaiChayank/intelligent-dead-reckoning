@@ -1,12 +1,15 @@
 package com.intelligentdeadreckoning.edge
 
 import com.intelligentdeadreckoning.app.calibration.isProperRotation
+import com.intelligentdeadreckoning.app.fusion.GeodeticAnchor
+import com.intelligentdeadreckoning.app.fusion.Geodesy
 import com.intelligentdeadreckoning.contracts.v1.*
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.locks.LockSupport
 import kotlin.math.ceil
+import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.sqrt
 
@@ -33,7 +36,11 @@ object BenchmarkHarness {
         var count = 0L
         private var squaredSum = 0.0
         private val errors = ArrayList<Double>()
-        fun add(error: Double) { count++; squaredSum += error * error; errors += error }
+        fun add(error: Double) { count++; squaredSum += error * error; errors += error; last = error }
+        var last: Double? = null
+        /** Last error seen in each whole second of source time, keyed by that second. */
+        val bySecond = java.util.TreeMap<Long, Double>()
+        fun max(): Double? = errors.maxOrNull()
         fun rmse(): Double? = if (count == 0L) null else sqrt(squaredSum / count)
         fun percentile(q: Double): Double? {
             val sorted = errors.sorted()
@@ -48,8 +55,11 @@ object BenchmarkHarness {
         require(Files.isRegularFile(inputPath)) { "input JSONL not found" }
         require(referencePath == null || Files.isRegularFile(referencePath)) { "reference JSONL not found" }
         val info = inspect(inputPath)
-        val reference = referencePath?.let(::readReference).orEmpty()
+        val csvTruth = referencePath?.takeIf { it.toString().endsWith(".csv", ignoreCase = true) }?.let(::readTruthCsv)
+        val reference = referencePath?.takeIf { csvTruth == null }?.let(::readReference).orEmpty()
         val accuracy = Accuracy()
+        val geodetic = Accuracy()
+        val geodeticDenied = Accuracy()
         val runtime = EdgeRuntime(
             ingressCapacity = config.ingressCapacity,
             outputCapacity = config.outputCapacity,
@@ -65,6 +75,19 @@ object BenchmarkHarness {
         fun collect() {
             runtime.drain().forEach { record ->
                 val state = record.event.data as? NavigationState ?: return@forEach
+                if (csvTruth != null) {
+                    val o = state.origin_wgs84_deg_m
+                    val p = state.position_enu_m
+                    val truth = csvTruth.at(record.event.t_ns)
+                    if (o != null && p != null && truth != null) {
+                        val g = Geodesy.geodeticFromEnu(GeodeticAnchor(o.latitude_deg, o.longitude_deg, o.altitude_m, true), Vector3(p.x, p.y, 0.0))
+                        val error = geodeticDistanceM(g.latitudeDeg, g.longitudeDeg, truth.latitudeDeg, truth.longitudeDeg)
+                        geodetic.add(error)
+                        geodetic.bySecond[record.event.t_ns / 1_000_000_000L] = error
+                        if (truth.denied) geodeticDenied.add(error)
+                    }
+                    return@forEach
+                }
                 val expected = reference[record.event.t_ns] ?: return@forEach
                 val actualOrigin = state.origin_wgs84_deg_m ?: return@forEach
                 val position = state.position_enu_m ?: return@forEach
@@ -97,7 +120,7 @@ object BenchmarkHarness {
         val elapsed = System.nanoTime() - benchmarkStart
         val metrics = runtime.metrics()
         Files.createDirectories(reportPath.toAbsolutePath().parent)
-        Files.writeString(reportPath, render(info, elapsed, metrics, accuracy, config), StandardCharsets.UTF_8)
+        Files.writeString(reportPath, render(info, elapsed, metrics, accuracy, config, geodetic, geodeticDenied, csvTruth != null), StandardCharsets.UTF_8)
     }
 
     private fun inspect(path: Path): InputInfo {
@@ -147,7 +170,37 @@ object BenchmarkHarness {
         return result
     }
 
-    private fun render(info: InputInfo, elapsed: Long, m: EdgeRuntimeMetrics, accuracy: Accuracy, config: Config): String {
+    private class TruthPoint(val latitudeDeg: Double, val longitudeDeg: Double, val denied: Boolean)
+
+    /** Truth track from a CSV with columns t_ns, latitude_deg, longitude_deg, denied (0 or 1), linearly interpolated. */
+    private class TruthTrack(val tNs: LongArray, val lat: DoubleArray, val lon: DoubleArray, val denied: BooleanArray) {
+        fun at(t: Long): TruthPoint? {
+            if (tNs.isEmpty() || t < tNs.first() || t > tNs.last()) return null
+            var i = java.util.Arrays.binarySearch(tNs, t)
+            if (i < 0) i = -i - 2
+            i = i.coerceIn(0, tNs.size - 1)
+            if (i == tNs.size - 1) return TruthPoint(lat[i], lon[i], denied[i])
+            val f = (t - tNs[i]).toDouble() / (tNs[i + 1] - tNs[i]).toDouble()
+            return TruthPoint(lat[i] + f * (lat[i + 1] - lat[i]), lon[i] + f * (lon[i + 1] - lon[i]), denied[i])
+        }
+    }
+
+    private fun readTruthCsv(path: Path): TruthTrack {
+        val rows = Files.readAllLines(path, StandardCharsets.UTF_8).drop(1).filter { it.isNotBlank() }.map { it.split(",") }
+        require(rows.isNotEmpty() && rows.all { it.size >= 4 }) { "truth CSV needs t_ns,latitude_deg,longitude_deg,denied" }
+        val t = LongArray(rows.size) { rows[it][0].trim().toLong() }
+        require((1 until t.size).all { t[it] > t[it - 1] }) { "truth CSV times must increase" }
+        return TruthTrack(t, DoubleArray(rows.size) { rows[it][1].toDouble() }, DoubleArray(rows.size) { rows[it][2].toDouble() },
+            BooleanArray(rows.size) { rows[it][3].trim() == "1" })
+    }
+
+    private fun geodeticDistanceM(lat: Double, lon: Double, tLat: Double, tLon: Double): Double {
+        val r = 6_371_000.0
+        return hypot(Math.toRadians(lat - tLat) * r, Math.toRadians(lon - tLon) * r * cos(Math.toRadians(tLat)))
+    }
+
+    private fun render(info: InputInfo, elapsed: Long, m: EdgeRuntimeMetrics, accuracy: Accuracy, config: Config,
+                       geodetic: Accuracy, geodeticDenied: Accuracy, geodeticScored: Boolean): String {
         fun n(value: Any?) = value?.toString() ?: "null"
         fun r(value: RateSummary) = "{\"count\":${value.count},\"hz\":${n(value.hz)}," +
             "\"first_ns\":${n(value.firstTimestampNs)},\"last_ns\":${n(value.lastTimestampNs)}," +
@@ -174,6 +227,7 @@ object BenchmarkHarness {
           "resources":{"worker_cpu_ns":${n(m.workerCpuTimeNs)},"worker_wall_ns":${n(m.workerWallTimeNs)},"cpu_percent_of_one_core":${n(cpuPercent)},"benchmark_elapsed_ns":$elapsed,"sampled_peak_jvm_heap_bytes":${n(m.peakHeapBytesSampled)},"sampled_peak_rss_bytes":null,"rss_reason":"portable JVM RSS metrics unavailable"},
           "queues":{"ingress":{"capacity":${m.ingressCapacity},"high_water":${m.ingressHighWater},"depth_after_stop":${m.ingressDepth},"dropped":${m.dropped}},"output":{"capacity":${m.outputCapacity},"high_water":${m.outputHighWater},"depth_after_stop":${m.outputDepth},"dropped":${m.outputDropped}},"rejected":${m.rejected},"late":${m.late},"invalid":${m.invalid},"duplicate":${m.duplicate}},
           "accuracy":{"join":"exact source timestamp and identical ENU origin","matches":${accuracy.count},"horizontal_rmse_m":${n(accuracy.rmse())},"p50_error_m":${n(accuracy.percentile(.5))},"p95_error_m":${n(accuracy.percentile(.95))}},
+          "geodetic_accuracy":${if (!geodeticScored) "null" else "{\"join\":\"truth CSV interpolated to the output timestamp; engine ENU converted to latitude/longitude\",\"all\":{\"matches\":${geodetic.count},\"rmse_m\":${n(geodetic.rmse())},\"p50_m\":${n(geodetic.percentile(.5))},\"p95_m\":${n(geodetic.percentile(.95))},\"max_m\":${n(geodetic.max())}},\"gnss_denied\":{\"matches\":${geodeticDenied.count},\"rmse_m\":${n(geodeticDenied.rmse())},\"p50_m\":${n(geodeticDenied.percentile(.5))},\"p95_m\":${n(geodeticDenied.percentile(.95))},\"max_m\":${n(geodeticDenied.max())},\"final_m\":${n(geodeticDenied.last)}},\"error_m_by_source_second\":{${geodetic.bySecond.entries.joinToString(",") { "\"${it.key}\":${"%.2f".format(java.util.Locale.ROOT, it.value)}" }}}}"},
           "limits":["No 200 Hz claim without genuinely 200 Hz source data and measured processing cadence.","AI and feature-generation stages are absent; latency is N/A, not zero.","JVM heap is not process RSS; edge-board memory, CPU, thermal and power still require target qualification.","NavigationState cadence remains the mobile engine's 5 Hz publication semantics, not 200 Hz."]
         }
         """.trimIndent() + "\n"

@@ -39,6 +39,7 @@ def main() -> int:
     p.add_argument("out", type=Path)
     p.add_argument("--seconds", type=float, default=70.0)
     p.add_argument("--seed", type=int, default=3)
+    p.add_argument("--truth", type=Path, help="also write the generated trajectory as t_ns,latitude_deg,longitude_deg,denied")
     a = p.parse_args()
     rng = np.random.default_rng(a.seed)
     n = int(a.seconds * HZ)
@@ -66,6 +67,16 @@ def main() -> int:
             else:
                 row += ["", "", "", "", "", ""]
             w.writerow(row)
+    if a.truth:
+        lat = ANCHOR_LAT + north / M_PER_DEG_LAT
+        lon = ANCHOR_LON + east / M_PER_DEG_LON
+        denied = (t >= OUTAGE_FROM_S) & (t < OUTAGE_TO_S)
+        a.truth.parent.mkdir(parents=True, exist_ok=True)
+        with open(a.truth, "w", newline="", encoding="utf-8") as fh:
+            w = csv.writer(fh, lineterminator="\n")
+            w.writerow(["t_ns", "latitude_deg", "longitude_deg", "denied"])
+            for i in range(n):
+                w.writerow([int(round(t[i] * 1e9)), f"{lat[i]:.9f}", f"{lon[i]:.9f}", int(denied[i])])
     print(f"wrote {n} samples ({a.seconds:.0f} s at {HZ:.0f} Hz, synthetic) to {a.out}")
     return 0
 
