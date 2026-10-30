@@ -129,6 +129,13 @@ Every number here is read from a file in `reports/` by `tools/build_claims.py`. 
 | EKF + NHC through outages + v3 (held-out) + tight GNSS velocity | 7 % (64%) | 18 % (24%) | 19 % (22%) | 20 % (20%) |
 | EKF + NHC through outages + v3 (held-out) + tight GNSS velocity + ZUPT engaging below 4 m/s | 7 % (63%) | 17 % (26%) | 17 % (27%) | 20 % (20%) |
 | EKF + NHC through outages + v3 (held-out) + tight GNSS velocity + learned GNSS trust (held-out weights) | 7 % (64%) | 19 % (26%) | 17 % (26%) | 19 % (19%) |
+| EKF + NHC through outages + v3 (held-out) + tight GNSS velocity + HMM map matching (heading only) | 7 % (66%) | 18 % (31%) | 17 % (33%) | 18 % (24%) |
+| EKF + NHC through outages + v3 (held-out) + tight GNSS velocity + HMM map matching (heading and cross-track) | 6 % (72%) | 10 % (51%) | 14 % (44%) | 13 % (37%) |
+| ... map matching with cross-track variance 9 m^2 | 6 % (72%) | 10 % (49%) | 14 % (42%) | 14 % (38%) |
+| ... map matching with cross-track variance 4 m^2 | 6 % (72%) | 10 % (50%) | 12 % (44%) | 15 % (39%) |
+| ... map matching with cross-track confidence floor 0.6 | 6 % (73%) | 8 % (56%) | 12 % (48%) | 14 % (40%) |
+| ... map matching with cross-track confidence floor 0.4 | 6 % (73%) | 8 % (56%) | 12 % (48%) | 14 % (40%) |
+| App configuration with the map-matching switch on | 22 % (26%) | 248 % (2%) | 898 % (1%) | 1660 % (2%) |
 | App configuration | 32 % (21%) | 767 % (0%) | 1169 % (0%) | 1407 % (1%) |
 | Baseline: hold last GNSS velocity | 18 % (39%) | 53 % (6%) | 71 % (3%) | 69 % (2%) |
 
@@ -199,6 +206,29 @@ _No flag was added: both settings already existed and stay at the old behaviour 
 | HMM matcher, cross-track only | 4.9 % (90%) | 5.1 % (67%) | 7.6 % (67%) | 5.3 % (60%) |
 
 _Synthetic motion at constant speed along real road geometry, not a recorded drive._
+
+**Map matching on REAL drives and REAL OpenStreetMap roads** (IO-VNBD drives in England, forced outages, scored against the VBOX reference; drives: m, s1, s2, s3c, s4, vfa01, vta16, vta2, vta8, vw3, y1). Same engine with and without the map, paired on the same outages; the matcher and its thresholds were not trained on these drives (the confidence floor was picked on the development drives only). Median drift (mean paired difference in percentage points, 95 % bootstrap interval, positive = the map helps):
+
+| Arm | Drives | Outage | Paired outages | Without map | With map | Mean difference (95 % interval) |
+|---|---|---|---:|---:|---:|---|
+| Heading + cross-track (confidence floor 0.8) | development | 50 m outage | 175 | 7.3 % | 6.5 % | +4.42 (+1.41 to +8.74) * |
+| Heading + cross-track (confidence floor 0.8) | development | 30 s outage | 160 | 17.5 % | 8.8 % | +9.03 (+6.12 to +12.06) * |
+| Heading + cross-track (confidence floor 0.8) | development | 60 s outage | 144 | 17.9 % | 12.5 % | +5.78 (+3.91 to +7.81) * |
+| Heading + cross-track (confidence floor 0.8) | development | 1 km outage | 106 | 20.5 % | 14.3 % | +1.71 (-3.92 to +6.69) |
+| Heading + cross-track (confidence floor 0.8) | held-out | 50 m outage | 56 | 5.4 % | 5.5 % | +2.11 (-0.94 to +6.34) |
+| Heading + cross-track (confidence floor 0.8) | held-out | 30 s outage | 48 | 22.5 % | 13.1 % | +8.34 (+4.10 to +12.94) * |
+| Heading + cross-track (confidence floor 0.8) | held-out | 60 s outage | 40 | 24.0 % | 18.7 % | +1.30 (-14.24 to +11.59) |
+| Heading + cross-track (confidence floor 0.8) | held-out | 1 km outage | 30 | 15.9 % | 12.8 % | +6.11 (+2.53 to +9.61) * |
+| Heading + cross-track (confidence floor 0.6, the setting chosen on the development drives) | development | 50 m outage | 177 | 7.2 % | 6.1 % | +6.27 (+2.66 to +11.16) * |
+| Heading + cross-track (confidence floor 0.6, the setting chosen on the development drives) | development | 30 s outage | 160 | 17.5 % | 8.2 % | +9.71 (+6.85 to +12.70) * |
+| Heading + cross-track (confidence floor 0.6, the setting chosen on the development drives) | development | 60 s outage | 144 | 17.9 % | 11.5 % | +7.05 (+5.10 to +9.19) * |
+| Heading + cross-track (confidence floor 0.6, the setting chosen on the development drives) | development | 1 km outage | 106 | 20.5 % | 14.7 % | +4.36 (-0.35 to +8.49) |
+| Heading + cross-track (confidence floor 0.6, the setting chosen on the development drives) | held-out | 50 m outage | 56 | 5.4 % | 5.0 % | +3.20 (-0.39 to +7.76) |
+| Heading + cross-track (confidence floor 0.6, the setting chosen on the development drives) | held-out | 30 s outage | 48 | 22.5 % | 9.6 % | +9.42 (+4.62 to +14.50) * |
+| Heading + cross-track (confidence floor 0.6, the setting chosen on the development drives) | held-out | 60 s outage | 40 | 24.0 % | 13.9 % | +8.05 (-3.20 to +17.32) |
+| Heading + cross-track (confidence floor 0.6, the setting chosen on the development drives) | held-out | 1 km outage | 30 | 15.9 % | 12.8 % | +4.57 (+0.70 to +8.24) * |
+
+_* interval excludes zero. The held-out rows are few outages on few drives. The switch in the app stays off by default: the app's own engine configuration was not what was evaluated, and no recorded Hyderabad drive exists._
 
 **Learned GNSS trust** (behind a flag, off by default; leave-one-drive-out, 6283 phone fixes): rank correlation with true fix error 0.28 (reported accuracy: 0.048); mean absolute error 2.487 m (reported accuracy: 2.638 m).
 

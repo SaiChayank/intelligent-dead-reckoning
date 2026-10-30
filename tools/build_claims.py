@@ -35,6 +35,13 @@ ARM_LABELS = {
     "ekf_nhc_v3_heldout_vel_nhcout": "EKF + NHC through outages + v3 (held-out) + tight GNSS velocity",
     "ekf_nhc_v3_heldout_vel_nhcout_zupt": "EKF + NHC through outages + v3 (held-out) + tight GNSS velocity + ZUPT engaging below 4 m/s",
     "ekf_nhc_v3_heldout_vel_nhcout_trust": "EKF + NHC through outages + v3 (held-out) + tight GNSS velocity + learned GNSS trust (held-out weights)",
+    "ekf_nhc_v3_heldout_vel_nhcout_map": "EKF + NHC through outages + v3 (held-out) + tight GNSS velocity + HMM map matching (heading only)",
+    "ekf_nhc_v3_heldout_vel_nhcout_mapx": "EKF + NHC through outages + v3 (held-out) + tight GNSS velocity + HMM map matching (heading and cross-track)",
+    "mapx_var9": "... map matching with cross-track variance 9 m^2",
+    "mapx_var4": "... map matching with cross-track variance 4 m^2",
+    "mapx_conf06": "... map matching with cross-track confidence floor 0.6",
+    "mapx_conf04": "... map matching with cross-track confidence floor 0.4",
+    "app_map": "App configuration with the map-matching switch on",
     "app": "App configuration",
     "hold_gnss": "Baseline: hold last GNSS velocity",
 }
@@ -126,6 +133,33 @@ def map_matching_section() -> list[str]:
                       f"{a['drift_pct_median_60s']:.1f} % ({a['share_under_10pct_60s']:.0%})"]
         lines.append(f"| {label} | " + " | ".join(cells) + " |")
     return lines + ["", "_Synthetic motion at constant speed along real road geometry, not a recorded drive._", ""]
+
+
+def map_real_section() -> list[str]:
+    m = load(REPORTS / "n7_map_comparison.json")
+    if m is None:
+        return ["_Map matching on real drives: not generated (reports/n7_map_comparison.json)._", ""]
+    names = {"heading_and_cross_track": "Heading + cross-track (confidence floor 0.8)",
+             "cross_track_confidence_0.6": "Heading + cross-track (confidence floor 0.6, the setting chosen on the development drives)"}
+    lines = ["**Map matching on REAL drives and REAL OpenStreetMap roads** (IO-VNBD drives in England, forced outages, scored against the VBOX "
+             f"reference; drives: {', '.join(m['drives'])}). Same engine with and without the map, paired on the same outages; the matcher and "
+             "its thresholds were not trained on these drives (the confidence floor was picked on the development drives only). "
+             "Median drift (mean paired difference in percentage points, 95 % bootstrap interval, positive = the map helps):", "",
+             "| Arm | Drives | Outage | Paired outages | Without map | With map | Mean difference (95 % interval) |",
+             "|---|---|---|---:|---:|---:|---|"]
+    for key, label in names.items():
+        for split in ("development", "held_out"):
+            for sc in ("d50", "t30", "t60", "d1000"):
+                r = m["results"].get(key, {}).get(split, {}).get(sc)
+                if r is None:
+                    continue
+                lo, hi = r["mean_difference_95pct_interval"]
+                lines.append(f"| {label} | {split.replace('_', '-')} | {SCENARIO_LABELS[sc]} | {r['paired_outages']} | "
+                             f"{r['median_drift_pct_without_map']} % | {r['median_drift_pct_with_map']} % | "
+                             f"{r['mean_paired_difference_pct_points']:+.2f} ({lo:+.2f} to {hi:+.2f}){' *' if r['interval_excludes_zero'] else ''} |")
+    lines += ["", "_* interval excludes zero. The held-out rows are few outages on few drives. The switch in the app stays off by default: "
+                  "the app's own engine configuration was not what was evaluated, and no recorded Hyderabad drive exists._", ""]
+    return lines
 
 
 def gnss_trust_section() -> list[str]:
@@ -419,7 +453,7 @@ def build() -> str:
              "about every 9 s).", ""]
     parts += iovnbd_table("vehicle", "IO-VNBD, vehicle-frame inertial input (external-IMU case)")
     parts += iovnbd_table("phone", "IO-VNBD, phone IMU export")
-    parts += t4_section() + speed_v3_section() + hard_turn_section() + map_matching_section() + gnss_trust_section()
+    parts += t4_section() + speed_v3_section() + hard_turn_section() + map_matching_section() + map_real_section() + gnss_trust_section()
     parts += edge_section() + synthetic_section()
     return "\n".join(parts).rstrip() + "\n"
 

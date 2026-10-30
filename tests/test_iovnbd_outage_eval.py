@@ -138,3 +138,42 @@ class RecoveryMetricsTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MapArmsTest(unittest.TestCase):
+    """The map arms run only on drives wholly inside the area the road graph was queried for."""
+
+    def setUp(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        self.tmp = tempfile.TemporaryDirectory()
+        (Path(self.tmp.name) / "coverage.json").write_text(
+            json.dumps({"boxes_west_south_east_north": [[-1.6, 52.3, -1.2, 52.5], [-0.8, 52.0, -0.7, 52.1]]}), encoding="utf-8")
+        self.saved = ev.ROAD_GRAPH_DIR
+        ev.ROAD_GRAPH_DIR = Path(self.tmp.name)
+
+    def tearDown(self):
+        ev.ROAD_GRAPH_DIR = self.saved
+        self.tmp.cleanup()
+
+    @staticmethod
+    def drive(lat, lon):
+        return {"lat": np.array(lat), "lon": np.array(lon)}
+
+    def test_a_drive_inside_a_box_is_covered(self):
+        self.assertTrue(ev.within_graph(self.drive([52.35, 52.45], [-1.5, -1.3])))
+        self.assertTrue(ev.within_graph(self.drive([52.02, 52.05], [-0.78, -0.72])))
+
+    def test_a_drive_that_leaves_every_box_is_not_covered(self):
+        self.assertFalse(ev.within_graph(self.drive([52.35, 52.55], [-1.5, -1.3])))       # north of the first box
+        self.assertFalse(ev.within_graph(self.drive([52.35, 52.05], [-1.5, -0.75])))      # spans two boxes: no single box holds it
+
+    def test_every_arm_has_a_label_and_a_colour_and_map_arms_are_held_out_arms(self):
+        for arm in ev.ARMS:
+            self.assertIn(arm, ev.ARM_LABELS)
+            self.assertIn(arm, ev.ARM_COLORS)
+        for arm in ev.MAP_ARMS:
+            if arm != "app_map":                       # the app arm uses the packaged speed model, not a held-out file
+                self.assertIn(arm, ev.HELDOUT_ARMS)
+        self.assertNotIn("app_map", ev.HELDOUT_ARMS)

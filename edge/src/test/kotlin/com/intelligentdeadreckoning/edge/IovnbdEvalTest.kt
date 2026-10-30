@@ -1,5 +1,6 @@
 package com.intelligentdeadreckoning.edge
 
+import com.intelligentdeadreckoning.app.navigation.AppFusion
 import com.intelligentdeadreckoning.app.navigation.ENGINE_OUTPUT_CONTRACT_VERSION
 import com.intelligentdeadreckoning.contracts.v1.CalibrationResult
 import com.intelligentdeadreckoning.contracts.v1.CalibrationStatus
@@ -128,5 +129,40 @@ class IovnbdEvalTest {
         assertTrue(IovnbdEval.Arm.APP.config().mountSlipDetectionEnabled)
         assertTrue(IovnbdEval.Arm.EKF_NHC_V3.config().speedCorrectionEnabled)
         assertFalse(IovnbdEval.Arm.EKF_NHC_V3.config().aiSpeedEstimationEnabled)
+    }
+
+    @Test
+    fun mapArmsDifferFromTheNoMapArmOnlyInTheMapSettings() {
+        val base = IovnbdEval.Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT.config()
+        val heading = IovnbdEval.Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT_MAP.config()
+        val cross = IovnbdEval.Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT_MAPX.config()
+        assertFalse(base.hmmMapMatchingEnabled)
+        assertFalse(base.mapCrossTrackEnabled)
+        assertEquals(base.copy(hmmMapMatchingEnabled = true, mapHeadingFeedbackEnabled = true), heading)
+        assertEquals(base.copy(hmmMapMatchingEnabled = true, mapHeadingFeedbackEnabled = true, mapCrossTrackEnabled = true), cross)
+        assertEquals(9.0, IovnbdEval.Arm.MAPX_VAR9.config().mapCrossTrackVarianceM2, 0.0)
+        assertEquals(cross.copy(mapCrossTrackVarianceM2 = 4.0), IovnbdEval.Arm.MAPX_VAR4.config())
+        assertEquals(cross.copy(mapCrossTrackMinConfidence = 0.6), IovnbdEval.Arm.MAPX_CONF06.config())
+    }
+
+    @Test
+    fun theJobsFileCarriesTheRoadGraphDirectoryForMapArms() {
+        val file = Files.createTempFile("jobs", ".json")
+        try {
+            Files.writeString(file, """{"jobs":[{"session":"s","output":"o.csv","arm":"mapx_var9","outages_ns":[["1","2"]],"road_graph":"g"}]}""")
+            val job = IovnbdEval.readJobs(file).single()
+            assertEquals(IovnbdEval.Arm.MAPX_VAR9, job.arm)
+            assertEquals("g", job.roadGraph.toString())
+        } finally {
+            Files.deleteIfExists(file)
+        }
+    }
+
+    @Test
+    fun theAppArmsAreExactlyTheAppFusionConfigurationsWithAndWithoutTheMapSwitch() {
+        assertEquals(AppFusion.config(experimentalMapMatching = false), IovnbdEval.Arm.APP.config())
+        assertEquals(AppFusion.config(experimentalMapMatching = true), IovnbdEval.Arm.APP_MAP.config())
+        assertTrue(IovnbdEval.Arm.APP_MAP.config().mapCrossTrackEnabled)
+        assertEquals(AppFusion.MAP_CROSS_TRACK_MIN_CONFIDENCE, IovnbdEval.Arm.APP_MAP.config().mapCrossTrackMinConfidence, 0.0)
     }
 }

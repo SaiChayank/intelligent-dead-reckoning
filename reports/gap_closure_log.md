@@ -657,3 +657,48 @@ GNSS withheld 30-55 s): (1) switch off through `AppFusion.factory` is bit-for-bi
 position); (2) switch on runs through the outage with no failed status, publishes at 10 Hz and ends within 30 m of the road end; (3) an engine built while the
 switch was on ignores a later flip to off. Plumbing and safety only, no accuracy claim (the 30 m bound is a sanity limit, not a result).
 `docs/MAP_MATCHING_DEVICE_CHECKLIST.md` lists the manual device checks, marked NOT RUN. The evidence for the matcher stays synthetic: nothing here changes the wording in the app.
+
+## 2026-10-31 N6: is the 10 % drift target a model limit or an information limit? (IO-VNBD held-out drives, proxy) - INFORMATION LIMIT
+
+Question: N2 gained about a point from richer features. Would a bigger or better-trained model on the same inputs get to 10 %?
+Method (`training/n6_information_bound.py`, output `reports/n6_information_bound.json`): train on the five held-out drives and score on the same five drives
+(in-sample, deliberately unfair), with the six extra N2 features, once with the shipped size (16 units, 60 epochs) and once with a much larger and longer-trained
+network (64 units, 300 epochs). In-sample scoring is an optimistic bound: the model has seen the answers.
+Result (median proxy drift at 30 / 60 s): 16 units 10.8 / 16.0 %; 64 units 8.3 / 12.2 %. Speed RMSE 2.24 and 1.52 m/s.
+Reading: even a model that has memorised these drives stays above 10 % at 60 s, and only the memorising network gets under it at 30 s. A model that has not seen
+the drive (N2 held-out: 10.8 / 15.6 %) cannot do better than the shipped one by a few points. The remaining error is not in the architecture; the 10 Hz vehicle IMU
+and the last fix do not contain the speed the driver will choose next. Information that could: wheel speed or CAN, a 100 Hz vibration signal (needs phone recordings),
+or map context (speed limits, curvature, junctions). The 50 m scenario already passes in the median (tight GNSS velocity arms, 6-7 %); 30 s, 60 s and 1 km do not.
+The 10 % target at 30 s and 60 s stays NOT MET and needs new inputs, not new models.
+
+## 2026-10-31 N7: map matching on REAL drives and REAL roads - POSITIVE RESULT (flag stays off)
+
+Until now the map evidence was simulated vehicles on the Hyderabad graph. IO-VNBD was recorded in England, so a real-data test needs English roads:
+OpenStreetMap highway ways (ODbL) were downloaded for one box per area where a usable drive was recorded (query saved beside the extract, `docs/MAP_MATCHING_REAL_DATA.md`)
+and built with the existing `tools/build_road_graph.py`. Nothing OSM is committed. The edge runner got arms that add the HMM matcher with heading feedback (`..._map`) and with
+cross-track (`..._mapx`); both reuse the best engine configuration (v3 held-out weights, tight GNSS velocity, NHC through outages), so each pair differs only in the map.
+Drives wholly inside the coverage: m, s1, s2, s3c, s4, vfa01, vta16, vta2, vta8, vw3, y1 (the T4 development / held-out split is reused). Paired on identical outages.
+- Heading feedback alone: small (30 s mean +0.65 pp, interval -0.46 to +1.72; 60 s +2.2 pp, 1.1 to 3.4). Not a meaningful gain at 30 s.
+- Cross-track correction, default confidence floor 0.8: 30 s median 18.4 -> 9.6 % ... (generated numbers in README and `reports/n7_map_comparison.json`); held-out 30 s 22.5 -> 13.1 %.
+- Parameter sweep, chosen on the DEVELOPMENT drives only and then read once on the held-out drives: cross-track variance 9 and 4 m^2 produced heavy tails (1 km mean worse by
+  18-42 pp) and were dropped; lowering the confidence floor from 0.8 to 0.6 was better on every development row (30 s 17.5 -> 8.2 %, 60 s 17.9 -> 11.5 %) and also held out
+  (30 s 22.5 -> 9.6 %, 60 s 24.0 -> 13.9 %, 1 km 15.9 -> 12.8 % with the interval excluding zero). A floor of 0.4 gave results identical to 0.6, so no lower value was tried.
+- Position accuracy while GNSS-aided is not harmed (median 0.71 m without, 0.73 m with; p95 3.79 vs 3.95 m). Engine failures: none.
+Reading for the 10 % target: with a map the 30 s outage median drops under 10 % on these drives, including the held-out ones (9.6 %), but 60 s (11.9 % overall, 13.9 % held-out) and 1 km (about 14 %) do not.
+The held-out rows are 30-56 outages on 5 drives; intervals are wide at 60 s. The map's gain comes from correcting cross-track error (the 13 % across-track share seen in T4), not from a better speed estimate.
+`AppFusion` now uses a 0.6 confidence floor in the experimental map-matching configuration. Caution: the app's own configuration (Model A v1) was NOT what was evaluated, and fed this vehicle-IMU input it performs
+far worse than the evaluated one (30 s median drift in the hundreds of percent), so an `app_map` arm (the app configuration with the switch on, on the same drives) is uninformative as evidence and is not quoted.
+The switch stays OFF by default; there is still no recorded Hyderabad drive, and the English roads are not Indian roads (OSM completeness differs). Device checks remain BLOCKED.
+
+## 2026-10-31 N8: learned GNSS trust on the phone's own fixes - INVALID TEST, DISCARDED; trust remains unproven
+
+Idea: the 1 Hz VBOX fixes (about 0.7 m) leave a trust model nothing to correct, so use the phone's own fixes (real errors, about one per 10 s) with the vehicle-frame inertial stream.
+Built such sessions and ran the trust and no-trust arms. The test is invalid: with a fix every 10 s the engine declares dead reckoning after about 2 s (median) and sits in it for about 99 %
+of the run (errors of kilometres), so the comparison measures sparse-fix failure, not trust. Densifying the fixes would be fabrication. The tooling, sessions and outputs were deleted; nothing was committed.
+Finding kept: the engine has no demonstrated recovery from sparse (10 s) fixes; the phone app receives 1 Hz fixes, so this is not the product case. The trust question needs 1 Hz phone recordings in a dense urban area
+(BLOCKED: field data). Fix-level evidence from Phase 3 is unchanged (rank correlation 0.28 vs 0.05, held out by drive).
+
+## 2026-10-31 N9: two-wheeler profile - STILL UNVALIDATED (searched for public data, none)
+
+A web search for open motorcycle or scooter IMU + GNSS datasets with RTK truth found only car and racing-car datasets (Ford Highway RTK, an F3 car, an RTK GNSS/INS car set). Nothing to validate a leaning two-wheeler against,
+so the profile stays marked unvalidated (N4) and not wired to any setting. Needs your own recording with `docs/FIELD_TEST_PROTOCOL.md`. BLOCKED: field data.

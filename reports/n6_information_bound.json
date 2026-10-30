@@ -1,0 +1,32 @@
+{
+ "drives": [
+  "s1",
+  "s3c",
+  "vfa01",
+  "vta2",
+  "vw3"
+ ],
+ "protocol": "trained and scored on the same drives (in-sample bound); N2 'full' features; proxy dead reckoning",
+ "hidden16_epochs60": {
+  "speed_rmse": 2.235,
+  "drift_median_pct": {
+   "30": 10.81,
+   "60": 15.99
+  },
+  "drift_samples": {
+   "30": 968,
+   "60": 958
+  }
+ },
+ "hidden64_epochs300": {
+  "speed_rmse": 1.516,
+  "drift_median_pct": {
+   "30": 8.26,
+   "60": 12.16
+  },
+  "drift_samples": {
+   "30": 968,
+   "60": 958
+  }
+ }
+}

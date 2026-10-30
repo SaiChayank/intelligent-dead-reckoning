@@ -10,6 +10,8 @@ import com.intelligentdeadreckoning.app.fusion.GeodeticAnchor
 import com.intelligentdeadreckoning.app.fusion.GnssTrustModel
 import com.intelligentdeadreckoning.app.fusion.SpeedCorrectionModel
 import com.intelligentdeadreckoning.app.fusion.Geodesy
+import com.intelligentdeadreckoning.app.matching.RoadGraph
+import com.intelligentdeadreckoning.app.navigation.AppFusion
 import com.intelligentdeadreckoning.app.navigation.CalibratingFusionEngine
 import com.intelligentdeadreckoning.app.navigation.ENGINE_OUTPUT_CONTRACT_VERSION
 import com.intelligentdeadreckoning.contracts.v1.CalibrationResult
@@ -78,6 +80,27 @@ object IovnbdEval {
         /** The best arm with each fix weighted by the learned GNSS trust model trained WITHOUT the drive being run. */
         EKF_NHC_V3_HELDOUT_VEL_NHCOUT_TRUST("ekf_nhc_v3_heldout_vel_nhcout_trust"),
 
+        /** The best arm plus the HMM map matcher with heading feedback only (needs a road graph covering the drive). */
+        EKF_NHC_V3_HELDOUT_VEL_NHCOUT_MAP("ekf_nhc_v3_heldout_vel_nhcout_map"),
+
+        /** The previous arm plus the cross-track position correction. */
+        EKF_NHC_V3_HELDOUT_VEL_NHCOUT_MAPX("ekf_nhc_v3_heldout_vel_nhcout_mapx"),
+
+        /** Cross-track variance 9 m^2 (pulls harder towards the road than the default 25). */
+        MAPX_VAR9("mapx_var9"),
+
+        /** Cross-track variance 4 m^2. */
+        MAPX_VAR4("mapx_var4"),
+
+        /** Cross-track accepted from match confidence 0.6 instead of 0.8. */
+        MAPX_CONF06("mapx_conf06"),
+
+        /** Cross-track accepted from match confidence 0.4. */
+        MAPX_CONF04("mapx_conf04"),
+
+        /** The configuration the app runs with the experimental map-matching switch on (AppFusion.config(true)); needs a road graph. */
+        APP_MAP("app_map"),
+
         /** Exactly the configuration the app runs (see CalibratingFusionEngine). */
         APP("app");
 
@@ -100,6 +123,19 @@ object IovnbdEval {
             EKF_NHC_V3_HELDOUT_VEL_NHCOUT -> FusionConfig(
                 speedCorrectionEnabled = true, gnssVelocitySigmaM_S = VELOCITY_SIGMA_M_S, nhcActiveDuringOutage = true,
             )
+            EKF_NHC_V3_HELDOUT_VEL_NHCOUT_MAP -> FusionConfig(
+                speedCorrectionEnabled = true, gnssVelocitySigmaM_S = VELOCITY_SIGMA_M_S, nhcActiveDuringOutage = true,
+                hmmMapMatchingEnabled = true, mapHeadingFeedbackEnabled = true,
+            )
+            EKF_NHC_V3_HELDOUT_VEL_NHCOUT_MAPX -> FusionConfig(
+                speedCorrectionEnabled = true, gnssVelocitySigmaM_S = VELOCITY_SIGMA_M_S, nhcActiveDuringOutage = true,
+                hmmMapMatchingEnabled = true, mapHeadingFeedbackEnabled = true, mapCrossTrackEnabled = true,
+            )
+            MAPX_VAR9 -> EKF_NHC_V3_HELDOUT_VEL_NHCOUT_MAPX.config().copy(mapCrossTrackVarianceM2 = 9.0)
+            MAPX_VAR4 -> EKF_NHC_V3_HELDOUT_VEL_NHCOUT_MAPX.config().copy(mapCrossTrackVarianceM2 = 4.0)
+            MAPX_CONF06 -> EKF_NHC_V3_HELDOUT_VEL_NHCOUT_MAPX.config().copy(mapCrossTrackMinConfidence = 0.6)
+            MAPX_CONF04 -> EKF_NHC_V3_HELDOUT_VEL_NHCOUT_MAPX.config().copy(mapCrossTrackMinConfidence = 0.4)
+            APP_MAP -> AppFusion.config(experimentalMapMatching = true)
             APP -> FusionConfig(
                 aiSpeedEstimationEnabled = true,
                 adaptiveNoiseScalingEnabled = true,
@@ -143,6 +179,8 @@ object IovnbdEval {
         val speedModel: Path? = null,
         /** Weights file for the learned GNSS trust model; required by the trust arm. */
         val trustModel: Path? = null,
+        /** Directory holding road-graph.json.gz; required by the map arms. */
+        val roadGraph: Path? = null,
     )
 
     /**
@@ -225,7 +263,11 @@ object IovnbdEval {
     val IOVNBD_MOUNT = MountThresholds(maxGravitySpreadM_S2 = 0.10, maxYawRateRad_S = 0.08)
 
     private val HELDOUT_ARMS = setOf(Arm.EKF_NHC_V3_HELDOUT, Arm.EKF_NHC_V3_HELDOUT_VEL, Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT,
-        Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT_ZUPT, Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT_TRUST)
+        Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT_ZUPT, Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT_TRUST,
+        Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT_MAP, Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT_MAPX,
+        Arm.MAPX_VAR9, Arm.MAPX_VAR4, Arm.MAPX_CONF06, Arm.MAPX_CONF04)
+    private val MAP_ARMS = setOf(Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT_MAP, Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT_MAPX,
+        Arm.MAPX_VAR9, Arm.MAPX_VAR4, Arm.MAPX_CONF06, Arm.MAPX_CONF04, Arm.APP_MAP)
 
     private fun FusionConfig.forIovnbd(): FusionConfig = copy(
         stationaryMinSamples = 15,
@@ -246,6 +288,8 @@ object IovnbdEval {
         val speedModel = job.speedModel?.let { Files.newInputStream(it).use(SpeedCorrectionModel::fromStream) }
         require(job.arm != Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT_TRUST || job.trustModel != null) { "trust arm needs a trust_model file" }
         val trustModel = job.trustModel?.let { Files.newInputStream(it).use(GnssTrustModel::fromStream) }
+        require(job.arm !in MAP_ARMS || job.roadGraph != null) { "map arm needs a road_graph directory" }
+        val roadGraph = job.roadGraph?.let { RoadGraph.load(it.resolve(RoadGraph.GRAPH_FILE).toFile()) }
         val engine = CalibratingFusionEngine(
             calibrator = job.calibration?.let { ReleasedCalibration(it) }
                 ?: CalibrationNavigationEngine(IOVNBD_MOUNT, IOVNBD_STATIONARY),
@@ -256,6 +300,7 @@ object IovnbdEval {
                 config = config,
                 speedCorrectionModel = speedModel,
                 gnssTrustModel = trustModel,
+                roadGraph = roadGraph,
             )
         },
         )
@@ -391,6 +436,7 @@ object IovnbdEval {
                     Outage(a[0].asString.toLong(), a[1].asString.toLong())
                 },
                 speedModel = o.get("speed_model")?.takeUnless { it.isJsonNull }?.asString?.let { Paths.get(it) },
+                roadGraph = o.get("road_graph")?.takeUnless { it.isJsonNull }?.asString?.let { Paths.get(it) },
                 trustModel = o.get("trust_model")?.takeUnless { it.isJsonNull }?.asString?.let { Paths.get(it) },
                 calibration = o.get("calibration")?.takeUnless { it.isJsonNull }?.asJsonObject?.let { c ->
                     val q = c.getAsJsonArray("q_vehicle_from_device_wxyz").map { it.asDouble }

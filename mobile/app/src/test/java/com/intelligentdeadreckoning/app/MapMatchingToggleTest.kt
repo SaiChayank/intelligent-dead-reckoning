@@ -117,7 +117,8 @@ class MapMatchingToggleTest {
         assertSame(graph, c.graph)
         assertTrue(c.config!!.hmmMapMatchingEnabled)
         assertTrue(c.config!!.mapCrossTrackEnabled)
-        assertEquals(AppFusion.config(false).copy(hmmMapMatchingEnabled = true, mapCrossTrackEnabled = true), c.config)
+        assertEquals(AppFusion.config(false).copy(hmmMapMatchingEnabled = true, mapCrossTrackEnabled = true,
+            mapCrossTrackMinConfidence = AppFusion.MAP_CROSS_TRACK_MIN_CONFIDENCE), c.config)
     }
 
     @Test

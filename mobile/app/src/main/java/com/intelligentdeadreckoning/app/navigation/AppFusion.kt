@@ -9,6 +9,13 @@ import com.intelligentdeadreckoning.contracts.v1.NavigationEngine
 object AppFusion {
     const val PUBLICATION_INTERVAL_NS = 100_000_000L
 
+    /**
+     * Cross-track corrections are accepted from this match confidence (the engine default is 0.8). Chosen on the development drives of the
+     * real-road evaluation (reports/n7_map_comparison.json, docs/MAP_MATCHING_REAL_DATA.md): 0.6 beat 0.8 there, and 0.4 gave exactly the same
+     * results as 0.6, so no lower value was tried.
+     */
+    const val MAP_CROSS_TRACK_MIN_CONFIDENCE = 0.6
+
     /** The shipped app configuration; [experimentalMapMatching] adds the HMM matcher and its cross-track correction. */
     fun config(experimentalMapMatching: Boolean): FusionConfig {
         val base = FusionConfig(
@@ -18,7 +25,9 @@ object AppFusion {
             mapHeadingFeedbackEnabled = true,
             adaptiveDecimationEnabled = true,
         )
-        return if (experimentalMapMatching) base.copy(hmmMapMatchingEnabled = true, mapCrossTrackEnabled = true) else base
+        return if (experimentalMapMatching) base.copy(
+            hmmMapMatchingEnabled = true, mapCrossTrackEnabled = true, mapCrossTrackMinConfidence = MAP_CROSS_TRACK_MIN_CONFIDENCE,
+        ) else base
     }
 
     /** What the factory hands to the engine constructor; a seam so tests can see the choice without running an engine. */
