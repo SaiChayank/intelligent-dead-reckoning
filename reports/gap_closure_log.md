@@ -637,3 +637,15 @@ GNSS-aided accuracy was already equal (median 0.71 m both). Verdict: no gain on 
 already good (median about 2.5 m) so there is nothing for a trust model to fix; the case it targets (urban-canyon multipath) is not in these data. A synthetic
 multipath stress test was considered and rejected: the model would have to be trained on synthetic errors, which makes the test circular. Needs field drives in a
 dense urban area with the sealed protocol. Flag stays off.
+
+## 2026-10-30 N4: two-wheeler profile - STILL UNVALIDATED (no data), guarded and documented
+
+Nothing can validate the profile without a two-wheeler recording, so this task makes the status explicit and checks for harm.
+- `VehicleProfile.validation(kind)` returns "UNVALIDATED: values chosen, no two-wheeler recording" for the two-wheeler and a tuned-on-IO-VNBD note for the car; a test pins both.
+  Nothing in the app selects the profile (it is not wired to any setting).
+- Non-harm check on SYNTHETIC car-like circles (12 noise seeds, tight GNSS velocity weighting in both arms, median / worst outage error in metres):
+  yaw 0.0: car 2.7 / 4.3, two-wheeler 2.7 / 4.3; +0.2: 7.1 / 13.7 vs 7.0 / 11.1; +0.4: 5.4 / 7.2 vs 5.6 / 7.3; -0.3: 3.9 / 6.6 vs 3.4 / 5.4.
+  The relaxed gates do not hurt car-style motion. This says nothing about real two-wheeler motion (roll, vibration, mounting).
+- `docs/FIELD_TEST_PROTOCOL.md` gained a "Two-wheeler recording" section: mounting, required manoeuvres, reference, forced outages, sealing, and the paired
+  scoring rule under which the profile may be marked validated.
+Still needs real two-wheeler drives (BLOCKED: field data).

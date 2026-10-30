@@ -78,3 +78,16 @@ You can test the system either during a natural outage (underpass, flyover tunne
      ```
    - All `.kml` and `.gpx` files from the phone will be downloaded to `reports/exports/pulled/`.
    - Double-click the `.kml` file to open it in Google Earth desktop to view the 3D ground truth vs. dead-reckoning trajectory overlay.
+
+### Two-wheeler recording (needed before the two-wheeler profile can be validated)
+
+`VehicleProfile.Kind.TWO_WHEELER` has values that were chosen, not measured. To measure them, record at least three drives of 20 minutes or more
+on a motorcycle or scooter, with a phone and the same tooling as Phases 1 to 3:
+
+1. Mount the phone rigidly (tank bag or handlebar mount with a locked orientation) and say which in the notes. A phone that can swing is not usable.
+2. Include starts and stops at junctions, at least ten turns each way at ordinary speed, one stretch of rough road and one stretch above 60 km/h.
+3. Record a reference: a second GNSS logger with a better antenna on the same vehicle, or a mapped route with timestamped landmarks. State which.
+4. Force outages with the mask tool exactly as in Phase 3 (30 s, 60 s, 1 km) and keep the outage list.
+5. Seal the recording with `tools/seal_experiment.py` before looking at any result, and decide the development/held-out split of the drives first.
+6. Score both profiles (car and two-wheeler) on the same outages with the same harness and report paired differences with intervals. The profile is
+   marked validated only if the two-wheeler profile is better on the held-out drives; otherwise it stays unvalidated or is retuned on the development drives.
