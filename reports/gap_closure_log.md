@@ -371,3 +371,33 @@ inside a sustained circle, default and two-wheeler profile alike: yaw rate 0.2 a
 the failure is not about lean and the test could not show the profile helps. OPEN: the engine's position diverges on sustained
 circles at 0.5 rad/s or more (a tight turn at 14 m/s) even with the filter fused beforehand. Not diagnosed: it may be the
 engine, the synthetic IMU conventions, or both. Worth a look before any claim about hard turns or two-wheelers.
+
+## 2026-10-30 - T1: initial heading from the aligning fix's course; scored synthetic 200 Hz runs
+
+SYNTHETIC throughout this entry: the 200 Hz drive comes from `tools/generate_fog_200hz.py` (scripted cruise at 12 m/s, one 8 s turn at
+0.2 rad/s, GNSS withheld 30-50 s, a stated tactical-grade noise profile). It is not a recording and not real FOG hardware.
+
+Defect found by scoring the 200 Hz run against truth: an engine built without an initial heading (the edge adapter) started with its
+attitude facing north and a half-turn heading variance even when the aligning fix carried a course. On a steady straight drive the
+heading is unobservable, so the first turn sent the filter off. Fix: `FusionConfig.initialHeadingFromGnssCourse` (default OFF; the
+phone app supplies its own heading), minimum speed `initialHeadingMinSpeedM_S` = 2 m/s; `MobileFusionAdapter` turns it on.
+`HeadingFromCourseTest` (host replay of the same trajectory, noise-free): without the option, worst outage error 537 m and final
+309 m; with it, 34 m and 13 m.
+
+`BenchmarkHarness` now also scores positions against a truth CSV (`t_ns,latitude_deg,longitude_deg,denied`, written by
+`generate_fog_200hz.py --truth`), reporting all-sample and GNSS-denied error and a per-second trace.
+
+Commands: `python tools/generate_fog_200hz.py fog.csv --truth truth.csv`; `python tools/external_imu_to_contract.py fog.csv fog.jsonl
+--accel-unit g --gyro-unit deg/s --mount-quat 1 0 0 0 --gyro-bias 0 0 0`; `gradlew -p edge runEdgeBenchmark -Pinput=fog.jsonl
+-Poutput=reports/edge_200hz_scored_<profile>.json -Preference=truth.csv -Pprofile=default|external-imu` (real-time paced, 70 s).
+
+| Edge profile | 200 Hz sustained | Ingress drops | RMSE all (m) | p95 all (m) | RMSE denied (m) | Final denied (m) |
+|---|---|---:|---:|---:|---:|---:|
+| default | True | 0 | 430.1 | 1006.1 | 201.6 | 381.1 |
+| external-imu | True | 0 | 6.5 | 18.4 | 12.0 | 26.0 |
+
+OPEN: the default profile still diverges on this drive even with the heading fix (the noise-free host replay with the same config
+stayed bounded, so the difference is not yet explained); the external-imu profile (v3 correction, 0.2 m/s GNSS velocity weighting,
+NHC through outages) is bounded. Do not quote the default-profile row as engine accuracy. Host-JVM numbers on a Windows laptop; no
+edge board. Tests at this commit: Python unittest 338 (5 skipped), pytest 386 passed / 5 skipped, mobile 462 passed, edge 20 passed,
+hygiene clean.
