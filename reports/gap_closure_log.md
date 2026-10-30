@@ -574,3 +574,27 @@ the wording. A build error was caught along the way: the edge source set lists f
 Not done: no run on a device, no new device test, and `EngineMapDeviceTest` was not run. The evidence behind the switch is synthetic
 (`reports/map_matching_eval.json`); nothing here changes that. Tests at this commit: Python unittest 346 (5 skipped), pytest 394 passed / 5 skipped,
 mobile 477 passed, edge 20 passed, hygiene clean, lint and assembleDebug OK.
+
+## 2026-10-30 - T7: claims, report and deck generated from result files
+
+Result: DONE (push pending an explicit go).
+
+`tools/build_claims.py` now also fills `<!-- CLAIMS:name:BEGIN -->..END` blocks and `<!--CV:key-->..<!--/CV-->` inline values in
+`reports/ai_dead_reckoning_final_report.md`, `reports/sih_hackathon_pitch_deck.md`, `tools/visualizer/pitch.html` and
+`tools/visualizer/index.html` (an unknown name is an error; `--check` covers all of them). New generated sections: the held-out check of the
+10 % target with the stop split (T4), the hard-turn sweep (T3), the trust comparison (T5) and the scored synthetic 200 Hz runs (T1, T2).
+The status table and paragraph are built from `reports/t4_split_comparison.json`; the verdict word is "met" only if every held-out median
+(30 s, 60 s, 1 km) is under 10 %, which it is not. Arm names in the tables are spelled out in full.
+
+Removed as unsupported, retired or typed: ">99.8 %" ZUPT accuracy and "78 % Lower Drift" (no measurement behind either), "< 3.2 % drift", the old
+in-sample "23 % to 26 %" range, the typed on-device counts (README and slideshow now point to this log), and a "< 5 ms" wake-up claim in the deck
+diagram. The one remaining typed calculation on the slideshow is labelled as illustrative arithmetic with assumed biases. `tests/test_claims.py`
+gained five tests (marker filling, unknown names, the verdict rule with mocked medians, retired numbers absent from every presentation file, the
+status row quoting the generated numbers).
+
+Queue summary (T1-T7): T1 DONE (heading-from-course option, truth scoring, synthetic 200 Hz reports); T2 DONE (root cause: undeclared accelerometer
+bias plus the legacy GNSS-velocity weighting); T3 NEGATIVE RESULT on the old claim and PARTIAL on mechanism (the >=0.5 rad/s failure did not
+reproduce); T4 NEGATIVE RESULT for the 10 % target and PARTIAL for the ZUPT fix; T5 NEGATIVE RESULT (trust shows no demonstrated gain, flag off); T6 DONE on the
+JVM and BLOCKED (needs phone) on device; T7 DONE. Still needing the phone or field data: the on-device failures, a phone-in-vehicle drive, field drives
+for the 10 % target, real remount and cold-start behaviour, and any real FOG/external-IMU recording.
+Tests at this commit: Python unittest 352 (5 skipped), pytest 400 passed / 5 skipped, mobile 477 passed, edge 20 passed, hygiene clean, claims check up to date.

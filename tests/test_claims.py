@@ -34,5 +34,58 @@ class ClaimsTest(unittest.TestCase):
             self.assertIsNone(arm["timing"]["inference_latency_p50_ms"])
 
 
+class GeneratedDocumentsTest(unittest.TestCase):
+    """The report, the deck and the visualizer pages carry generated blocks and values, never typed results."""
+
+    def test_every_generated_file_is_up_to_date_and_has_markers(self):
+        for path in build_claims.GENERATED_FILES:
+            text = path.read_text(encoding="utf-8")
+            self.assertTrue(build_claims.BLOCK_RE.search(text) or build_claims.VALUE_RE.search(text),
+                            f"{path.name} has no generated markers")
+
+    def test_retired_and_unsupported_numbers_are_gone_from_every_presentation_file(self):
+        for path in list(build_claims.GENERATED_FILES) + [ROOT / "README.md"]:
+            text = path.read_text(encoding="utf-8")
+            for retired in ("< 3.2% drift", "&lt; 3.2% drift", "&gt; 99.8%", "78% Lower Drift", "23% – 26%", "23% to 26%",
+                            "34 of 43", "< 5 ms Jerk"):
+                self.assertNotIn(retired, text, f"{path.name} still contains '{retired}'")
+
+    def test_unknown_marker_names_are_an_error(self):
+        with self.assertRaises(SystemExit):
+            build_claims.apply_markers("<!-- CLAIMS:nope:BEGIN -->\n<!-- CLAIMS:nope:END -->", {}, {}, "x")
+        with self.assertRaises(SystemExit):
+            build_claims.apply_markers("<!--CV:nope-->1<!--/CV-->", {}, {}, "x")
+
+    def test_markers_are_filled_and_the_text_outside_them_is_untouched(self):
+        out = build_claims.apply_markers("a <!--CV:k-->old<!--/CV--> b\n<!-- CLAIMS:t:BEGIN -->\nstale\n<!-- CLAIMS:t:END -->\nc",
+                                         {"t": "fresh"}, {"k": "new"}, "x")
+        self.assertEqual(out, "a <!--CV:k-->new<!--/CV--> b\n<!-- CLAIMS:t:BEGIN -->\nfresh\n<!-- CLAIMS:t:END -->\nc")
+
+    def test_the_ten_percent_verdict_follows_the_held_out_medians(self):
+        from unittest import mock
+
+        def held(t30, t60, d1000):
+            def cell(v):
+                return {"best_arm": {"median_drift_pct": v}, "hold_last_gnss": {"median_drift_pct": 50.0}}
+            return {"t30": cell(t30), "t60": cell(t60), "d1000": cell(d1000)}
+
+        with mock.patch.object(build_claims, "_held", return_value=held(9.0, 8.0, 7.0)):
+            self.assertTrue(build_claims.drift_verdict()[0])
+            self.assertEqual(build_claims.values()["verdict_word"], "met")
+        with mock.patch.object(build_claims, "_held", return_value=held(9.0, 8.0, 11.0)):
+            self.assertFalse(build_claims.drift_verdict()[0])
+            self.assertEqual(build_claims.values()["verdict_word"], "not met")
+            self.assertIn("Not met", build_claims.status_table())
+        with mock.patch.object(build_claims, "_held", return_value=None):
+            self.assertFalse(build_claims.drift_verdict()[0])
+
+    def test_the_status_row_quotes_the_generated_held_out_numbers(self):
+        import json
+        held = json.loads((ROOT / "reports" / "t4_split_comparison.json").read_text(encoding="utf-8"))["comparison"]["held_out"]
+        text = build_claims.status_table()
+        for sc in ("t30", "t60", "d1000"):
+            self.assertIn(f"{held[sc]['best_arm']['median_drift_pct']:.0f} %", text)
+
+
 if __name__ == "__main__":
     unittest.main()

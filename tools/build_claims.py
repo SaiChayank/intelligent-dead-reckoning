@@ -10,7 +10,9 @@ Sources (each section is omitted, with a note, when its file is missing; nothing
   reports/synthetic_outage_measured.json             scripted synthetic drive, measured by the JVM test
   reports/map_matching_eval.json                     map matching on real Hyderabad road geometry (JVM test)
 
-The README block between the CLAIMS markers is replaced; everything else in the README is hand-written.
+The README block between the CLAIMS markers is replaced; everything else in the README is hand-written. The final report, the
+pitch deck and the two visualizer pages carry `<!-- CLAIMS:name:BEGIN -->..END` blocks and `<!--CV:key-->..<!--/CV-->` inline values
+that this tool fills; an unknown name is an error. Result numbers in those files are therefore generated, never typed.
 """
 from __future__ import annotations
 
@@ -31,8 +33,9 @@ ARM_LABELS = {
     "ekf_nhc_vel": "EKF + NHC/ZUPT + tight GNSS velocity (0.2 m/s)",
     "ekf_nhc_v3_heldout_vel": "EKF + NHC/ZUPT + v3 (held-out) + tight GNSS velocity",
     "ekf_nhc_v3_heldout_vel_nhcout": "EKF + NHC through outages + v3 (held-out) + tight GNSS velocity",
-    "ekf_nhc_v3_heldout_vel_nhcout_zupt": "... + ZUPT engaging below 4 m/s",
-    "ekf_nhc_v3_heldout_vel_nhcout_trust": "... + learned GNSS trust (held-out weights)", "app": "App configuration",
+    "ekf_nhc_v3_heldout_vel_nhcout_zupt": "EKF + NHC through outages + v3 (held-out) + tight GNSS velocity + ZUPT engaging below 4 m/s",
+    "ekf_nhc_v3_heldout_vel_nhcout_trust": "EKF + NHC through outages + v3 (held-out) + tight GNSS velocity + learned GNSS trust (held-out weights)",
+    "app": "App configuration",
     "hold_gnss": "Baseline: hold last GNSS velocity",
 }
 SCENARIO_LABELS = {"d50": "50 m outage", "t30": "30 s outage", "t60": "60 s outage", "d1000": "1 km outage"}
@@ -129,10 +132,284 @@ def gnss_trust_section() -> list[str]:
     s = load(REPORTS / "gnss_trust_eval.json")
     if s is None:
         return []
-    return ["**Learned GNSS trust** (research artifact, not in the engine; leave-one-drive-out, "
-            f"{s['fixes']} phone fixes): rank correlation with true fix error {s['spearman']['learned']} "
-            f"(reported accuracy: {s['spearman']['reported_accuracy']}); mean absolute error "
-            f"{s['mae_m']['learned']} m (reported accuracy: {s['mae_m']['reported_accuracy']} m).", ""]
+    lines = ["**Learned GNSS trust** (behind a flag, off by default; leave-one-drive-out, "
+             f"{s['fixes']} phone fixes): rank correlation with true fix error {s['spearman']['learned']} "
+             f"(reported accuracy: {s['spearman']['reported_accuracy']}); mean absolute error "
+             f"{s['mae_m']['learned']} m (reported accuracy: {s['mae_m']['reported_accuracy']} m).", ""]
+    t5 = load(REPORTS / "t5_trust_comparison.json")
+    if t5 is None:
+        return lines
+    lines += ["Engine-level paired comparison on IO-VNBD (the best arm with and without the trust weighting; weights trained "
+              "without the drive being run; positive difference = trust helps; interval is a 95 % bootstrap of the mean "
+              "paired difference in percentage points):", "",
+              "| Drives | Outage | Paired outages | Median drift without | with | Mean difference (95 % interval) |",
+              "|---|---|---:|---:|---:|---|"]
+    excluding = 0
+    total = 0
+    for split in ("development", "held_out"):
+        for sc, r in t5["results"][split].items():
+            lo, hi = r["mean_difference_95pct_interval"]
+            total += 1
+            excluding += 1 if r["interval_excludes_zero"] else 0
+            lines.append(f"| {split.replace('_', '-')} | {SCENARIO_LABELS[sc]} | {r['paired_outages']} | "
+                         f"{r['median_drift_pct_without_trust']} % | {r['median_drift_pct_with_trust']} % | "
+                         f"{r['mean_paired_difference_pct_points']:+.2f} ({lo:+.2f} to {hi:+.2f}){' *' if r['interval_excludes_zero'] else ''} |")
+    lines += ["", f"{excluding} of {total} intervals exclude zero (marked *). Verdict: "
+                  f"{'no demonstrated gain' if excluding <= max(1, total // 8) else 'a gain in some scenarios'}; the flag stays off.", ""]
+    return lines
+
+
+BEST_ARM = "ekf_nhc_v3_heldout_vel_nhcout"
+HELD_SCENARIOS = ("t30", "t60", "d1000")
+
+
+def t4_section() -> list[str]:
+    t4 = load(REPORTS / "t4_split_comparison.json")
+    if t4 is None:
+        return ["_Held-out comparison: not generated (reports/t4_split_comparison.json)._", ""]
+    lines = ["**Held-out check of the 10 % target** (IO-VNBD, vehicle-frame input). The drives were split before any held-out "
+             f"result was read: development = {', '.join(t4['development_drives'])}; held-out = {', '.join(t4['held_out_drives'])}. "
+             "Earlier choices (0.2 m/s GNSS velocity weighting, NHC through outages) were made on all drives, so the held-out set "
+             "is fresh only for the ZUPT change. Median drift (share of outages under 10 %):", "",
+             "| Drives | Outage | Hold last GNSS | Best arm | Best arm + ZUPT engaging below 4 m/s |", "|---|---|---:|---:|---:|"]
+    for name in ("development", "held_out"):
+        for sc in ("d50", "t30", "t60", "d1000"):
+            c = t4["comparison"][name][sc]
+            cell = lambda k: f"{c[k]['median_drift_pct']:.1f} % ({c[k]['pass_under_10_pct']:.0%})"
+            lines.append(f"| {name.replace('_', '-')} | {SCENARIO_LABELS[sc]} | {cell('hold_last_gnss')} | "
+                         f"{cell('best_arm')} | {cell('best_arm_plus_zupt_4mps')} |")
+    dec = load(REPORTS / f"drift_decomposition_heldout_{BEST_ARM}.json")
+    dev = load(REPORTS / f"drift_decomposition_dev_{BEST_ARM}.json")
+    if dec and dev:
+        lines += ["", "Why: on the development drives the speed error is the largest part of the drift "
+                      "(median share of the squared error "
+                  + ", ".join(f"{SCENARIO_LABELS[sc]} {dev['summary'][sc]['share_speed']:.2f}" for sc in HELD_SCENARIOS)
+                  + "), and the heading part is about "
+                  + f"{min(dev['summary'][sc]['median_heading_part_pct_of_distance'] for sc in HELD_SCENARIOS):.1f}-"
+                  + f"{max(dev['summary'][sc]['median_heading_part_pct_of_distance'] for sc in HELD_SCENARIOS):.1f} % of the "
+                  "distance. Held-out median drift by whether the vehicle stops during the outage:", "",
+                  "| Outage | Outages with a stop | Median drift, with a stop | Median drift, no stop |", "|---|---:|---:|---:|"]
+        for sc in HELD_SCENARIOS:
+            s = dec["summary"][sc]
+            lines.append(f"| {SCENARIO_LABELS[sc]} | {s['outages_with_stop']} of {s['outages']} | "
+                         f"{s['median_drift_pct_with_stop']:.1f} % | {s['median_drift_pct_without_stop']:.1f} % |")
+        lines += ["", "Even outages with no stop drift well above 10 %, so better stop detection alone would not meet the target; the "
+                      "remaining error is the outage-to-outage spread of the speed estimate."]
+    return lines + [""]
+
+
+def hard_turn_section() -> list[str]:
+    h = load(REPORTS / "hard_turn_sweep.json")
+    if h is None:
+        return ["_Hard-turn sweep: not generated (reports/hard_turn_sweep.json)._", ""]
+    rates = sorted({float(r) for v in h["results"].values() for r in v})
+    names = {"default": "Default", "velocity_sigma_0.2": "GNSS velocity weighting 0.2 m/s",
+             "nhc_yaw_gate_2.0": "NHC yaw-rate gate raised to 2.0 rad/s",
+             "velocity_sigma_0.2_and_nhc_yaw_gate_2.0": "Both"}
+    lines = [f"**Sustained circles at a swept yaw rate**: {h['description']} Worst horizontal error during the outage, metres; "
+             "negative rates are right turns:", "",
+             "| Configuration | " + " | ".join(f"{r:+.1f} rad/s" for r in rates) + " |", "|---|" + "---:|" * len(rates)]
+    for key, label in names.items():
+        if key in h["results"]:
+            lines.append(f"| {label} | " + " | ".join(f"{h['results'][key][str(r)]:.0f}" for r in rates) + " |")
+    return lines + ["", "_No flag was added: both settings already existed and stay at the old behaviour by default._", ""]
+
+
+EDGE_RUNS = (
+    ("default profile, accelerometer bias undeclared", "edge_200hz_scored_default.json"),
+    ("default profile, accelerometer bias declared zero", "edge_200hz_scored_default_declared_accel_bias.json"),
+    ("external-imu profile, bias undeclared", "edge_200hz_scored_external_imu.json"),
+    ("external-imu profile, bias declared zero", "edge_200hz_scored_external_imu_declared_accel_bias.json"),
+)
+
+
+def edge_section() -> list[str]:
+    rows = []
+    for label, name in EDGE_RUNS:
+        d = load(REPORTS / name)
+        if d is None:
+            continue
+        g = d["geodetic_accuracy"]
+        rows.append(f"| {label} | {d['input']['paired_imu_processing_wall']['hz']:.2f} | {d['queues']['ingress']['dropped']} | "
+                    f"{g['all']['rmse_m']:.1f} | {g['gnss_denied']['rmse_m']:.1f} | {g['gnss_denied']['final_m']:.1f} |")
+    if not rows:
+        return ["_Edge 200 Hz runs: not generated (reports/edge_200hz_scored_*.json)._", ""]
+    return ["**Edge engine at 200 Hz (SYNTHETIC drive, host JVM, real-time paced)**: a scripted 70 s drive with one turn and a 20 s "
+            "GNSS outage, tactical-grade noise stated in `tools/generate_fog_200hz.py`; not a recording and not real FOG hardware. "
+            "Positions are scored against the generator's truth. A paired processing rate just under 200 Hz is pacing jitter on this "
+            "laptop, not a drop (no samples were dropped).", "",
+            "| Run | Paired processing (Hz) | Ingress drops | RMSE all (m) | RMSE during outage (m) | Final error after outage (m) |",
+            "|---|---:|---:|---:|---:|---:|", *rows, "",
+            "_Declaring a zero accelerometer bias is an assumption (the generator adds a small real bias). With the bias undeclared and "
+            "the legacy GNSS-velocity weighting, the default profile diverges; the cause and the fixes are in "
+            "`reports/gap_closure_log.md` (T2)._", ""]
+
+
+def _pct(x: float) -> str:
+    return f"{x:.0f} %"
+
+
+def _held() -> dict | None:
+    t4 = load(REPORTS / "t4_split_comparison.json")
+    return None if t4 is None else t4["comparison"]["held_out"]
+
+
+def drift_verdict() -> tuple[bool, str]:
+    """(met, sentence) for the PS target on the pre-registered held-out drives, by the rule: every median under 10 %."""
+    held = _held()
+    if held is None:
+        return False, "not evaluated (reports/t4_split_comparison.json missing)"
+    med = {sc: held[sc]["best_arm"]["median_drift_pct"] for sc in HELD_SCENARIOS}
+    hold = {sc: held[sc]["hold_last_gnss"]["median_drift_pct"] for sc in HELD_SCENARIOS}
+    met = all(m < 10.0 for m in med.values())
+    return met, (f"IO-VNBD, vehicle-frame IMU, held-out drives, best arm: median {med['t30']:.0f} % (30 s), "
+                 f"{med['t60']:.0f} % (60 s), {med['d1000']:.0f} % (1 km); holding the last GNSS velocity gives "
+                 f"{hold['t30']:.0f} %, {hold['t60']:.0f} %, {hold['d1000']:.0f} %")
+
+
+def status_rows() -> list[tuple[str, str, str]]:
+    met, drift_text = drift_verdict()
+    rows = [("No OBD-II / CAN-bus / wheel sensor", "Engine inputs are IMU and GNSS only", "Met by design"),
+            ("Dead-reckoning drift under 10 %", drift_text, "**Met on these data**" if met else "**Not met**"),
+            ("Phone IMU in a vehicle", "No phone drive has been scored", "**Not evaluated**")]
+    s = load(REPORTS / "speed_v3_eval.json")
+    if s is not None:
+        r = s["speed_rmse"]
+        rows.append(("AI speed estimation",
+                     f"v1 (synthetic) fails on real drives; v3 lowers leave-one-drive-out speed RMSE from "
+                     f"{r['integrated']['all']} (integrated acceleration) and {r['hold']['all']} (hold last speed) to "
+                     f"{r['learned']['all']} m/s", "Partly met, external-IMU input only"))
+    rows.append(("Auto mount calibration", "Implemented; the in-motion calibrator does not reach VALID on 10 Hz IO-VNBD data; a saved "
+                 "mount lets a drive start at the first accurate fix (synthetic replay, host only)", "Partly met, unverified in a vehicle"))
+    rows.append(("10 Hz output", "Publication interval is 100 ms; host replay only", "Met on host, not on device"))
+    mm = load(REPORTS / "map_matching_eval.json")
+    if mm is not None:
+        def med(arm, cond):
+            return next(a for a in mm["arms"] if a["arm_id"] == arm and a["condition"] == cond)["drift_pct_median_30s"]
+        conds = sorted({a["condition"] for a in mm["arms"]})
+        matched = [med("hmm_heading_crosstrack", c) for c in conds]
+        unmatched = [med("no_map", c) for c in conds]
+        rows.append(("Offline map and matching",
+                     f"HMM matcher with cross-track feedback on synthetic motion over real Hyderabad roads (30 s outages): median "
+                     f"{min(matched):.0f}-{max(matched):.0f} % against {min(unmatched):.0f}-{max(unmatched):.0f} % with no map; not a "
+                     "recorded drive; the in-app switch is experimental and off by default", "Implemented; not verified in a vehicle"))
+    e = load(REPORTS / "edge_200hz_scored_external_imu_declared_accel_bias.json")
+    if e is not None:
+        g = e["geodetic_accuracy"]
+        rows.append(("Edge engine, external IMU at 200 Hz",
+                     f"SYNTHETIC drive: {g['gnss_denied']['rmse_m']:.0f} m RMSE during a 20 s outage, {g['gnss_denied']['final_m']:.0f} m "
+                     f"final, {e['input']['paired_imu_processing_wall']['hz']:.2f} Hz paired processing, {e['queues']['ingress']['dropped']} "
+                     "drops; no real FOG hardware", "Partly met (synthetic only)"))
+    rows.append(("Verification", "Host suites pass (Python, mobile JVM, edge); on-device suite had failures on its first run and needs the "
+                 "phone", "See the log"))
+    return rows
+
+
+def status_table() -> str:
+    lines = ["| Requirement | Evidence | Status |", "| :--- | :--- | :--- |"]
+    lines += [f"| {a} | {b} | {c} |" for a, b, c in status_rows()]
+    return "\n".join(lines)
+
+
+def status_paragraph() -> str:
+    met, text = drift_verdict()
+    sentence = ("the PS #26168 mandate (drift under 10% of distance in an outage) is **met** on these data. " if met else
+                "the PS #26168 mandate (drift under 10% of distance in an outage) is **not yet met**. ")
+    return (f"**Status:** {sentence}Best measured: {text}. Nothing has been scored on a phone in a vehicle. The earlier "
+            "synthetic-trained Model A v1 (a 1D-CNN) fails on real drives, and figures this deck used to show came from a "
+            "scripted synthetic drive and were not measured. Every result number in this deck is generated from files in "
+            "`reports/` by `tools/build_claims.py`.")
+
+
+def values() -> dict[str, str]:
+    held = _held()
+    out: dict[str, str] = {}
+    if held is not None:
+        meds = [held[sc]["best_arm"]["median_drift_pct"] for sc in HELD_SCENARIOS]
+        out["heldout_range"] = f"{min(meds):.0f}% – {max(meds):.0f}%"
+        out["heldout_best_30s"] = f"{held['t30']['best_arm']['median_drift_pct']:.0f}%"
+    met, _ = drift_verdict()
+    out["verdict_word"] = "met" if met else "not met"
+    out["gate_sentence"] = "The 10% gate is met on these data." if met else "The 10% gate is not met."
+    mm = load(REPORTS / "map_matching_eval.json")
+    if mm is not None:
+        conds = sorted({a["condition"] for a in mm["arms"]})
+        pick = lambda arm: [next(a for a in mm["arms"] if a["arm_id"] == arm and a["condition"] == c)["drift_pct_median_30s"] for c in conds]
+        matched, unmatched = pick("hmm_heading_crosstrack"), pick("no_map")
+        out["mm_summary"] = (f"{min(matched):.0f}-{max(matched):.0f}% vs {min(unmatched):.0f}-{max(unmatched):.0f}%")
+    s = load(REPORTS / "synthetic_outage_measured.json")
+    if s is not None:
+        arm = {a["arm_id"]: a for a in s["arms"]}
+        out["synthetic_ins_drift"] = f"{arm['classical_ins']['drift_pct']:.1f}% Drift ({arm['classical_ins']['end_error_m']:.0f} m)"
+        out["synthetic_fused_drift"] = f"{arm['fusion_constraints']['drift_pct']:.1f}% Drift ({arm['fusion_constraints']['end_error_m']:.0f} m)"
+        out["synthetic_fused_drift_short"] = f"{arm['fusion_constraints']['drift_pct']:.0f}%"
+        out["synthetic_ins_drift_short"] = f"{arm['classical_ins']['drift_pct']:.0f}%"
+    v = load(REPORTS / "iovnbd_eval" / "vehicle" / "summary.json")
+    if v is not None:
+        b = v["scenarios"]["t30"][BEST_ARM]
+        out["slide_tolerance_m"] = f"{0.1 * b['median_distance_m']:.0f} m"
+        out["slide_tolerance_note"] = f"10% of the {b['median_distance_m']:.0f} m median outage distance (all 11 drives)."
+        out["slide_end_error_m"] = f"{b['end_error_m_median']:.0f} m"
+    return out
+
+
+def slide_table() -> str:
+    v = load(REPORTS / "iovnbd_eval" / "vehicle" / "summary.json")
+    if v is None:
+        return "<!-- no vehicle summary -->"
+    rows = []
+    for arm, label in (("ins", "INS only (no constraints)"), ("ekf_nhc", "ES-EKF + NHC/ZUPT"),
+                       ("ekf_nhc_v3_heldout", "ES-EKF + NHC/ZUPT + speed correction v3 (held-out weights)"),
+                       (BEST_ARM, "Best arm: + tight GNSS velocity, NHC through outages"),
+                       ("hold_gnss", "Baseline: hold last GNSS velocity")):
+        x = v["scenarios"]["t30"].get(arm)
+        if not x or not x.get("scored"):
+            continue
+        highlight = ' class="highlight"' if arm == BEST_ARM else ""
+        rows.append(f"<tr{highlight}><td><strong>{label}</strong></td><td>{x['end_error_m_median']:.0f} m</td>"
+                    f"<td>{x['median_distance_m']:.0f} m</td>"
+                    f'<td style="color:var(--accent-red); font-weight:700;">{x["drift_pct_median"]:.0f}%</td>'
+                    f'<td><span class="{"pill-fail" if x["drift_pct_median"] >= 10 else "pill-ok"}">'
+                    f'{"NOT MET" if x["drift_pct_median"] >= 10 else "MET"}</span> '
+                    f"({x['pass_rate_drift_lt_10pct']:.0%} of outages under 10%)</td><td>{x['scored']} outages</td></tr>")
+    return "\n".join(rows)
+
+
+def blocks() -> dict[str, str]:
+    return {"status_table": status_table(), "status_paragraph": status_paragraph(), "results": build_body(),
+            "slide_table": slide_table()}
+
+
+import re  # noqa: E402
+
+BLOCK_RE = re.compile(r"(<!-- CLAIMS:(\w+):BEGIN -->)(.*?)(<!-- CLAIMS:\2:END -->)", re.S)
+VALUE_RE = re.compile(r"(<!--CV:(\w+)-->)(.*?)(<!--/CV-->)", re.S)
+GENERATED_FILES = (
+    ROOT / "reports" / "ai_dead_reckoning_final_report.md",
+    ROOT / "reports" / "sih_hackathon_pitch_deck.md",
+    ROOT / "tools" / "visualizer" / "pitch.html",
+    ROOT / "tools" / "visualizer" / "index.html",
+)
+
+
+def apply_markers(text: str, block_map: dict[str, str], value_map: dict[str, str], where: str = "") -> str:
+    """Fill `<!-- CLAIMS:name:BEGIN -->..END` blocks and `<!--CV:key-->..<!--/CV-->` inline values; unknown names are an error."""
+    def block(m):
+        if m.group(2) not in block_map:
+            raise SystemExit(f"{where}: unknown claims block '{m.group(2)}'")
+        return f"{m.group(1)}\n{block_map[m.group(2)].strip(chr(10))}\n{m.group(4)}"
+
+    def value(m):
+        if m.group(2) not in value_map:
+            raise SystemExit(f"{where}: unknown claims value '{m.group(2)}' (is its source file missing?)")
+        return f"{m.group(1)}{value_map[m.group(2)]}{m.group(4)}"
+
+    return VALUE_RE.sub(value, BLOCK_RE.sub(block, text))
+
+
+def build_body() -> str:
+    full = build()
+    return full.split("\n", 2)[2] if full.startswith("# ") else full
 
 
 def build() -> str:
@@ -142,7 +419,8 @@ def build() -> str:
              "about every 9 s).", ""]
     parts += iovnbd_table("vehicle", "IO-VNBD, vehicle-frame inertial input (external-IMU case)")
     parts += iovnbd_table("phone", "IO-VNBD, phone IMU export")
-    parts += speed_v3_section() + map_matching_section() + gnss_trust_section() + synthetic_section()
+    parts += t4_section() + speed_v3_section() + hard_turn_section() + map_matching_section() + gnss_trust_section()
+    parts += edge_section() + synthetic_section()
     return "\n".join(parts).rstrip() + "\n"
 
 
@@ -169,14 +447,20 @@ def main(argv=None) -> int:
     claims = build()
     readme = refreshed_readme(claims)
     claims_path = REPORTS / "claims.md"
+    block_map, value_map = blocks(), values()
+    targets = {path: apply_markers(path.read_text(encoding="utf-8"), block_map, value_map, path.name)
+               for path in GENERATED_FILES if path.is_file()}
     if args.check:
-        ok = claims_path.is_file() and claims_path.read_text(encoding="utf-8") == claims and \
-            README.read_text(encoding="utf-8") == readme
+        ok = (claims_path.is_file() and claims_path.read_text(encoding="utf-8") == claims
+              and README.read_text(encoding="utf-8") == readme
+              and all(path.read_text(encoding="utf-8") == text for path, text in targets.items()))
         print("claims up to date" if ok else "claims out of date: run tools/build_claims.py")
         return 0 if ok else 1
     claims_path.write_text(claims, encoding="utf-8", newline="\n")
     README.write_text(readme, encoding="utf-8", newline="\n")
-    print(f"wrote {claims_path.relative_to(ROOT)} and refreshed README.md")
+    for path, text in targets.items():
+        path.write_text(text, encoding="utf-8", newline="\n")
+    print(f"wrote {claims_path.relative_to(ROOT)}, refreshed README.md and {len(targets)} other generated files")
     return 0
 
 

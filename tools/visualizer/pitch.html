@@ -475,8 +475,8 @@
           </div>
           <div class="card-metric">
             <div class="metric-label">Measured Median Drift</div>
-            <div class="metric-val red">23% – 26%</div>
-            <div class="metric-sub">Best arm, 30 s to 1 km outages, IO-VNBD with a vehicle-frame IMU. The 10% gate is not met.</div>
+            <div class="metric-val red"><!--CV:heldout_range-->17% – 24%<!--/CV--></div>
+            <div class="metric-sub">Best arm, 30 s to 1 km outages, held-out IO-VNBD drives with a vehicle-frame IMU. <!--CV:gate_sentence-->The 10% gate is not met.<!--/CV--></div>
           </div>
           <div class="card-metric">
             <div class="metric-label">Engine Output Rate</div>
@@ -515,7 +515,7 @@
             <div class="box-code" style="margin-bottom: 14px;">
               <span style="color:#64748b;">// Classical Double Integration Error Growth:</span><br>
               <span style="color:var(--accent-red); font-weight:700;">p(t) = p0 + v0*t + 1/2*(a_meas - b_a)*t^2 + 1/6*(bias_drift)*t^3</span><br><br>
-              <span style="color:#64748b;">// Error at t = 20s (accel bias 0.12 m/s²):</span><br>
+              <span style="color:#64748b;">// Illustrative arithmetic with assumed biases, not a measurement. Error at t = 20s (accel bias 0.12 m/s²):</span><br>
               delta_p &approx; 1/2 * (0.12) * (20)² = <strong>24.0 metres</strong><br>
               + speed bias drift (0.8 m/s * 20s) = <strong>16.0 metres</strong><br>
               <span style="color:var(--accent-red);">Total 20s Error: 40.0 m (16.6% Drift) — FAILED MANDATE</span>
@@ -658,9 +658,9 @@
               <div class="metric-sub">Updated at 100 Hz with 10 ms causal step.</div>
             </div>
             <div class="card-metric" style="margin-bottom: 12px;">
-              <div class="metric-label">Zero-Speed Hold (ZUPT) Accuracy</div>
-              <div class="metric-val green">&gt; 99.8%</div>
-              <div class="metric-sub">Automatically freezes velocity state during red lights and standstill.</div>
+              <div class="metric-label">Zero-Speed Hold (ZUPT)</div>
+              <div class="metric-val">Not measured</div>
+              <div class="metric-sub">Freezes the velocity at standstill once the filter's own speed is low. Stops that happen inside a GNSS outage can go unnoticed (see the results slide).</div>
             </div>
             <div class="card-metric">
               <div class="metric-label">Forward Velocity RMS Error</div>
@@ -698,9 +698,9 @@
               <div class="metric-sub">Sub-millisecond nearest segment lookup on mobile CPU.</div>
             </div>
             <div class="card-metric" style="margin-bottom: 12px;">
-              <div class="metric-label">Heading Drift Reduction</div>
-              <div class="metric-val green">78% Lower Drift</div>
-              <div class="metric-sub">Suppresses gyro integration drift through 1+ km tunnel transits.</div>
+              <div class="metric-label">Map-matched vs unmatched drift, 30 s (synthetic)</div>
+              <div class="metric-val"><!--CV:mm_summary-->4-7% vs 14-15%<!--/CV--></div>
+              <div class="metric-sub">Synthetic motion on real Hyderabad road geometry, not a recorded drive; the in-app switch is experimental and off by default.</div>
             </div>
             <div class="card-metric">
               <div class="metric-label">Ghosting Protection</div>
@@ -725,55 +725,30 @@
               <th>Distance (m)</th>
               <th>Drift Ratio (%)</th>
               <th>SIH Gate (&lt; 10%)</th>
-              <th>Safety Margin</th>
+              <th>Scored outages</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td><strong>INS only (no constraints)</strong></td>
-              <td>116 m</td>
-              <td>270 m</td>
-              <td style="color:var(--accent-red); font-weight:700;">43%</td>
-              <td><span class="pill-fail">NOT MET</span> (8% of outages under 10%)</td>
-              <td>219 outages</td>
-            </tr>
-            <tr>
-              <td><strong>ES-EKF + NHC/ZUPT</strong></td>
-              <td>116 m</td>
-              <td>261 m</td>
-              <td style="color:var(--accent-red); font-weight:700;">42%</td>
-              <td><span class="pill-fail">NOT MET</span> (6% of outages under 10%)</td>
-              <td>212 outages</td>
-            </tr>
-            <tr class="highlight">
-              <td><strong>ES-EKF + NHC/ZUPT + speed correction v3 (in-sample weights)</strong></td>
-              <td>58 m</td>
-              <td>264 m</td>
-              <td style="color:var(--accent-red); font-weight:700;">23%</td>
-              <td><span class="pill-fail">NOT MET</span> (20% of outages under 10%)</td>
-              <td>207 outages</td>
-            </tr>
-            <tr>
-              <td><strong>Baseline: hold last GNSS velocity</strong></td>
-              <td>142 m</td>
-              <td>270 m</td>
-              <td style="color:var(--accent-red); font-weight:700;">53%</td>
-              <td><span class="pill-fail">NOT MET</span> (6% of outages under 10%)</td>
-              <td>221 outages</td>
-            </tr>
+<!-- CLAIMS:slide_table:BEGIN -->
+<tr><td><strong>INS only (no constraints)</strong></td><td>116 m</td><td>270 m</td><td style="color:var(--accent-red); font-weight:700;">43%</td><td><span class="pill-fail">NOT MET</span> (8% of outages under 10%)</td><td>219 outages</td></tr>
+<tr><td><strong>ES-EKF + NHC/ZUPT</strong></td><td>116 m</td><td>261 m</td><td style="color:var(--accent-red); font-weight:700;">42%</td><td><span class="pill-fail">NOT MET</span> (6% of outages under 10%)</td><td>212 outages</td></tr>
+<tr><td><strong>ES-EKF + NHC/ZUPT + speed correction v3 (held-out weights)</strong></td><td>60 m</td><td>264 m</td><td style="color:var(--accent-red); font-weight:700;">24%</td><td><span class="pill-fail">NOT MET</span> (17% of outages under 10%)</td><td>209 outages</td></tr>
+<tr class="highlight"><td><strong>Best arm: + tight GNSS velocity, NHC through outages</strong></td><td>50 m</td><td>264 m</td><td style="color:var(--accent-red); font-weight:700;">18%</td><td><span class="pill-fail">NOT MET</span> (24% of outages under 10%)</td><td>213 outages</td></tr>
+<tr><td><strong>Baseline: hold last GNSS velocity</strong></td><td>142 m</td><td>270 m</td><td style="color:var(--accent-red); font-weight:700;">53%</td><td><span class="pill-fail">NOT MET</span> (6% of outages under 10%)</td><td>221 outages</td></tr>
+<!-- CLAIMS:slide_table:END -->
           </tbody>
         </table>
 
         <div class="grid-3" style="margin-top: 14px;">
           <div class="card-metric">
             <div class="metric-label">SIH Tolerance, median 30 s outage</div>
-            <div class="metric-val red">26 m</div>
-            <div class="metric-sub">10% of the 264 m median outage distance.</div>
+            <div class="metric-val red"><!--CV:slide_tolerance_m-->26 m<!--/CV--></div>
+            <div class="metric-sub"><!--CV:slide_tolerance_note-->10% of the 264 m median outage distance (all 11 drives).<!--/CV--></div>
           </div>
           <div class="card-metric">
             <div class="metric-label">Median End Error (best arm)</div>
-            <div class="metric-val red">58 m</div>
-            <div class="metric-sub">At the end of a 30 s outage; weights are in-sample.</div>
+            <div class="metric-val red"><!--CV:slide_end_error_m-->50 m<!--/CV--></div>
+            <div class="metric-sub">At the end of a 30 s outage, best arm, all 11 drives (speed-model weights trained without the drive being run).</div>
           </div>
           <div class="card-metric">
             <div class="metric-label">Compliance Status</div>
@@ -845,7 +820,7 @@
             <div class="metric-label">Step 3: Verify & Export</div>
             <div style="font-size: 14px; font-weight: 700; color: var(--accent-green); margin-top: 8px;">One-Tap KML Export</div>
             <div class="metric-sub" style="font-size: 13px; margin-top: 8px; line-height: 1.5;">
-              Review the live Drift Report Card (&lt; 3.2% drift). Tap "Export KML" or run <code>pull_device_telemetry.py</code>.
+              Review the Evaluation tab (it states what was measured). Tap "Export KML" or run <code>pull_device_telemetry.py</code>.
             </div>
           </div>
         </div>
@@ -871,7 +846,7 @@
             <div class="card-metric" style="margin-bottom: 12px;">
               <div class="metric-label">Local test status</div>
               <div class="metric-val">Host suites pass</div>
-              <div class="metric-sub">Python, mobile JVM and edge suites pass locally; on the phone 34 of 43 tests passed and 9 fail (not yet investigated).</div>
+              <div class="metric-sub">Python, mobile JVM and edge suites pass locally; on the phone some tests failed on the first run (not yet investigated; counts are in reports/gap_closure_log.md).</div>
             </div>
             <div class="card-metric">
               <div class="metric-label">Contract Integrity</div>
@@ -884,7 +859,7 @@
               <strong>Status against Problem Statement #26168:</strong><br>
               The mandate (drift under 10% of distance in a GNSS outage) is <strong style="color:var(--accent-red);">not yet met</strong> on any drive.
               <br><br>
-              &bull; IO-VNBD, vehicle-frame IMU, best arm: median drift 23% to 26%<br>
+              &bull; IO-VNBD, vehicle-frame IMU, best arm, held-out drives: median drift <!--CV:heldout_range-->17% – 24%<!--/CV--><br>
               &bull; Not yet scored on a phone in a vehicle<br>
               &bull; No network permission; offline map implemented
             </div>
@@ -929,8 +904,8 @@ No certificate is issued. Figures come from reports/iovnbd_eval (tools/iovnbd_ou
   - Inertial input: VBOX vehicle-frame yaw rate and acceleration (external-IMU case).
   - Outages are withheld GNSS intervals; drift is the position error at the end of
     the outage divided by the distance travelled in it. Gate: under 10 %.
-  - The v3 speed correction weights were trained on these drives (in-sample).
-    Held-out numbers are in reports/speed_v3_eval.json.
+  - The v3 speed correction weights in the table are trained without the drive being run
+    (held-out). Held-out speed numbers are in reports/speed_v3_eval.json.
   - Nothing has been scored on a phone in a vehicle.
       </div>
     </div>
