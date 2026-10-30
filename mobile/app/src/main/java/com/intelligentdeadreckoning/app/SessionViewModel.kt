@@ -80,6 +80,7 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
      *  fusion waits for valid mounting and measured forward course. Field qualification is pending. */
     private val navigation = NavigationRuntime(
         CalibratingFusionEngine(
+            fusionFactory = com.intelligentdeadreckoning.app.navigation.AppFusion.factory({ mapEvaluation.value }, { evaluationGraph }),
             store = com.intelligentdeadreckoning.app.calibration.FileCalibrationStore(File(application.noBackupFilesDir, "calibration")),
             deviceKey = "${android.os.Build.MANUFACTURER}_${android.os.Build.MODEL}",
         ),
@@ -397,8 +398,17 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
     }
 
     /** The evaluation toggle: on, the map matcher runs beside the raw output; off, it does not. */
-    val mapEvaluation = MutableStateFlow(false)
-    private var evaluationGraph: RoadGraph? = null
+    private val settings = com.intelligentdeadreckoning.app.settings.AppSettings(
+        com.intelligentdeadreckoning.app.settings.SharedPreferencesSettingsStore.of(application),
+    )
+    val mapEvaluation = MutableStateFlow(settings.experimentalMapMatching)
+    @Volatile private var evaluationGraph: RoadGraph? = null
+
+    /** Persists the experimental map-matching choice; it reaches the engine from the next navigation session. */
+    fun setMapMatching(enabled: Boolean) {
+        settings.experimentalMapMatching = enabled
+        mapEvaluation.value = enabled
+    }
     /**
      * The engine session's map display: NavigationEngine → NavigationState →
      * NavigationPresentation → MapOverlay → MapLibreRenderer. Rebuilt per subscriber like the

@@ -830,7 +830,7 @@ private fun EnginePanel(
             modifier = Modifier.testTag("engine_quality"),
         )
         IdrChip(
-            label = if (evaluation) "Map matching on" else "Map matching off",
+            label = MapMatchingCopy.label(evaluation),
             selected = evaluation,
             onClick = { onEvaluation(!evaluation) },
             glyph = IdrGlyph.LAYERS,
@@ -856,6 +856,12 @@ private fun EnginePanel(
             color = IdrPalette.textMuted,
             style = IdrType.bodySmall,
             modifier = Modifier.testTag("engine_evaluation"),
+        )
+        Text(
+            MapMatchingCopy.CAVEAT,
+            color = IdrPalette.textMuted,
+            style = IdrType.bodySmall,
+            modifier = Modifier.testTag(MapMatchingCopy.TEST_TAG_CAVEAT),
         )
         Text(
             "This engine view reads no sensor and estimates nothing. Ordinary app use supplies no valid calibration, " +

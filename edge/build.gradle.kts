@@ -26,6 +26,7 @@ kotlin {
             "**/app/navigation/NavigationRuntime.kt",
             "**/app/navigation/UninitializedNavigationEngine.kt",
             "**/app/navigation/CalibratingFusionEngine.kt",
+            "**/app/navigation/AppFusion.kt",
             "**/edge/**",
         )
         // The shipped Model A weights, byte-identical to the app asset, for the AI arms.

@@ -549,3 +549,28 @@ accuracy while fixes are available: median 0.71 m without and 0.71 m with trust,
 separate recovery-time metric is not recorded by the harness and was not measured. Why it is plausible: the Phase 3 signal is weak and phone fixes in
 these drives are already accurate (median about 2.5 m). Not adopted anywhere; the default engine is unchanged.
 Tests at this commit: Python unittest 346 (5 skipped), pytest 394 passed / 5 skipped, mobile 470 passed, edge 20 passed, hygiene clean.
+
+## 2026-10-30 - T6: experimental map-matching switch in the app (default OFF)
+
+Result: DONE on the JVM; the on-device part is BLOCKED (needs phone).
+
+Before: the app had an in-memory "map evaluation" switch on the map screen that drew a map-matched overlay beside the raw position. It was not
+persisted and never reached the engine, which is built without a road graph.
+
+Now: `settings/AppSettings.kt` keeps `experimentalMapMatching` (default false, one stored key) behind a `SettingsStore` interface with a
+SharedPreferences implementation and an in-memory one. `navigation/AppFusion.kt` holds the app's engine configuration and factory:
+`config(false)` is exactly the previous app configuration; `config(true)` adds `hmmMapMatchingEnabled` and `mapCrossTrackEnabled`. The factory reads the
+switch and the loaded road graph when fusion starts, so a change applies from the next navigation session and never to a running one; with the
+switch on but no graph loaded yet the engine is built without map feedback. `CalibratingFusionEngine`'s default factory now calls
+`AppFusion.build` with the unchanged off configuration. `SessionViewModel.setMapMatching` persists and updates the existing switch, and the
+road graph is the one the existing overlay already loads. The map screen shows an always-visible caveat (`MapMatchingCopy.CAVEAT`): experimental,
+evidence so far is synthetic motion on the Hyderabad road graph and not a recorded drive, and the choice reaches the engine from the next
+navigation session. The chip labels stay exactly "Map matching on/off" because `EngineMapDeviceTest` matches them exactly.
+
+Tests: `MapMatchingToggleTest` (7): default off, persistence across a new settings object over a fake preferences file, in-memory parity, the off
+configuration equal to the shipped one with no graph, the on configuration with a graph, on without a graph, the switch read at session start, and
+the wording. A build error was caught along the way: the edge source set lists files explicitly, so `AppFusion.kt` was added to it.
+
+Not done: no run on a device, no new device test, and `EngineMapDeviceTest` was not run. The evidence behind the switch is synthetic
+(`reports/map_matching_eval.json`); nothing here changes that. Tests at this commit: Python unittest 346 (5 skipped), pytest 394 passed / 5 skipped,
+mobile 477 passed, edge 20 passed, hygiene clean, lint and assembleDebug OK.

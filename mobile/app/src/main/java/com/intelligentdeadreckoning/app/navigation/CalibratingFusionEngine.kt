@@ -26,18 +26,7 @@ class CalibratingFusionEngine(
     private val deviceKey: String? = null,
     private val clockEpochMs: () -> Long = System::currentTimeMillis,
     private val fusionFactory: (Double) -> NavigationEngine = { heading ->
-        FusionNavigationEngine(
-            initialHeadingRad = heading,
-            publicationIntervalNs = 100_000_000L,
-            config = com.intelligentdeadreckoning.app.fusion.FusionConfig(
-                aiSpeedEstimationEnabled = true,
-                adaptiveNoiseScalingEnabled = true,
-                mountSlipDetectionEnabled = true,
-                mapHeadingFeedbackEnabled = true,
-                adaptiveDecimationEnabled = true,
-            ),
-            roadGraph = roadGraph,
-        )
+        AppFusion.build(heading, AppFusion.config(experimentalMapMatching = false), roadGraph)
     },
 ) : NavigationEngine {
     private var prior: Record? = null

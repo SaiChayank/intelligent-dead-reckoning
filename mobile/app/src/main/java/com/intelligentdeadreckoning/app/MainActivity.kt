@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
             val replayVisible by session.replayVisible.collectAsStateWithLifecycle()
             IdrTheme { IdrApp(state, session::start, session::stop, source, capture,
                 liveGnss = liveGnss, engineMap = engineMap, navigation = navigationState,
-                evaluation = mapEvaluation, onEvaluation = { session.mapEvaluation.value = it },
+                evaluation = mapEvaluation, onEvaluation = session::setMapMatching,
                 evaluationLibrary = evaluationLibrary, onReloadEvaluation = session::refreshEvaluation,
                 onSource = session::select,
                 onPermission = {
