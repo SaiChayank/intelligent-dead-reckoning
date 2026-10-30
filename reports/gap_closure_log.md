@@ -472,3 +472,46 @@ Reading (synthetic):
 - Unexplained: a right turn at -0.7 rad/s with only the raised gate gave 41 m against 9 m for the left turn at +0.7.
 - Tests at this commit: Python unittest 339 (5 skipped), pytest 387 passed / 5 skipped, mobile 467 passed, edge 20 passed, hygiene clean.
 - Not done: no recorded hard-turn drive, and the two-wheeler profile is still unvalidated.
+
+## 2026-10-30 - T4: the 10 % drift target (IO-VNBD vehicle input; no tuning on the held-out drives)
+
+Result: NEGATIVE RESULT for the target; PARTIAL for the one fix tried. 10 % is not reachable with this speed estimator on these drives.
+
+Pre-registered split (fixed before any held-out result was read; drives sorted by name, every other one): development = m, s2, s4,
+vta16, vta8, y1; held-out = s1, s3c, vfa01, vta2, vw3. Caveat: earlier choices (0.2 m/s velocity weighting, NHC through outages) were
+made on all eleven drives, so the held-out set is fresh only for the new fix. v3 weights are leave-one-drive-out as before.
+
+Decomposition (`tools/drift_decomposition.py`, 5 tests; development drives, best arm; counterfactual tracks, truth used only to
+score; generated in `reports/drift_decomposition_dev_*.json`): the speed part (engine speed with true heading) is about 12-13 % of
+distance at 30 s, 60 s and 1 km, the heading part (engine heading with true speed) 5-6.5 %, the starting offset 0.1-0.3 %. Speed
+dominates (median share about 0.8). The speed error is mostly random in sign per outage (median signed bias +6.8 %, median
+absolute 12.9 %), so a global scale correction would only move the median absolute bias from 12.9 % to 12.5 % (a development-drive
+diagnostic; the scale fix was therefore not evaluated).
+
+Main finding: in 36 % of the 30 s and 60 s development outages the vehicle stops at some point. While truth is stopped the engine's
+speed is a median 3.45 m/s, and those outages show +22 % speed bias against a 9.2 % median absolute bias without a stop. Cause: the
+ZUPT only engages when the filter's own speed is already under `zuptSpeedThresholdM_S` (0.5 m/s), which an inflated speed never is.
+
+The one fix (frozen before the held-out run): ZUPT engage speed 4 m/s (existing setting `zuptSpeedThresholdM_S`; evaluation arm
+`ekf_nhc_v3_heldout_vel_nhcout_zupt`; no default changed). Median drift % (pass under 10 % in brackets), generated from
+`reports/t4_split_comparison.json`:
+
+| Split | Scenario | Hold last GNSS | Best arm | Best arm + ZUPT 4 m/s |
+|---|---|---:|---:|---:|
+| development | d50 | 18.7 (38 %) | 7.5 (62 %) | 7.5 (63 %) |
+| development | t30 | 50.0 (8 %) | 18.1 (26 %) | 16.9 (26 %) |
+| development | t60 | 68.6 (2 %) | 17.9 (23 %) | 15.9 (28 %) |
+| development | d1000 | 68.9 (2 %) | 20.5 (20 %) | 20.8 (20 %) |
+| held_out | d50 | 13.0 (41 %) | 5.3 (68 %) | 5.8 (64 %) |
+| held_out | t30 | 59.6 (2 %) | 21.6 (18 %) | 17.3 (26 %) |
+| held_out | t60 | 78.7 (4 %) | 24.0 (17 %) | 23.0 (25 %) |
+| held_out | d1000 | 62.1 (3 %) | 16.7 (19 %) | 16.7 (19 %) |
+
+Stop split (generated in `reports/drift_decomposition_heldout_*.json`): even outages with NO stop have held-out median drift of
+about 18-23 %, so perfect stop detection would not reach 10 %. The fix helps a little at 30 s and 60 s, is neutral at 1 km and
+slightly worse at 50 m; it is not adopted. An earlier back-of-envelope floor of 10-11 % with perfect stop detection was too
+optimistic; the generated no-stop numbers are the ones to quote.
+
+Open: the remaining error is the per-outage spread of the speed estimate; a better speed model (probably needing real 100 Hz
+phone data) would be needed. Heading is a secondary 5-6 % contributor. Tests at this commit: Python unittest 344 (5 skipped),
+pytest 392 passed / 5 skipped, mobile 467 passed, edge 20 passed, hygiene clean.

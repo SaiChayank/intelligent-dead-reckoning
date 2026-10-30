@@ -30,7 +30,8 @@ ARM_LABELS = {
     "ekf_nhc_v3_heldout": "EKF + NHC/ZUPT + speed correction v3 (held-out weights)",
     "ekf_nhc_vel": "EKF + NHC/ZUPT + tight GNSS velocity (0.2 m/s)",
     "ekf_nhc_v3_heldout_vel": "EKF + NHC/ZUPT + v3 (held-out) + tight GNSS velocity",
-    "ekf_nhc_v3_heldout_vel_nhcout": "EKF + NHC through outages + v3 (held-out) + tight GNSS velocity", "app": "App configuration",
+    "ekf_nhc_v3_heldout_vel_nhcout": "EKF + NHC through outages + v3 (held-out) + tight GNSS velocity",
+    "ekf_nhc_v3_heldout_vel_nhcout_zupt": "... + ZUPT engaging below 4 m/s", "app": "App configuration",
     "hold_gnss": "Baseline: hold last GNSS velocity",
 }
 SCENARIO_LABELS = {"d50": "50 m outage", "t30": "30 s outage", "t60": "60 s outage", "d1000": "1 km outage"}

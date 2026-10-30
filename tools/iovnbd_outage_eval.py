@@ -66,7 +66,7 @@ def session_info(conv: dict) -> dict:
     return info
 ORIGIN_NS = 1_000_000_000
 
-ARMS = ("ins", "ekf_nhc", "ekf_nhc_ai", "ekf_nhc_v3", "ekf_nhc_v3_heldout", "ekf_nhc_vel", "ekf_nhc_v3_heldout_vel", "ekf_nhc_v3_heldout_vel_nhcout", "app")
+ARMS = ("ins", "ekf_nhc", "ekf_nhc_ai", "ekf_nhc_v3", "ekf_nhc_v3_heldout", "ekf_nhc_vel", "ekf_nhc_v3_heldout_vel", "ekf_nhc_v3_heldout_vel_nhcout", "ekf_nhc_v3_heldout_vel_nhcout_zupt", "app")
 BASELINE = "hold_gnss"
 ARMS_REPORT = ARMS + (BASELINE,)
 ARM_LABELS = {
@@ -79,6 +79,7 @@ ARM_LABELS = {
     "ekf_nhc_vel": "EKF + NHC/ZUPT + tight GNSS velocity (0.2 m/s)",
     "ekf_nhc_v3_heldout_vel": "EKF + NHC/ZUPT + v3 (held-out) + tight GNSS velocity",
     "ekf_nhc_v3_heldout_vel_nhcout": "EKF + NHC through outages + v3 (held-out) + tight GNSS velocity",
+    "ekf_nhc_v3_heldout_vel_nhcout_zupt": "... + ZUPT engaging below 4 m/s",
     "app": "App configuration",
 }
 
@@ -321,7 +322,7 @@ def _plt():
     return plt
 
 
-ARM_COLORS = {BASELINE: "#7f7f7f", "ins": "#d1495b", "ekf_nhc": "#edae49", "ekf_nhc_ai": "#00798c", "ekf_nhc_v3": "#2a9d8f", "ekf_nhc_v3_heldout": "#6a4c93", "ekf_nhc_vel": "#8d6a9f", "ekf_nhc_v3_heldout_vel": "#1b9e77", "ekf_nhc_v3_heldout_vel_nhcout": "#d95f02", "app": "#30638e"}
+ARM_COLORS = {BASELINE: "#7f7f7f", "ins": "#d1495b", "ekf_nhc": "#edae49", "ekf_nhc_ai": "#00798c", "ekf_nhc_v3": "#2a9d8f", "ekf_nhc_v3_heldout": "#6a4c93", "ekf_nhc_vel": "#8d6a9f", "ekf_nhc_v3_heldout_vel": "#1b9e77", "ekf_nhc_v3_heldout_vel_nhcout": "#d95f02", "ekf_nhc_v3_heldout_vel_nhcout_zupt": "#e7298a", "app": "#30638e"}
 
 
 def plot_drive(seq: str, truth: dict, navs: dict[str, dict], outages: list[tuple[int, int]],
@@ -413,7 +414,7 @@ def eligible_drives() -> list[tuple[str, dict]]:
     return out
 
 
-HELDOUT_ARMS = ("ekf_nhc_v3_heldout", "ekf_nhc_v3_heldout_vel", "ekf_nhc_v3_heldout_vel_nhcout")
+HELDOUT_ARMS = ("ekf_nhc_v3_heldout", "ekf_nhc_v3_heldout_vel", "ekf_nhc_v3_heldout_vel_nhcout", "ekf_nhc_v3_heldout_vel_nhcout_zupt")
 
 
 def heldout_weights(seq: str) -> Path:

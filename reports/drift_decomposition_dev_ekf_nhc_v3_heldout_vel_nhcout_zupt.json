@@ -1,0 +1,67 @@
+{
+  "arm": "ekf_nhc_v3_heldout_vel_nhcout_zupt",
+  "drives": [
+    "m",
+    "s2",
+    "s4",
+    "vta16",
+    "vta8",
+    "y1"
+  ],
+  "summary": {
+    "d1000": {
+      "outages": 112,
+      "median_drift_pct": 20.156176187139238,
+      "median_heading_part_pct_of_distance": 6.449021962120164,
+      "median_speed_part_pct_of_distance": 13.190222199515095,
+      "median_start_offset_pct_of_distance": 0.06830857328418782,
+      "median_abs_along_pct": 11.574124357462274,
+      "median_abs_across_pct": 9.824855923311716,
+      "outages_with_stop": 65,
+      "median_drift_pct_with_stop": 24.03158186424172,
+      "median_drift_pct_without_stop": 16.90693904527932,
+      "median_signed_speed_bias_pct": 5.201261918811159,
+      "median_abs_speed_bias_pct": 14.9008659652572,
+      "fraction_speed_too_high": 0.5714285714285714,
+      "share_heading": 0.2622041065351442,
+      "share_speed": 0.737784438037397,
+      "share_start_offset": 1.187919369080221e-05
+    },
+    "t30": {
+      "outages": 169,
+      "median_drift_pct": 17.282616568378206,
+      "median_heading_part_pct_of_distance": 5.2204434204118515,
+      "median_speed_part_pct_of_distance": 11.400993097133195,
+      "median_start_offset_pct_of_distance": 0.30473599816707453,
+      "median_abs_along_pct": 8.542792930373308,
+      "median_abs_across_pct": 10.244816310617901,
+      "outages_with_stop": 49,
+      "median_drift_pct_with_stop": 20.192433310374295,
+      "median_drift_pct_without_stop": 16.482152028570983,
+      "median_signed_speed_bias_pct": 5.662485698273253,
+      "median_abs_speed_bias_pct": 10.82332821128358,
+      "fraction_speed_too_high": 0.6390532544378699,
+      "share_heading": 0.20133117019085162,
+      "share_speed": 0.7759864764149632,
+      "share_start_offset": 0.00043668571344449795
+    },
+    "t60": {
+      "outages": 147,
+      "median_drift_pct": 15.933077369119106,
+      "median_heading_part_pct_of_distance": 5.537063825333592,
+      "median_speed_part_pct_of_distance": 10.737994529993847,
+      "median_start_offset_pct_of_distance": 0.13527204065508824,
+      "median_abs_along_pct": 7.580297788989522,
+      "median_abs_across_pct": 9.481437099231242,
+      "outages_with_stop": 65,
+      "median_drift_pct_with_stop": 23.860563428398,
+      "median_drift_pct_without_stop": 12.482855374567787,
+      "median_signed_speed_bias_pct": 6.229077050246861,
+      "median_abs_speed_bias_pct": 9.882124581931695,
+      "fraction_speed_too_high": 0.6122448979591837,
+      "share_heading": 0.18158571818007552,
+      "share_speed": 0.803312984820013,
+      "share_start_offset": 0.00010826419525794868
+    }
+  }
+}

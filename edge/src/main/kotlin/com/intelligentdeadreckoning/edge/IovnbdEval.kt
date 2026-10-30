@@ -71,6 +71,9 @@ object IovnbdEval {
         /** The previous arm with the NHC kept active through the whole outage instead of standing down after 3 s. */
         EKF_NHC_V3_HELDOUT_VEL_NHCOUT("ekf_nhc_v3_heldout_vel_nhcout"),
 
+        /** The previous arm with the ZUPT allowed to engage below [ZUPT_ENGAGE_SPEED_M_S] instead of 0.5 m/s (stops go unnoticed otherwise). */
+        EKF_NHC_V3_HELDOUT_VEL_NHCOUT_ZUPT("ekf_nhc_v3_heldout_vel_nhcout_zupt"),
+
         /** Exactly the configuration the app runs (see CalibratingFusionEngine). */
         APP("app");
 
@@ -82,6 +85,10 @@ object IovnbdEval {
             EKF_NHC_V3_HELDOUT -> FusionConfig(speedCorrectionEnabled = true)
             EKF_NHC_VEL -> FusionConfig(gnssVelocitySigmaM_S = VELOCITY_SIGMA_M_S)
             EKF_NHC_V3_HELDOUT_VEL -> FusionConfig(speedCorrectionEnabled = true, gnssVelocitySigmaM_S = VELOCITY_SIGMA_M_S)
+            EKF_NHC_V3_HELDOUT_VEL_NHCOUT_ZUPT -> FusionConfig(
+                speedCorrectionEnabled = true, gnssVelocitySigmaM_S = VELOCITY_SIGMA_M_S, nhcActiveDuringOutage = true,
+                zuptSpeedThresholdM_S = ZUPT_ENGAGE_SPEED_M_S,
+            )
             EKF_NHC_V3_HELDOUT_VEL_NHCOUT -> FusionConfig(
                 speedCorrectionEnabled = true, gnssVelocitySigmaM_S = VELOCITY_SIGMA_M_S, nhcActiveDuringOutage = true,
             )
@@ -97,6 +104,7 @@ object IovnbdEval {
         companion object {
             /** Chosen from a sweep over 1.0, 0.5, 0.2 and 0.1 m/s on these drives (see reports/gap_closure_log.md). */
             const val VELOCITY_SIGMA_M_S = 0.2
+            const val ZUPT_ENGAGE_SPEED_M_S = 4.0
             fun of(id: String): Arm = entries.firstOrNull { it.id == id }
                 ?: throw IllegalArgumentException("unknown arm '$id' (expected ${entries.joinToString { it.id }})")
         }
@@ -206,7 +214,8 @@ object IovnbdEval {
      */
     val IOVNBD_MOUNT = MountThresholds(maxGravitySpreadM_S2 = 0.10, maxYawRateRad_S = 0.08)
 
-    private val HELDOUT_ARMS = setOf(Arm.EKF_NHC_V3_HELDOUT, Arm.EKF_NHC_V3_HELDOUT_VEL, Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT)
+    private val HELDOUT_ARMS = setOf(Arm.EKF_NHC_V3_HELDOUT, Arm.EKF_NHC_V3_HELDOUT_VEL, Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT,
+        Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT_ZUPT)
 
     private fun FusionConfig.forIovnbd(): FusionConfig = copy(
         stationaryMinSamples = 15,
