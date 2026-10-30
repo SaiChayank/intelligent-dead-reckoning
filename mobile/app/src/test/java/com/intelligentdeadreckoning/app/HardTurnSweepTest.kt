@@ -22,13 +22,13 @@ class HardTurnSweepTest {
     class Result(val worstOutageM: Double, val finalM: Double, val headingErrAtOutageEndDeg: Double, val speedAtOutageEnd: Double)
 
     fun simulate(yaw: Double, config: FusionConfig, fixSigmaM: Double = 2.0, gyroBias: Double = 0.0, suppliedHeading: Boolean = true,
-                 noise: Double = 1.0): Result {
+                 noise: Double = 1.0, seed: Long = 5): Result {
         val engine = FusionNavigationEngine(config = config, publicationIntervalNs = 100_000_000L,
             initialHeadingRad = if (suppliedHeading) 0.0 else null)
         engine.initialize(EngineSession(header, "s", 0L),
             rec(0L, "cal", CalibrationResult("cal", CalibrationStatus.VALID, Quaternion(1.0, 0.0, 0.0, 0.0),
                 Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 0.0), 0.9)), InitializationMode.EVALUATION)
-        val rnd = Random(5)
+        val rnd = Random(seed)
         val anchor = ScriptedDrive.ANCHOR
         val v = 14.0
         var heading = Math.PI / 2.0          // CCW from east; start due north
@@ -101,6 +101,33 @@ class HardTurnSweepTest {
         out.parentFile.mkdirs()
         out.writeText(json.toString())
         table.forEach { (name, byRate) -> println("SWEEP %-42s %s".format(name, byRate.entries.joinToString(" ") { "%+.1f:%.0f".format(it.key, it.value.worstOutageM) })) }
+    }
+
+    private fun median(v: List<Double>) = v.sorted().let { (it[(it.size - 1) / 2] + it[it.size / 2]) / 2.0 }
+    private val seeds = 1L..12L
+
+    /** Earlier single-seed runs showed 41 m for a right turn and 9 m for a left turn with only the gate raised. */
+    @Test
+    fun theLeftRightGapWithOnlyTheGateRaisedIsNoiseNotAnAsymmetry() {
+        val cfg = FusionConfig(nhcMaxYawRateRad_S = 2.0)
+        for (w in listOf(0.7, 1.0)) {
+            val left = seeds.map { simulate(w, cfg, seed = it).worstOutageM }
+            val right = seeds.map { simulate(-w, cfg, seed = it).worstOutageM }
+            println("SEEDS gate_only %.1f left %s | right %s".format(w, left.joinToString(" ") { "%.0f".format(it) }, right.joinToString(" ") { "%.0f".format(it) }))
+            val ratio = median(right) / median(left)
+            org.junit.Assert.assertTrue("median right/left at $w rad/s = $ratio", ratio in 0.5..2.0)
+            org.junit.Assert.assertTrue("a single seed spans a wide range", left.max() > 3.0 * left.min())
+        }
+    }
+
+    @Test
+    fun withTheTightVelocityWeightingBothTurnDirectionsStayUnderFifteenMetresOnEverySeed() {
+        val cfg = FusionConfig(gnssVelocitySigmaM_S = 0.2)
+        for (w in listOf(0.7, -0.7, 1.0, -1.0)) {
+            val worst = seeds.maxOf { simulate(w, cfg, seed = it).worstOutageM }
+            println("SEEDS sigma_0.2 %+.1f worst over seeds %.1f".format(w, worst))
+            org.junit.Assert.assertTrue("yaw $w worst $worst m", worst < 15.0)
+        }
     }
 
     @Test

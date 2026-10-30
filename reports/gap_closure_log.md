@@ -469,7 +469,7 @@ Reading (synthetic):
   the sweep stays at 3-7 m.
 - No new flag: both settings already exist and default to the old behaviour. The gate value 2.0 is NOT adopted anywhere; it is
   measured on this synthetic sweep only, and the gate exists to protect against skids and sideslip that the sweep does not contain.
-- Unexplained: a right turn at -0.7 rad/s with only the raised gate gave 41 m against 9 m for the left turn at +0.7.
+- Resolved in N1: the 41 m vs 9 m difference was one noise seed; across 12 seeds the gate-only result is noise-sensitive in both directions.
 - Tests at this commit: Python unittest 339 (5 skipped), pytest 387 passed / 5 skipped, mobile 467 passed, edge 20 passed, hygiene clean.
 - Not done: no recorded hard-turn drive, and the two-wheeler profile is still unvalidated.
 
@@ -598,3 +598,12 @@ reproduce); T4 NEGATIVE RESULT for the 10 % target and PARTIAL for the ZUPT fix;
 JVM and BLOCKED (needs phone) on device; T7 DONE. Still needing the phone or field data: the on-device failures, a phone-in-vehicle drive, field drives
 for the 10 % target, real remount and cold-start behaviour, and any real FOG/external-IMU recording.
 Tests at this commit: Python unittest 352 (5 skipped), pytest 400 passed / 5 skipped, mobile 477 passed, edge 20 passed, hygiene clean, claims check up to date.
+
+## 2026-10-30 N1: left/right hard-turn asymmetry (SYNTHETIC)
+
+Question left open by T3: with only the NHC yaw gate raised, a right turn at -0.7 rad/s gave 41 m and a left turn at +0.7 rad/s gave 9 m.
+Method: `HardTurnSweepTest` now takes a noise seed. 12 seeds, both signs, at 0.7 and 1.0 rad/s, gate-only configuration.
+Result: no asymmetry. Worst outage error per seed ranges from 9 m to 362 m for BOTH directions (medians within a factor of 2 of each other);
+the 41 m / 9 m pair was one seed's noise. With `gnssVelocitySigmaM_S = 0.2` the worst over 12 seeds is 10.7 m (+0.7), 5.1 m (-0.7), 8.8 m (+1.0),
+4.4 m (-1.0). So the gate-only configuration is noise-sensitive, not direction-sensitive, and the tight velocity weighting is what makes turns safe.
+Two new tests assert both statements. Also checked: `edge/bin/` is untracked and gitignored (0 tracked files), so that older item is closed.
