@@ -649,3 +649,11 @@ Nothing can validate the profile without a two-wheeler recording, so this task m
 - `docs/FIELD_TEST_PROTOCOL.md` gained a "Two-wheeler recording" section: mounting, required manoeuvres, reference, forced outages, sealing, and the paired
   scoring rule under which the profile may be marked validated.
 Still needs real two-wheeler drives (BLOCKED: field data).
+
+## 2026-10-30 N5: map-matching switch against the real engine (SYNTHETIC) - DONE on the JVM, device check BLOCKED (needs phone)
+
+The T6 toggle tests used a stub engine. `MapMatchingSwitchEngineTest` now drives the real `FusionNavigationEngine` (70 s north at 10 m/s on a fixture road,
+GNSS withheld 30-55 s): (1) switch off through `AppFusion.factory` is bit-for-bit the shipped engine without a graph (same published count, statuses and final
+position); (2) switch on runs through the outage with no failed status, publishes at 10 Hz and ends within 30 m of the road end; (3) an engine built while the
+switch was on ignores a later flip to off. Plumbing and safety only, no accuracy claim (the 30 m bound is a sanity limit, not a result).
+`docs/MAP_MATCHING_DEVICE_CHECKLIST.md` lists the manual device checks, marked NOT RUN. The evidence for the matcher stays synthetic: nothing here changes the wording in the app.
