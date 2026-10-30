@@ -125,5 +125,77 @@
         "fraction_outages_improved": 0.533
       }
     }
+  },
+  "recovery": {
+    "development": {
+      "recovery_error_5s_m": {
+        "paired_outages": 578,
+        "median_without_trust": 1.27,
+        "median_with_trust": 1.44,
+        "mean_paired_difference": -0.3,
+        "mean_difference_95pct_interval": [
+          -2.464,
+          1.607
+        ],
+        "interval_excludes_zero": false
+      },
+      "recovery_error_max10s_m": {
+        "paired_outages": 578,
+        "median_without_trust": 58.52,
+        "median_with_trust": 57.22,
+        "mean_paired_difference": -0.814,
+        "mean_difference_95pct_interval": [
+          -4.055,
+          1.421
+        ],
+        "interval_excludes_zero": false
+      },
+      "recovery_time_s": {
+        "paired_outages": 578,
+        "median_without_trust": 3.92,
+        "median_with_trust": 3.92,
+        "mean_paired_difference": 0.07,
+        "mean_difference_95pct_interval": [
+          -0.529,
+          0.666
+        ],
+        "interval_excludes_zero": false
+      }
+    },
+    "held_out": {
+      "recovery_error_5s_m": {
+        "paired_outages": 171,
+        "median_without_trust": 1.05,
+        "median_with_trust": 0.9,
+        "mean_paired_difference": 4.226,
+        "mean_difference_95pct_interval": [
+          -0.558,
+          9.713
+        ],
+        "interval_excludes_zero": false
+      },
+      "recovery_error_max10s_m": {
+        "paired_outages": 171,
+        "median_without_trust": 56.88,
+        "median_with_trust": 57.57,
+        "mean_paired_difference": 8.443,
+        "mean_difference_95pct_interval": [
+          1.548,
+          16.158
+        ],
+        "interval_excludes_zero": true
+      },
+      "recovery_time_s": {
+        "paired_outages": 171,
+        "median_without_trust": 0.98,
+        "median_with_trust": 0.98,
+        "mean_paired_difference": 0.096,
+        "mean_difference_95pct_interval": [
+          -0.853,
+          1.032
+        ],
+        "interval_excludes_zero": false
+      }
+    }
   }
 }

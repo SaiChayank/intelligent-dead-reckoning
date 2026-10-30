@@ -23,10 +23,10 @@ HELD = ["s1", "s3c", "vfa01", "vta2", "vw3"]
 SEED = 20261030
 
 
-def paired(rows, drives, scenario):
-    pick = lambda arm: {(r["sequence"], r["start_ns"]): float(r["drift_pct"]) for r in rows
+def paired(rows, drives, scenario, column="drift_pct"):
+    pick = lambda arm: {(r["sequence"], r["start_ns"]): float(r[column]) for r in rows
                         if r["arm"] == arm and r["scenario"] == scenario and r["sequence"] in drives
-                        and r["outcome"] == "scored" and r["drift_pct"]}
+                        and r["outcome"] == "scored" and r.get(column) not in (None, "")}
     a, b = pick(OFF), pick(ON)
     keys = sorted(set(a) & set(b))
     return np.array([a[k] for k in keys]), np.array([b[k] for k in keys])
@@ -57,6 +57,25 @@ def main() -> int:
                 "interval_excludes_zero": bool(lo > 0 or hi < 0),
                 "fraction_outages_improved": round(float(np.mean(d > 0)), 3),
             }
+    out["recovery"] = {}
+    for split, drives in (("development", DEV), ("held_out", HELD)):
+        out["recovery"][split] = {}
+        for col in ("recovery_error_5s_m", "recovery_error_max10s_m", "recovery_time_s"):
+            a, b = [], []
+            for sc in ("d50", "t30", "t60", "d1000"):
+                x, y = paired(rows, set(drives), sc, col)
+                a.append(x); b.append(y)
+            off, on = np.concatenate(a), np.concatenate(b)
+            if not len(off):
+                continue
+            d = off - on
+            lo, hi = bootstrap_mean_ci(d)
+            out["recovery"][split][col] = {"paired_outages": int(len(d)), "median_without_trust": round(float(np.median(off)), 2),
+                                           "median_with_trust": round(float(np.median(on)), 2),
+                                           "mean_paired_difference": round(float(d.mean()), 3),
+                                           "mean_difference_95pct_interval": [round(lo, 3), round(hi, 3)],
+                                           "interval_excludes_zero": bool(lo > 0 or hi < 0)}
+            print(f"recovery {split:11s} {col:24s} n={len(d):3d} off {np.median(off):6.2f} on {np.median(on):6.2f} mean diff {d.mean():+.3f} CI [{lo:+.3f}, {hi:+.3f}]")
     (ROOT / "reports" / "t5_trust_comparison.json").write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")
     for split, byscen in out["results"].items():
         for sc, r in byscen.items():

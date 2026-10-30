@@ -109,5 +109,32 @@ class BaselineTest(unittest.TestCase):
                          "not_navigating_at_start")
 
 
+class RecoveryMetricsTest(unittest.TestCase):
+    def _run(self, offsets_m):
+        truth = eastbound_truth(duration_s=100.0)
+        n = len(truth["t"])
+        nav = nav_from(truth, offsets_m(truth), np.array(["fused"] * n))
+        end = ev.ORIGIN_NS + int(50e9)
+        after = np.flatnonzero((nav["t"] >= end) & (nav["t"] <= end + int(ev.RECOVERY_WINDOW_S * 1e9)))
+        return ev.recovery_metrics(nav, truth, end, after)
+
+    def test_an_error_that_decays_to_zero_settles_at_the_time_it_crosses_five_metres(self):
+        # 40 m at the outage end, falling 10 m per second: above 5 m until t = 3.5 s after the end
+        r = self._run(lambda tr: np.clip(40.0 - 10.0 * np.maximum((tr["t"] - ev.ORIGIN_NS) / 1e9 - 50.0, 0.0), 0.0, 40.0))
+        self.assertAlmostEqual(r["recovery_time_s"], 3.5, delta=0.15)
+        self.assertAlmostEqual(r["recovery_error_5s_m"], 0.0, places=1)
+        self.assertAlmostEqual(r["recovery_error_max10s_m"], 40.0, delta=1.0)
+
+    def test_an_error_that_never_settles_is_capped_at_the_window(self):
+        r = self._run(lambda tr: np.full(len(tr["t"]), 20.0))
+        self.assertEqual(r["recovery_time_s"], ev.RECOVERY_WINDOW_S)
+
+    def test_no_solutions_after_the_outage_give_empty_values(self):
+        truth = eastbound_truth(duration_s=60.0)
+        nav = nav_from(truth, np.zeros(len(truth["t"])), np.array(["fused"] * len(truth["t"])))
+        r = ev.recovery_metrics(nav, truth, ev.ORIGIN_NS, np.array([], dtype=int))
+        self.assertEqual(r, {"recovery_error_5s_m": None, "recovery_error_max10s_m": None, "recovery_time_s": None})
+
+
 if __name__ == "__main__":
     unittest.main()

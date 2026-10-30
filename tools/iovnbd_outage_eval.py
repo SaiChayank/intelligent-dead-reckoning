@@ -214,12 +214,38 @@ def score_outage(nav: dict, truth: dict, start: int, end: int) -> dict:
                             np.interp(t[inside], truth["t"], truth["lon"]))
     dr = inside[nav["mode"][inside] == "dr"]
     end_error = err(i1)
+    after = np.flatnonzero((t >= end) & (t <= end + int(RECOVERY_WINDOW_S * 1e9)) & np.isfinite(nav["lat"]))
     return {**row, "outcome": "scored",
+            **recovery_metrics(nav, truth, end, after),
             "error_start_m": round(err(i0), 2),
             "error_end_m": round(end_error, 2),
             "error_max_m": round(float(np.nanmax(e_in)), 2),
             "drift_pct": round(100.0 * end_error / row["distance_m"], 2) if row["distance_m"] > 1 else None,
             "dr_declared_after_s": round((t[dr[0]] - start) / 1e9, 2) if len(dr) else None}
+
+
+RECOVERY_WINDOW_S = 30.0
+RECOVERY_WITHIN_M = 5.0
+
+
+def recovery_metrics(nav: dict, truth: dict, end: int, after: np.ndarray) -> dict:
+    """Error after GNSS returns at `end`: at +5 s, the worst in the first 10 s, and the time until the error stays within 5 m.
+
+    The time is capped at the window (30 s) when the error never settles, and is empty when there are no solutions after the outage.
+    """
+    if not len(after):
+        return {"recovery_error_5s_m": None, "recovery_error_max10s_m": None, "recovery_time_s": None}
+    t = nav["t"][after]
+    e = horizontal_error(nav["lat"][after], nav["lon"][after], np.interp(t, truth["t"], truth["lat"]),
+                         np.interp(t, truth["t"], truth["lon"]))
+    rel = (t - end) / 1e9
+    near5 = int(np.argmin(np.abs(rel - 5.0)))
+    first10 = rel <= 10.0
+    bad = np.flatnonzero(e > RECOVERY_WITHIN_M)
+    settle = 0.0 if not len(bad) else (float(rel[bad[-1]]) if bad[-1] + 1 < len(e) else RECOVERY_WINDOW_S)
+    return {"recovery_error_5s_m": round(float(e[near5]), 2),
+            "recovery_error_max10s_m": round(float(np.max(e[first10])), 2) if first10.any() else None,
+            "recovery_time_s": round(settle, 2)}
 
 
 def summarize(rows: list[dict], scenario: Scenario) -> dict:
@@ -568,7 +594,7 @@ def score_all(plan: dict, results: list[dict]) -> dict:
     with open(REPORT / "outages.csv", "w", encoding="utf-8", newline="") as fh:
         keys = ["sequence", "scenario", "arm", "outcome", "start_ns", "end_ns", "duration_s",
                 "distance_m", "error_start_m", "error_end_m", "error_max_m", "drift_pct",
-                "dr_declared_after_s"]
+                "dr_declared_after_s", "recovery_error_5s_m", "recovery_error_max10s_m", "recovery_time_s"]
         w = csv.DictWriter(fh, fieldnames=keys, lineterminator="\n")
         w.writeheader()
         for r in outage_rows:

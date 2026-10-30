@@ -621,3 +621,19 @@ at 30 s and -0.47 pp (-0.68 to -0.30, 958) at 60 s. Speed RMSE 2.45 -> 2.33 m/s.
 Reading: the gain is real but about one percentage point. This proxy dead-reckons along the last fix course plus integrated yaw and sits well under the
 engine's 17-24 % held-out medians, so the engine would not approach 10 %. Not ported to Kotlin and not shipped; the shipped v3 stays. Two causality/bias tests
 in `tests/test_speed_v4_experiment.py`. Conclusion for the 10 % target is unchanged: speed information from a 10 Hz vehicle IMU is the limit.
+
+## 2026-10-30 N3: learned GNSS trust, missing recovery metric measured - STILL NO DEMONSTRATED GAIN, flag stays off
+
+T5 left a hole: the original gate asked for GNSS-aided accuracy AND post-outage recovery, and recovery was not recorded. `tools/iovnbd_outage_eval.py` now records,
+per outage, the error 5 s after GNSS returns, the worst error in the first 10 s, and the recovery time (until the error stays within 5 m, capped at 30 s).
+Three unit tests on tracks with known answers. Both trust arms were rerun (vehicle input, trust weights trained without the drive being run); the drift
+numbers reproduced T5 exactly (so nothing else moved). `tools/t5_trust_comparison.py` pairs the recovery columns (all four scenarios pooled).
+Result (off minus on; positive = trust helps; 95 % bootstrap interval of the mean paired difference):
+- development, n = 578: error at +5 s median 1.27 m off / 1.44 m on (-0.30, interval -2.46 to +1.61); worst in 10 s 58.5 / 57.2 m (-0.81, -4.06 to +1.42);
+  recovery time median 3.92 s both (+0.07, -0.53 to +0.67).
+- held-out, n = 171: error at +5 s 1.05 / 0.90 m (+4.2, -0.56 to +9.7); worst in 10 s 56.9 / 57.6 m (+8.4, +1.5 to +16.2, but the medians go the wrong way and the
+  development drives show the opposite sign, so it is outlier-driven); recovery time median 0.98 s both (+0.10, -0.85 to +1.03).
+GNSS-aided accuracy was already equal (median 0.71 m both). Verdict: no gain on drift, accuracy or recovery. The honest reason is that phone fixes in IO-VNBD are
+already good (median about 2.5 m) so there is nothing for a trust model to fix; the case it targets (urban-canyon multipath) is not in these data. A synthetic
+multipath stress test was considered and rejected: the model would have to be trained on synthetic errors, which makes the test circular. Needs field drives in a
+dense urban area with the sealed protocol. Flag stays off.
