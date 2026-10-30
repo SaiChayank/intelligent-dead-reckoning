@@ -401,6 +401,23 @@
         "pass_rate_end_error_lt_5m": 0.633,
         "dr_declared_after_s_median": 2.04
       },
+      "ekf_nhc_v3_heldout_vel_nhcout_trust": {
+        "planned": 248,
+        "scored": 234,
+        "engine_failed": 0,
+        "not_navigating_at_start": 14,
+        "no_solution_in_outage": 0,
+        "median_distance_m": 50.4,
+        "median_duration_s": 5.5,
+        "drift_pct_median": 6.86,
+        "drift_pct_p90": 27.5,
+        "end_error_m_median": 3.5,
+        "end_error_m_p90": 13.81,
+        "pass_rate_drift_lt_10pct": 0.641,
+        "pass_rate_incl_failures": 0.641,
+        "pass_rate_end_error_lt_5m": 0.632,
+        "dr_declared_after_s_median": 2.04
+      },
       "app": {
         "planned": 248,
         "scored": 237,
@@ -589,6 +606,23 @@
         "pass_rate_end_error_lt_100m": 0.196,
         "dr_declared_after_s_median": 2.04
       },
+      "ekf_nhc_v3_heldout_vel_nhcout_trust": {
+        "planned": 147,
+        "scored": 137,
+        "engine_failed": 0,
+        "not_navigating_at_start": 10,
+        "no_solution_in_outage": 0,
+        "median_distance_m": 1000.6,
+        "median_duration_s": 102.5,
+        "drift_pct_median": 18.99,
+        "drift_pct_p90": 45.74,
+        "end_error_m_median": 190.01,
+        "end_error_m_p90": 457.94,
+        "pass_rate_drift_lt_10pct": 0.19,
+        "pass_rate_incl_failures": 0.19,
+        "pass_rate_end_error_lt_100m": 0.19,
+        "dr_declared_after_s_median": 2.04
+      },
       "app": {
         "planned": 147,
         "scored": 137,
@@ -768,6 +802,22 @@
         "pass_rate_incl_failures": 0.263,
         "dr_declared_after_s_median": 2.04
       },
+      "ekf_nhc_v3_heldout_vel_nhcout_trust": {
+        "planned": 221,
+        "scored": 207,
+        "engine_failed": 0,
+        "not_navigating_at_start": 14,
+        "no_solution_in_outage": 0,
+        "median_distance_m": 257.2,
+        "median_duration_s": 30.0,
+        "drift_pct_median": 18.55,
+        "drift_pct_p90": 43.93,
+        "end_error_m_median": 49.43,
+        "end_error_m_p90": 111.36,
+        "pass_rate_drift_lt_10pct": 0.256,
+        "pass_rate_incl_failures": 0.256,
+        "dr_declared_after_s_median": 2.04
+      },
       "app": {
         "planned": 221,
         "scored": 206,
@@ -945,6 +995,22 @@
         "pass_rate_incl_failures": 0.272,
         "dr_declared_after_s_median": 2.04
       },
+      "ekf_nhc_v3_heldout_vel_nhcout_trust": {
+        "planned": 192,
+        "scored": 181,
+        "engine_failed": 0,
+        "not_navigating_at_start": 11,
+        "no_solution_in_outage": 0,
+        "median_distance_m": 538.3,
+        "median_duration_s": 60.0,
+        "drift_pct_median": 17.16,
+        "drift_pct_p90": 55.52,
+        "end_error_m_median": 95.0,
+        "end_error_m_p90": 237.05,
+        "pass_rate_drift_lt_10pct": 0.26,
+        "pass_rate_incl_failures": 0.26,
+        "dr_declared_after_s_median": 2.04
+      },
       "app": {
         "planned": 192,
         "scored": 173,
@@ -1024,6 +1090,11 @@
       "median_m": 0.71,
       "p95_m": 3.82
     },
+    "ekf_nhc_v3_heldout_vel_nhcout_trust": {
+      "samples": 223175,
+      "median_m": 0.71,
+      "p95_m": 3.75
+    },
     "app": {
       "samples": 203593,
       "median_m": 0.92,
@@ -1040,6 +1111,7 @@
     "ekf_nhc_vel": 179,
     "ekf_nhc_v3_heldout_vel": 317,
     "ekf_nhc_v3_heldout_vel_nhcout": 429,
-    "ekf_nhc_v3_heldout_vel_nhcout_zupt": 442
+    "ekf_nhc_v3_heldout_vel_nhcout_zupt": 442,
+    "ekf_nhc_v3_heldout_vel_nhcout_trust": 434
   }
 }

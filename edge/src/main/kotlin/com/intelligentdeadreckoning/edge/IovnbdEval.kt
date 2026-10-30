@@ -7,6 +7,7 @@ import com.intelligentdeadreckoning.app.calibration.StationaryThresholds
 import com.intelligentdeadreckoning.app.fusion.FusionConfig
 import com.intelligentdeadreckoning.app.fusion.FusionNavigationEngine
 import com.intelligentdeadreckoning.app.fusion.GeodeticAnchor
+import com.intelligentdeadreckoning.app.fusion.GnssTrustModel
 import com.intelligentdeadreckoning.app.fusion.SpeedCorrectionModel
 import com.intelligentdeadreckoning.app.fusion.Geodesy
 import com.intelligentdeadreckoning.app.navigation.CalibratingFusionEngine
@@ -74,6 +75,9 @@ object IovnbdEval {
         /** The previous arm with the ZUPT allowed to engage below [ZUPT_ENGAGE_SPEED_M_S] instead of 0.5 m/s (stops go unnoticed otherwise). */
         EKF_NHC_V3_HELDOUT_VEL_NHCOUT_ZUPT("ekf_nhc_v3_heldout_vel_nhcout_zupt"),
 
+        /** The best arm with each fix weighted by the learned GNSS trust model trained WITHOUT the drive being run. */
+        EKF_NHC_V3_HELDOUT_VEL_NHCOUT_TRUST("ekf_nhc_v3_heldout_vel_nhcout_trust"),
+
         /** Exactly the configuration the app runs (see CalibratingFusionEngine). */
         APP("app");
 
@@ -85,6 +89,10 @@ object IovnbdEval {
             EKF_NHC_V3_HELDOUT -> FusionConfig(speedCorrectionEnabled = true)
             EKF_NHC_VEL -> FusionConfig(gnssVelocitySigmaM_S = VELOCITY_SIGMA_M_S)
             EKF_NHC_V3_HELDOUT_VEL -> FusionConfig(speedCorrectionEnabled = true, gnssVelocitySigmaM_S = VELOCITY_SIGMA_M_S)
+            EKF_NHC_V3_HELDOUT_VEL_NHCOUT_TRUST -> FusionConfig(
+                speedCorrectionEnabled = true, gnssVelocitySigmaM_S = VELOCITY_SIGMA_M_S, nhcActiveDuringOutage = true,
+                gnssTrustEnabled = true,
+            )
             EKF_NHC_V3_HELDOUT_VEL_NHCOUT_ZUPT -> FusionConfig(
                 speedCorrectionEnabled = true, gnssVelocitySigmaM_S = VELOCITY_SIGMA_M_S, nhcActiveDuringOutage = true,
                 zuptSpeedThresholdM_S = ZUPT_ENGAGE_SPEED_M_S,
@@ -133,6 +141,8 @@ object IovnbdEval {
         val calibration: BatchCalibration?,
         /** Weights file for the v3 correction; null uses the packaged weights (in-sample for these drives). */
         val speedModel: Path? = null,
+        /** Weights file for the learned GNSS trust model; required by the trust arm. */
+        val trustModel: Path? = null,
     )
 
     /**
@@ -215,7 +225,7 @@ object IovnbdEval {
     val IOVNBD_MOUNT = MountThresholds(maxGravitySpreadM_S2 = 0.10, maxYawRateRad_S = 0.08)
 
     private val HELDOUT_ARMS = setOf(Arm.EKF_NHC_V3_HELDOUT, Arm.EKF_NHC_V3_HELDOUT_VEL, Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT,
-        Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT_ZUPT)
+        Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT_ZUPT, Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT_TRUST)
 
     private fun FusionConfig.forIovnbd(): FusionConfig = copy(
         stationaryMinSamples = 15,
@@ -234,6 +244,8 @@ object IovnbdEval {
         val config = job.arm.config().forIovnbd()
         require(job.arm !in HELDOUT_ARMS || job.speedModel != null) { "held-out arm needs a speed_model file" }
         val speedModel = job.speedModel?.let { Files.newInputStream(it).use(SpeedCorrectionModel::fromStream) }
+        require(job.arm != Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT_TRUST || job.trustModel != null) { "trust arm needs a trust_model file" }
+        val trustModel = job.trustModel?.let { Files.newInputStream(it).use(GnssTrustModel::fromStream) }
         val engine = CalibratingFusionEngine(
             calibrator = job.calibration?.let { ReleasedCalibration(it) }
                 ?: CalibrationNavigationEngine(IOVNBD_MOUNT, IOVNBD_STATIONARY),
@@ -243,6 +255,7 @@ object IovnbdEval {
                 publicationIntervalNs = PUBLICATION_INTERVAL_NS,
                 config = config,
                 speedCorrectionModel = speedModel,
+                gnssTrustModel = trustModel,
             )
         },
         )
@@ -378,6 +391,7 @@ object IovnbdEval {
                     Outage(a[0].asString.toLong(), a[1].asString.toLong())
                 },
                 speedModel = o.get("speed_model")?.takeUnless { it.isJsonNull }?.asString?.let { Paths.get(it) },
+                trustModel = o.get("trust_model")?.takeUnless { it.isJsonNull }?.asString?.let { Paths.get(it) },
                 calibration = o.get("calibration")?.takeUnless { it.isJsonNull }?.asJsonObject?.let { c ->
                     val q = c.getAsJsonArray("q_vehicle_from_device_wxyz").map { it.asDouble }
                     val b = c.getAsJsonArray("gyro_bias_rad_s").map { it.asDouble }

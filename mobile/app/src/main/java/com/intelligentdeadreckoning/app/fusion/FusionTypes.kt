@@ -229,6 +229,16 @@ data class FusionConfig(
     /** Use the HMM matcher (HmmMapMatcher) instead of the greedy matcher for the map feedback path. */
     val hmmMapMatchingEnabled: Boolean = false,
     /**
+     * Weight each GNSS position fix by a learned prediction of its real horizontal error ([GnssTrustModel]) instead of the
+     * provider's reported accuracy. Fixes the model cannot score (first fix, missing fields, a gap) keep the reported accuracy.
+     * Off by default; evaluated held-out in reports/gap_closure_log.md (T5).
+     */
+    val gnssTrustEnabled: Boolean = false,
+    /** The model predicts a central (median-like) error; a Rayleigh error's median is 1.1774 times its per-axis sigma. */
+    val gnssTrustSigmaDivisor: Double = 1.1774,
+    val gnssTrustMinSigmaM: Double = 1.0,
+    val gnssTrustMaxSigmaM: Double = 30.0,
+    /**
      * When no initial heading is supplied, take it from the aligning fix's GNSS course (needs a speed of at least
      * [initialHeadingMinSpeedM_S]) instead of starting with a north-facing attitude and a half-turn variance. On a
      * steady straight drive the heading cannot be learned afterwards, so the first turn otherwise sends the filter

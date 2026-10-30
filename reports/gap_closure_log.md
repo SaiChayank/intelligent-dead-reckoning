@@ -515,3 +515,37 @@ optimistic; the generated no-stop numbers are the ones to quote.
 Open: the remaining error is the per-outage spread of the speed estimate; a better speed model (probably needing real 100 Hz
 phone data) would be needed. Heading is a secondary 5-6 % contributor. Tests at this commit: Python unittest 344 (5 skipped),
 pytest 392 passed / 5 skipped, mobile 467 passed, edge 20 passed, hygiene clean.
+
+## 2026-10-30 - T5: learned GNSS trust inside the filter (flag OFF by default)
+
+Result: NEGATIVE RESULT. The flag, the Kotlin port and the held-out evaluation are delivered; the learned trust does not show a gain.
+
+Built: `GnssTrust.kt` (`GnssTrustModel`, `GnssTrustTracker`); `FusionConfig.gnssTrustEnabled` (default false), `gnssTrustSigmaDivisor` 1.1774
+(a Rayleigh median to per-axis sigma, chosen), `gnssTrustMinSigmaM` 1, `gnssTrustMaxSigmaM` 30; the engine takes `gnssTrustModel` (injectable) and
+replaces a position fix's variance by (predicted error / divisor) squared, keeping the reported accuracy for fixes the model cannot score. The
+velocity rows and the quality gates are untouched. `training/gnss_trust.py` now has one shared `feature_row` (the refactor reproduces the Phase 3
+evaluation exactly: 6,283 fixes, MAE 2.487 vs 2.638 m, Spearman 0.28 vs 0.048) and `export-heldout` (one model per drive, trained without it).
+Parity: `tools/make_gnss_trust_golden.py` writes `gnss_trust_golden.json` (70 fixes: a real stretch of drive m plus stationary, missing-field, gap
+and backwards-time cases); `GnssTrustParityTest` matches features to 1e-9 and predictions to 1e-6. The same test shows the plumbing: flag off
+scaled 0 fixes, flag on scaled 48 (synthetic scripted drive, no accuracy claim).
+
+Held-out evaluation (`tools/iovnbd_outage_eval.py run --input vehicle --arms ekf_nhc_v3_heldout_vel_nhcout_trust`, then
+`tools/t5_trust_comparison.py`; trust weights trained without the drive being run; pre-registered development and held-out drives from T4;
+paired on outages both arms scored; interval is a 95 % bootstrap of the mean paired difference in drift percentage points, positive = trust helps):
+
+| Split | Scenario | Paired outages | Median drift without trust | with trust | Mean difference (95 % interval) |
+|---|---|---:|---:|---:|---|
+| development | d50 | 176 | 7.3 | 7.3 | +2.04 (-0.30 to +6.02) |
+| development | t30 | 157 | 18.1 | 18.1 | +0.24 (-0.29 to +0.93) |
+| development | t60 | 140 | 17.3 | 16.6 | +0.47 (-0.06 to +1.09) |
+| development | d1000 | 105 | 19.9 | 19.9 | -0.89 (-2.52 to +0.09) |
+| held_out | d50 | 54 | 5.4 | 5.0 | -0.86 (-2.66 to +0.45) |
+| held_out | t30 | 48 | 21.6 | 21.2 | +1.78 (-0.29 to +5.06) |
+| held_out | t60 | 39 | 23.9 | 21.0 | +2.09 (+0.16 to +5.23) * |
+| held_out | d1000 | 30 | 18.1 | 14.8 | +0.95 (-0.28 to +2.49) |
+
+Only one of the eight intervals (held-out 60 s, marked *) excludes zero, which is about what chance gives across eight comparisons. GNSS-aided
+accuracy while fixes are available: median 0.71 m without and 0.71 m with trust, p95 3.79 m without and 3.75 m with. A
+separate recovery-time metric is not recorded by the harness and was not measured. Why it is plausible: the Phase 3 signal is weak and phone fixes in
+these drives are already accurate (median about 2.5 m). Not adopted anywhere; the default engine is unchanged.
+Tests at this commit: Python unittest 346 (5 skipped), pytest 394 passed / 5 skipped, mobile 470 passed, edge 20 passed, hygiene clean.

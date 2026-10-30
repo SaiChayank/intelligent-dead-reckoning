@@ -66,7 +66,7 @@ def session_info(conv: dict) -> dict:
     return info
 ORIGIN_NS = 1_000_000_000
 
-ARMS = ("ins", "ekf_nhc", "ekf_nhc_ai", "ekf_nhc_v3", "ekf_nhc_v3_heldout", "ekf_nhc_vel", "ekf_nhc_v3_heldout_vel", "ekf_nhc_v3_heldout_vel_nhcout", "ekf_nhc_v3_heldout_vel_nhcout_zupt", "app")
+ARMS = ("ins", "ekf_nhc", "ekf_nhc_ai", "ekf_nhc_v3", "ekf_nhc_v3_heldout", "ekf_nhc_vel", "ekf_nhc_v3_heldout_vel", "ekf_nhc_v3_heldout_vel_nhcout", "ekf_nhc_v3_heldout_vel_nhcout_zupt", "ekf_nhc_v3_heldout_vel_nhcout_trust", "app")
 BASELINE = "hold_gnss"
 ARMS_REPORT = ARMS + (BASELINE,)
 ARM_LABELS = {
@@ -80,6 +80,7 @@ ARM_LABELS = {
     "ekf_nhc_v3_heldout_vel": "EKF + NHC/ZUPT + v3 (held-out) + tight GNSS velocity",
     "ekf_nhc_v3_heldout_vel_nhcout": "EKF + NHC through outages + v3 (held-out) + tight GNSS velocity",
     "ekf_nhc_v3_heldout_vel_nhcout_zupt": "... + ZUPT engaging below 4 m/s",
+    "ekf_nhc_v3_heldout_vel_nhcout_trust": "... + learned GNSS trust (held-out weights)",
     "app": "App configuration",
 }
 
@@ -322,7 +323,7 @@ def _plt():
     return plt
 
 
-ARM_COLORS = {BASELINE: "#7f7f7f", "ins": "#d1495b", "ekf_nhc": "#edae49", "ekf_nhc_ai": "#00798c", "ekf_nhc_v3": "#2a9d8f", "ekf_nhc_v3_heldout": "#6a4c93", "ekf_nhc_vel": "#8d6a9f", "ekf_nhc_v3_heldout_vel": "#1b9e77", "ekf_nhc_v3_heldout_vel_nhcout": "#d95f02", "ekf_nhc_v3_heldout_vel_nhcout_zupt": "#e7298a", "app": "#30638e"}
+ARM_COLORS = {BASELINE: "#7f7f7f", "ins": "#d1495b", "ekf_nhc": "#edae49", "ekf_nhc_ai": "#00798c", "ekf_nhc_v3": "#2a9d8f", "ekf_nhc_v3_heldout": "#6a4c93", "ekf_nhc_vel": "#8d6a9f", "ekf_nhc_v3_heldout_vel": "#1b9e77", "ekf_nhc_v3_heldout_vel_nhcout": "#d95f02", "ekf_nhc_v3_heldout_vel_nhcout_zupt": "#e7298a", "ekf_nhc_v3_heldout_vel_nhcout_trust": "#66a61e", "app": "#30638e"}
 
 
 def plot_drive(seq: str, truth: dict, navs: dict[str, dict], outages: list[tuple[int, int]],
@@ -414,7 +415,13 @@ def eligible_drives() -> list[tuple[str, dict]]:
     return out
 
 
-HELDOUT_ARMS = ("ekf_nhc_v3_heldout", "ekf_nhc_v3_heldout_vel", "ekf_nhc_v3_heldout_vel_nhcout", "ekf_nhc_v3_heldout_vel_nhcout_zupt")
+HELDOUT_ARMS = ("ekf_nhc_v3_heldout", "ekf_nhc_v3_heldout_vel", "ekf_nhc_v3_heldout_vel_nhcout", "ekf_nhc_v3_heldout_vel_nhcout_zupt", "ekf_nhc_v3_heldout_vel_nhcout_trust")
+TRUST_ARM = "ekf_nhc_v3_heldout_vel_nhcout_trust"
+
+
+def heldout_trust_weights(seq: str) -> Path:
+    """Trust weights trained without this drive: `python training/gnss_trust.py export-heldout`."""
+    return DATA / "heldout_trust_weights" / f"gnss_trust_without_{seq}.json"
 
 
 def heldout_weights(seq: str) -> Path:
@@ -463,6 +470,11 @@ def plan_all(arms: tuple[str, ...] | None = None) -> tuple[list[dict], dict]:
                             continue
                         raise SystemExit(f"missing {weights}: run `python training/speed_v3.py export-heldout` first")
                     job["speed_model"] = weights.as_posix()
+                if arm == TRUST_ARM:
+                    trust = heldout_trust_weights(seq)
+                    if not trust.is_file():
+                        raise SystemExit(f"missing {trust}: run `python training/gnss_trust.py export-heldout` first")
+                    job["trust_model"] = trust.as_posix()
                 jobs.append(job)
     return jobs, plan
 

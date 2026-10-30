@@ -39,6 +39,24 @@ FEATURES = ("accuracy_m", "log_accuracy", "satellites", "speed_m_s", "dt_s", "sp
 SEED = 42
 
 
+def feature_row(prev: tuple | None, cur: tuple, acc, sats, spd, crs) -> list[float] | None:
+    """Feature vector of one fix given the previous fix (t_ns, lat, lon), or None when it cannot be formed.
+
+    This is the single definition the Kotlin `GnssTrustTracker` reproduces (checked by `GnssTrustParityTest`)."""
+    if prev is None or acc is None or spd is None or crs is None:
+        return None
+    dt = (cur[0] - prev[0]) / 1e9
+    if not (0.0 < dt <= 15.0):
+        return None
+    d_n = math.radians(cur[1] - prev[1]) * EARTH_R
+    d_e = math.radians(cur[2] - prev[2]) * EARTH_R * math.cos(math.radians(prev[1]))
+    dist = math.hypot(d_n, d_e)
+    moving = dist / dt > 1.0
+    bearing = (math.degrees(math.atan2(d_e, d_n)) + 360.0) % 360.0
+    dcourse = abs((crs - bearing + 540.0) % 360.0 - 180.0) if moving else 0.0
+    return [acc, math.log(max(acc, 0.1)), float(sats or 0), spd, dt, abs(spd - dist / dt), dcourse, 1.0 if moving else 0.0]
+
+
 def fixes_with_error(seq: str) -> tuple[np.ndarray, np.ndarray]:
     """(feature matrix, horizontal error in metres) for every usable phone fix of a drive."""
     truth = np.genfromtxt(DATA / seq / "truth.csv", delimiter=",", names=True)
@@ -54,22 +72,13 @@ def fixes_with_error(seq: str) -> tuple[np.ndarray, np.ndarray]:
             t = int(e["t_ns"])
             cur = (t, g["latitude_deg"], g["longitude_deg"])
             acc, sats, spd, crs = g["horizontal_accuracy_m"], g["satellites_used"], g["speed_m_s"], g["bearing_deg"]
-            if prev is not None and acc is not None and spd is not None and crs is not None \
-                    and tt[0] <= t <= tt[-1]:
-                dt = (t - prev[0]) / 1e9
-                if 0.0 < dt <= 15.0:
-                    d_n = math.radians(cur[1] - prev[1]) * EARTH_R
-                    d_e = math.radians(cur[2] - prev[2]) * EARTH_R * math.cos(math.radians(prev[1]))
-                    dist = math.hypot(d_n, d_e)
-                    moving = dist / dt > 1.0
-                    bearing = (math.degrees(math.atan2(d_e, d_n)) + 360.0) % 360.0
-                    dcourse = abs((crs - bearing + 540.0) % 360.0 - 180.0) if moving else 0.0
-                    lat_t = np.interp(t, tt, truth["latitude_deg"]); lon_t = np.interp(t, tt, truth["longitude_deg"])
-                    err = math.hypot(math.radians(cur[1] - lat_t) * EARTH_R,
-                                     math.radians(cur[2] - lon_t) * EARTH_R * math.cos(math.radians(lat_t)))
-                    rows.append([acc, math.log(max(acc, 0.1)), float(sats or 0), spd, dt,
-                                 abs(spd - dist / dt), dcourse, 1.0 if moving else 0.0])
-                    errors.append(err)
+            row = feature_row(prev, cur, acc, sats, spd, crs) if tt[0] <= t <= tt[-1] else None
+            if row is not None:
+                lat_t = np.interp(t, tt, truth["latitude_deg"]); lon_t = np.interp(t, tt, truth["longitude_deg"])
+                err = math.hypot(math.radians(cur[1] - lat_t) * EARTH_R,
+                                 math.radians(cur[2] - lon_t) * EARTH_R * math.cos(math.radians(lat_t)))
+                rows.append(row)
+                errors.append(err)
             prev = cur
     return np.array(rows, dtype=float).reshape(-1, len(FEATURES)), np.array(errors, dtype=float)
 
@@ -136,7 +145,8 @@ def evaluate(names: list[str], hidden: int, epochs: int) -> dict:
 
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    p.add_argument("command", choices=["evaluate", "export"])
+    p.add_argument("command", choices=["evaluate", "export", "export-heldout"])
+    p.add_argument("--heldout-dir", type=Path, default=DATA / "heldout_trust_weights")
     p.add_argument("--out", type=Path, default=ROOT / "reports" / "gnss_trust_eval.json")
     p.add_argument("--weights", type=Path, default=ROOT / "models" / "gnss_trust_weights.json")
     args = p.parse_args(argv)
@@ -145,6 +155,17 @@ def main(argv=None) -> int:
         res = evaluate(names, 12, 80)
         args.out.write_text(json.dumps(res, indent=2) + "\n", encoding="utf-8")
         print(json.dumps({k: res[k] for k in ("fixes", "mae_m", "spearman", "top10pct_recall")}, indent=1))
+    elif args.command == "export-heldout":
+        data = {n: fixes_with_error(n) for n in names}
+        data = {n: v for n, v in data.items() if len(v[1]) >= 30}
+        args.heldout_dir.mkdir(parents=True, exist_ok=True)
+        for held in names:
+            rest = [v for n, v in data.items() if n != held]
+            m = train(np.vstack([d[0] for d in rest]), np.concatenate([d[1] for d in rest]))
+            j = m.to_json(); j["features"] = list(FEATURES); j["y_mean"] = m.y_mean   # type: ignore[attr-defined]
+            path = args.heldout_dir / f"gnss_trust_without_{held}.json"
+            path.write_text(json.dumps(j) + "\n", encoding="utf-8")
+            print("wrote", path)
     else:
         data = [fixes_with_error(n) for n in names]
         data = [d for d in data if len(d[1]) >= 30]

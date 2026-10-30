@@ -107,6 +107,8 @@ class FusionNavigationEngine(
     private val roadGraph: RoadGraph? = null,
     /** Weights for [FusionConfig.speedCorrectionEnabled]; null loads the packaged resource. Tests and evaluations inject their own. */
     private val speedCorrectionModel: SpeedCorrectionModel? = null,
+    /** Weights for [FusionConfig.gnssTrustEnabled]; null loads the packaged resource. */
+    private val gnssTrustModel: GnssTrustModel? = null,
 ) : NavigationEngine {
 
     private val filter = GnssInsEkf(config)
@@ -143,6 +145,19 @@ class FusionNavigationEngine(
         }
     }
     private var lastAiSpeedUpdateNs: Long = 0L
+
+    private val gnssTrustTracker: GnssTrustTracker? by lazy {
+        if (!config.gnssTrustEnabled) null else try {
+            GnssTrustTracker(gnssTrustModel ?: GnssTrustModel.fromResource())
+        } catch (_: Exception) {
+            null
+        }
+    }
+    private var lastTrustErrorM: Double? = null
+    private var trustScaledFixes: Long = 0L
+
+    /** GNSS position updates whose variance came from the learned trust model instead of the reported accuracy. */
+    val gnssTrustScaledFixes: Long get() = trustScaledFixes
 
     private val speedTracker: OutageSpeedTracker? by lazy {
         if (!config.speedCorrectionEnabled) null else try {
@@ -247,6 +262,9 @@ class FusionNavigationEngine(
         aiSpeedEstimator?.reset()
         lastAiSpeedUpdateNs = 0L
         speedTracker?.reset()
+        gnssTrustTracker?.reset()
+        lastTrustErrorM = null
+        trustScaledFixes = 0L
         hmmMatcher?.reset()
         lastCrossTrackNs = 0L
         lastSpeedCorrectionNs = 0L
@@ -401,6 +419,9 @@ class FusionNavigationEngine(
         aiSpeedEstimator?.reset()
         lastAiSpeedUpdateNs = 0L
         speedTracker?.reset()
+        gnssTrustTracker?.reset()
+        lastTrustErrorM = null
+        trustScaledFixes = 0L
         hmmMatcher?.reset()
         lastCrossTrackNs = 0L
         lastSpeedCorrectionNs = 0L
@@ -841,6 +862,7 @@ class FusionNavigationEngine(
         }
         clockNs = maxOf(clockNs, measurement.event.t_ns)
         val tNs = measurement.event.t_ns
+        lastTrustErrorM = gnssTrustTracker?.observe(tNs, payload)
         val refusal = refuse(payload)
         if (refusal != null) {
             recordRefusal(refusal, tNs)
@@ -1042,12 +1064,19 @@ class FusionNavigationEngine(
         // Location.getAccuracy() is the provider's own 68% horizontal radius, so it is a
         // one-sigma figure and the variance is its square. No conversion is applied.
         val vertical = payload.vertical_accuracy_m
+        val predicted = lastTrustErrorM
+        val trustSigma = if (predicted != null && predicted.isFinite()) {
+            trustScaledFixes++
+            (predicted / config.gnssTrustSigmaDivisor).coerceIn(config.gnssTrustMinSigmaM, config.gnssTrustMaxSigmaM)
+        } else {
+            accuracy
+        }
         val position = filter.updateGnssPosition(
             tNs = tNs,
             latitudeDeg = payload.latitude_deg,
             longitudeDeg = payload.longitude_deg,
             altitudeM = payload.altitude_m,
-            horizontalVarianceM2 = accuracy * accuracy,
+            horizontalVarianceM2 = trustSigma.let { it * it },
             verticalVarianceM2 = if (vertical != null && vertical > 0.0) vertical * vertical else null,
         )
         if (position.result == GnssUpdateResult.FAILED) {

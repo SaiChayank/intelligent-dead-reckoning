@@ -30,7 +30,7 @@ kotlin {
         )
         // The shipped Model A weights, byte-identical to the app asset, for the AI arms.
         resources.srcDir("../models")
-        resources.include("speed_estimator_weights.json", "speed_estimator_v3_weights.json")
+        resources.include("speed_estimator_weights.json", "speed_estimator_v3_weights.json", "gnss_trust_weights.json")
     }
     sourceSets.test {
         kotlin.srcDir("src/test/kotlin")

@@ -37,6 +37,7 @@ Every number here is read from a file in `reports/` by `tools/build_claims.py`. 
 | EKF + NHC/ZUPT + v3 (held-out) + tight GNSS velocity | 7 % (65%) | 21 % (18%) | 23 % (16%) | 24 % (14%) |
 | EKF + NHC through outages + v3 (held-out) + tight GNSS velocity | 7 % (64%) | 18 % (24%) | 19 % (22%) | 20 % (20%) |
 | ... + ZUPT engaging below 4 m/s | 7 % (63%) | 17 % (26%) | 17 % (27%) | 20 % (20%) |
+| ... + learned GNSS trust (held-out weights) | 7 % (64%) | 19 % (26%) | 17 % (26%) | 19 % (19%) |
 | App configuration | 32 % (21%) | 767 % (0%) | 1169 % (0%) | 1407 % (1%) |
 | Baseline: hold last GNSS velocity | 18 % (39%) | 53 % (6%) | 71 % (3%) | 69 % (2%) |
 
