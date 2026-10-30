@@ -55,7 +55,8 @@ def _unit_quaternion(q: Sequence[float]) -> Quaternion:
 
 
 def records(rows: Iterator[dict], session_id: str, accel_scale: float, gyro_scale: float, mount: Quaternion,
-            gyro_bias_rad_s: Vector3, origin_ns: int | None = None) -> Iterator[Record]:
+            gyro_bias_rad_s: Vector3, origin_ns: int | None = None,
+            accel_bias_m_s2: Vector3 | None = None) -> Iterator[Record]:
     header = Header(session_id, Source.REAL, "1.1.0")
     last_t = None
     event_id = 1
@@ -75,7 +76,7 @@ def records(rows: Iterator[dict], session_id: str, accel_scale: float, gyro_scal
         if first:
             origin = t_ns if origin_ns is None else origin_ns
             cal = CalibrationResult("external-imu-declared", CalibrationStatus.VALID, mount, gyro_bias_rad_s,
-                                    None, None)
+                                    accel_bias_m_s2, None)
             yield Record(header, Event("0", origin, origin, cal))
             first = False
 
@@ -100,17 +101,19 @@ def records(rows: Iterator[dict], session_id: str, accel_scale: float, gyro_scal
 
 
 def convert(csv_path: Path, out_path: Path, session_id: str, accel_unit: str, gyro_unit: str,
-            mount: Sequence[float], gyro_bias: Sequence[float]) -> int:
+            mount: Sequence[float], gyro_bias: Sequence[float], accel_bias: Sequence[float] | None = None) -> int:
     if accel_unit not in ACCEL_UNITS or gyro_unit not in GYRO_UNITS:
         raise AdapterError("units must be declared: accel m/s^2|g, gyro rad/s|deg/s")
     q = _unit_quaternion(mount)
     bias = Vector3(*[float(b) * GYRO_UNITS[gyro_unit] for b in gyro_bias])
+    accel_bias = None if accel_bias is None else Vector3(*[float(b) * ACCEL_UNITS[accel_unit] for b in accel_bias])
     with open(csv_path, newline="", encoding="utf-8") as fh:
         reader = csv.DictReader(fh)
         missing = {"t_s", "ax", "ay", "az", "gx", "gy", "gz"} - set(reader.fieldnames or [])
         if missing:
             raise AdapterError(f"missing columns: {sorted(missing)}")
-        recs = list(records(reader, session_id, ACCEL_UNITS[accel_unit], GYRO_UNITS[gyro_unit], q, bias))
+        recs = list(records(reader, session_id, ACCEL_UNITS[accel_unit], GYRO_UNITS[gyro_unit], q, bias,
+                            accel_bias_m_s2=accel_bias))
     if len(recs) < 3:
         raise AdapterError("no samples")
     with open(out_path, "wb") as out:
@@ -128,9 +131,12 @@ def main(argv=None) -> int:
     p.add_argument("--mount-quat", nargs=4, type=float, required=True, metavar=("W", "X", "Y", "Z"))
     p.add_argument("--gyro-bias", nargs=3, type=float, default=[0.0, 0.0, 0.0], metavar=("X", "Y", "Z"),
                    help="in the declared gyro unit")
+    p.add_argument("--accel-bias", nargs=3, type=float, default=None, metavar=("X", "Y", "Z"),
+                   help="declared accelerometer bias in the declared accel unit; omitted means unknown, which the engine "
+                        "treats with a ten times looser prior (see reports/gap_closure_log.md, T2)")
     a = p.parse_args(argv)
     try:
-        n = convert(a.csv, a.out, a.session_id, a.accel_unit, a.gyro_unit, a.mount_quat, a.gyro_bias)
+        n = convert(a.csv, a.out, a.session_id, a.accel_unit, a.gyro_unit, a.mount_quat, a.gyro_bias, a.accel_bias)
     except AdapterError as exc:
         print(f"refused: {exc}", file=sys.stderr)
         return 2

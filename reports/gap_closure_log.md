@@ -401,3 +401,41 @@ stayed bounded, so the difference is not yet explained); the external-imu profil
 NHC through outages) is bounded. Do not quote the default-profile row as engine accuracy. Host-JVM numbers on a Windows laptop; no
 edge board. Tests at this commit: Python unittest 338 (5 skipped), pytest 386 passed / 5 skipped, mobile 462 passed, edge 20 passed,
 hygiene clean.
+
+## 2026-10-30 - T2: why the default edge profile diverged at 200 Hz (SYNTHETIC drive)
+
+Result: ROOT CAUSE FOUND AND DOCUMENTED; the divergence needs two conditions together, and either fix alone removes it.
+
+1. The converter wrote the calibration's `accelerometer_bias_m_s2` as null (nothing was declared). The engine starts an unknown
+   accelerometer bias with variance 1e-2 (ACCEL_BIAS_UNKNOWN_VARIANCE) instead of 1e-3 when a bias is provided.
+2. The legacy GNSS velocity variance is the fix's horizontal position accuracy squared (2.5 m/s one-sigma here), so the course
+   barely corrects heading during the turn.
+Together the filter explains the turn's centripetal force as accelerometer bias and attitude error and runs off.
+
+Bisect on the same converted file (bare engine, no runtime, mobile and edge classpaths agree): tight GNSS velocity weighting alone
+brings 430 m RMSE to 0.2 m; NHC through outages alone 220 m; v3 correction alone 421 m; the file's calibration with a zero vector
+as the accelerometer bias brings the end-of-outage error from 381 m to 29 m. NOT the cause (each tested): gyro noise, IMU accuracy
+flag, record source, calibration confidence, timestamps, initialization mode, GNSS value precision, queue or pacing effects (an
+unpaced replay reproduced the paced run exactly).
+
+Changes: `tools/external_imu_to_contract.py --accel-bias X Y Z` (declared in the accel unit, never guessed; omitted stays null);
+`BenchmarkHarness` argument `-Ppace=unpaced` for 10 s replays; regression test
+`HeadingFromCourseTest.withAnUndeclaredAccelerometerBias...` (host replay of the same trajectory, worst outage error: legacy weighting
+with undeclared bias 370 m, legacy with declared bias 26 m, 0.2 m/s weighting with undeclared bias 1 m). Default behaviour is
+unchanged: no flag flipped.
+
+Real-time benchmark, 70 s each, input converted with `--accel-bias 0 0 0` (declared zero is an assumption; the generator actually adds
+a 1e-3 m/s^2 bias). Generated from `reports/edge_200hz_scored_*_declared_accel_bias.json`:
+
+| Edge profile | RMSE all (m) | RMSE denied (m) | Final denied (m) | Paired proc. Hz | Ingress drops |
+|---|---:|---:|---:|---:|---:|
+| default, declared accel bias | 9.5 | 16.4 | 29.3 | 199.99 | 0 |
+| external-imu, declared accel bias | 6.4 | 11.8 | 25.8 | 200.01 | 0 |
+| default, undeclared (before) | 430.1 | 201.6 | 381.1 | 200.01 | 0 |
+| external-imu, undeclared (before) | 6.5 | 12.0 | 26.0 | 200.02 | 0 |
+
+The default declared-bias run printed `sustained_200_hz_met: false` with zero drops: its paired processing rate was 199.99 Hz against
+a literal 200.0 cut-off (other runs 200.01-200.02; about 1 % of one core in all four). Treat it as pacing jitter, not a performance
+shortfall. Open: the fragility to an undeclared bias with the legacy velocity weighting remains in the engine; the real-sensor
+equivalent of a declared bias (a calibrated accelerometer bias) is not available here. Tests at this commit: Python unittest 339
+(5 skipped), pytest 387 passed / 5 skipped, mobile 463 passed, edge 20 passed, hygiene clean.

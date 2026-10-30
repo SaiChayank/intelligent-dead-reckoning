@@ -65,6 +65,7 @@ tasks.register<JavaExec>("runEdgeBenchmark") {
         providers.gradleProperty("output").orElse("").get(),
         providers.gradleProperty("reference").orElse("").get(),
         providers.gradleProperty("profile").orElse("").get(),
+        providers.gradleProperty("pace").orElse("").get(),
     )
 }
 

@@ -238,12 +238,12 @@ object BenchmarkHarness {
 
 fun main(args: Array<String>) {
     require(args.isNotEmpty() && args[0].isNotBlank()) {
-        "Usage: gradle -p edge runEdgeBenchmark -Pinput=path/to/input.jsonl -Poutput=path/to/report.json [-Preference=path/to/reference.jsonl] [-Pprofile=default|external-imu]"
+        "Usage: gradle -p edge runEdgeBenchmark -Pinput=path/to/input.jsonl -Poutput=path/to/report.json [-Preference=path/to/reference.jsonl] [-Pprofile=default|external-imu] [-Ppace=unpaced]"
     }
     val input = Path.of(args[0])
     val output = Path.of(args.getOrNull(1)?.takeIf(String::isNotBlank) ?: "edge-profile.json")
     val reference = args.getOrNull(2)?.takeIf(String::isNotBlank)?.let(Path::of)
     val profile = args.getOrNull(3)?.takeIf(String::isNotBlank) ?: "default"
-    BenchmarkHarness.run(input, output, reference, BenchmarkHarness.Config(fusion = EdgeProfiles.byName(profile)))
+    BenchmarkHarness.run(input, output, reference, BenchmarkHarness.Config(fusion = EdgeProfiles.byName(profile), paceAtSourceClock = args.getOrNull(4) != "unpaced"))
     println("Edge benchmark report written: $output")
 }

@@ -24,11 +24,14 @@ class HeadingFromCourseTest {
 
     private class Outcome(val headingAt21S: Double?, val worstOutageErrorM: Double, val finalErrorM: Double)
 
-    private fun run(config: FusionConfig, firstFixSpeed: Double = 12.0, initialHeadingRad: Double? = null): Outcome {
+    private fun run(
+        config: FusionConfig, firstFixSpeed: Double = 12.0, initialHeadingRad: Double? = null,
+        declaredAccelBias: Vector3? = Vector3(0.0, 0.0, 0.0),
+    ): Outcome {
         val engine = FusionNavigationEngine(config = config, publicationIntervalNs = 100_000_000L, initialHeadingRad = initialHeadingRad)
         engine.initialize(EngineSession(header, "s", 0L),
             rec(0L, "cal", CalibrationResult("cal", CalibrationStatus.VALID, Quaternion(1.0, 0.0, 0.0, 0.0),
-                Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 0.0), 0.9)), InitializationMode.EVALUATION)
+                Vector3(0.0, 0.0, 0.0), declaredAccelBias, 0.9)), InitializationMode.EVALUATION)
         var heading = 0.0
         var east = 0.0
         var north = 0.0
@@ -43,7 +46,7 @@ class HeadingFromCourseTest {
             heading += w / 200.0
             east += 12.0 * cos(heading) / 200.0
             north += 12.0 * sin(heading) / 200.0
-            val tNs = (t * 1e9).toLong()
+            val tNs = Math.round(t * 1e9)
             engine.acceptImu(rec(tNs, "a$i", ImuMeasurement(Sensor.ACCELEROMETER, DeviceFrame.ANDROID_DEVICE,
                 ImuUnit.METRES_PER_SECOND_SQUARED, Vector3(0.0, 12.0 * w, g), SensorAccuracy.UNKNOWN)))
             engine.acceptImu(rec(tNs, "g$i", ImuMeasurement(Sensor.GYROSCOPE, DeviceFrame.ANDROID_DEVICE,
@@ -82,6 +85,18 @@ class HeadingFromCourseTest {
         assertTrue("heading at 21 s ${o.headingAt21S}", o.headingAt21S != null && Math.abs(o.headingAt21S!! - 78.3) < 5.0)
         assertTrue("worst outage error ${o.worstOutageErrorM}", o.worstOutageErrorM < 60.0)
         assertTrue("final error ${o.finalErrorM}", o.finalErrorM < 30.0)
+    }
+
+    @Test
+    fun withAnUndeclaredAccelerometerBiasAndTheLegacyVelocityWeightingTheTurnIsNotSurvivedUnlessEitherIsFixed() {
+        val legacyUndeclared = run(FusionConfig(initialHeadingFromGnssCourse = true), declaredAccelBias = null)
+        val legacyDeclared = run(FusionConfig(initialHeadingFromGnssCourse = true), declaredAccelBias = Vector3(0.0, 0.0, 0.0))
+        val tightUndeclared = run(FusionConfig(initialHeadingFromGnssCourse = true, gnssVelocitySigmaM_S = 0.2), declaredAccelBias = null)
+        println("accel bias prior: legacy+undeclared %.0f m, legacy+declared %.0f m, sigma 0.2+undeclared %.0f m (worst outage error)"
+            .format(legacyUndeclared.worstOutageErrorM, legacyDeclared.worstOutageErrorM, tightUndeclared.worstOutageErrorM))
+        assertTrue("expected the documented fragility, got ${legacyUndeclared.worstOutageErrorM} m", legacyUndeclared.worstOutageErrorM > 100.0)
+        assertTrue("declared bias: ${legacyDeclared.worstOutageErrorM}", legacyDeclared.worstOutageErrorM < 60.0)
+        assertTrue("tight velocity: ${tightUndeclared.worstOutageErrorM}", tightUndeclared.worstOutageErrorM < 60.0)
     }
 
     @Test

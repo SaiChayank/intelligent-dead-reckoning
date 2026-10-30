@@ -44,6 +44,13 @@ class AdapterTest(unittest.TestCase):
         self.assertEqual(n, 1 + 2 * 2)
         self.assertLessEqual(recs[0].event.t_ns, recs[1].event.t_ns)
 
+    def test_accelerometer_bias_is_null_unless_declared_and_is_converted_to_m_s2(self):
+        rows = ["0.0,0,0,1,0,0,0,,,,,,", "0.005,0,0,1,0,0,0,,,,,,"]
+        self.assertIsNone(self.convert(rows)[1][0].event.data.accelerometer_bias_m_s2)
+        bias = self.convert(rows, accel_bias=[0.0, 0.001, 0.0])[1][0].event.data.accelerometer_bias_m_s2
+        self.assertAlmostEqual(bias.y, 0.001 * 9.80665)
+        self.assertEqual(bias.x, 0.0)
+
     def test_gnss_is_emitted_only_when_filled_and_event_ids_are_unique(self):
         _, recs = self.convert(["0.0,0,0,1,0,0,0,17.4,78.4,12.0,90,2.5,12", "0.005,0,0,1,0,0,0,,,,,,"])
         fixes = [r.event.data for r in recs if isinstance(r.event.data, GnssMeasurement)]
