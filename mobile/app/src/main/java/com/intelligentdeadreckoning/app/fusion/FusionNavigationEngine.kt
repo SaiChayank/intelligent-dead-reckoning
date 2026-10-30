@@ -194,6 +194,7 @@ class FusionNavigationEngine(
     private var publishedAtNs = Long.MIN_VALUE
     private var announcedCalibrationRequired = false
     private var announcedHeadingUnobserved = false
+    private var headingFromCourseUsed = false
     private var announcedPairedWarning = false
     private var outageAnnounced = false
     private var gapAnnounced = false
@@ -273,6 +274,7 @@ class FusionNavigationEngine(
         publishedAtNs = Long.MIN_VALUE
         announcedCalibrationRequired = false
         announcedHeadingUnobserved = false
+        headingFromCourseUsed = false
         announcedPairedWarning = false
         outageAnnounced = false
         gapAnnounced = false
@@ -954,7 +956,7 @@ class FusionNavigationEngine(
                 else " and no ellipsoidal altitude, so no vertical update is taken") +
                 ". Position is relative to that anchor, and the anchor is not revisited by later fixes.",
         )
-        if (initialHeadingRad == null && !announcedHeadingUnobserved) {
+        if (initialHeadingRad == null && !headingFromCourseUsed && !announcedHeadingUnobserved) {
             announcedHeadingUnobserved = true
             emitDiagnostic(
                 Severity.WARNING, "FUSION_HEADING_UNOBSERVED",
@@ -971,7 +973,12 @@ class FusionNavigationEngine(
         anchor: GeodeticAnchor,
         mounting: Quaternion,
     ): FusionInitialState {
-        val heading = initialHeadingRad
+        val courseDeg = payload.bearing_deg
+        val courseSpeed = payload.speed_m_s
+        val courseHeading = if (config.initialHeadingFromGnssCourse && initialHeadingRad == null &&
+            courseDeg != null && courseDeg.isFinite() && courseSpeed != null && courseSpeed.isFinite() &&
+            courseSpeed >= config.initialHeadingMinSpeedM_S) Math.toRadians(courseDeg) else null
+        val heading = initialHeadingRad ?: courseHeading
         // The vehicle frame's forward axis must land on the ENU direction (sin h, cos h, 0), which
         // a rotation about ENU up produces when it is turned by 90 degrees minus the heading.
         val qEnuFromVehicle = quaternionAboutZ(Math.PI / 2.0 - (heading ?: 0.0))
@@ -997,6 +1004,7 @@ class FusionNavigationEngine(
             accuracy * VERTICAL_SIGMA_FACTOR
         }
         // Half a turn when no heading was supplied: the filter does not claim to know it.
+        headingFromCourseUsed = courseHeading != null
         val headingVariance = if (heading == null) HALF_TURN_VARIANCE_RAD2 else LEVEL_HEADING_VARIANCE_RAD2
         return FusionInitialState(
             anchor = anchor,

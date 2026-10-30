@@ -229,6 +229,14 @@ data class FusionConfig(
     /** Use the HMM matcher (HmmMapMatcher) instead of the greedy matcher for the map feedback path. */
     val hmmMapMatchingEnabled: Boolean = false,
     /**
+     * When no initial heading is supplied, take it from the aligning fix's GNSS course (needs a speed of at least
+     * [initialHeadingMinSpeedM_S]) instead of starting with a north-facing attitude and a half-turn variance. On a
+     * steady straight drive the heading cannot be learned afterwards, so the first turn otherwise sends the filter
+     * off. The phone app supplies its own heading; this is for engines built without one (the edge adapter).
+     */
+    val initialHeadingFromGnssCourse: Boolean = false,
+    val initialHeadingMinSpeedM_S: Double = 2.0,
+    /**
      * Keep the non-holonomic constraints active for the whole GNSS outage instead of standing them down once the
      * newest fix is older than [nhcMaxGnssAgeS]. The stand-down was added so a parked vehicle is not constrained
      * along a corrupted attitude; the ZUPT, the speed floor and the benign-dynamics dwell still guard that here.

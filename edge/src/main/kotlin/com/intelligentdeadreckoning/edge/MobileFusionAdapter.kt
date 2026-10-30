@@ -21,7 +21,7 @@ internal class MobileFusionAdapter(
     config: FusionConfig = FusionConfig(),
 ) : NavigationEngine {
     private val delegate = FusionNavigationEngine(
-        config = config,
+        config = config.copy(initialHeadingFromGnssCourse = true),
         publicationIntervalNs = publicationIntervalNs,
     )
 
