@@ -733,3 +733,10 @@ Recording: the app's own recorder wrote 27,578 records in 92 s with 0 dropped an
 IMU noise from that recording (`tools/phone_imu_noise.py`, `reports/phone_imu_cph2585_desk.json`): accelerometer white-noise density about 0.001 m/s2/sqrt(Hz), gyro about 7.5e-5 rad/s/sqrt(Hz), gyro bias about 0.1 to 0.23 deg/min.
 The engine assumes 0.05 and 0.005 (documented as "chosen, not measured"): about 50 and 66 times the bench noise. That is a conservative choice and stays: a still phone understates in-vehicle noise (engine and road vibration), so this is a floor, not a tuning input. Retuning needs a recording in a moving vehicle.
 Not done: any motion, GNSS outage or drift test; they need the phone in a vehicle.
+
+## 2026-11-01 N13: presentation cadence 5 Hz to 2 Hz - phone jank roughly halved; 49 of 49 on the phone
+
+Raised the sensor-readout publish interval from 200 ms to 500 ms and the recording-status sampling from 200 ms to 500 ms (`AndroidAcquisition`, `SessionViewModel`). Counters and recording stay exact at full rate inside the recorder and processor; only what the screen is told changes.
+Same 15 s measurement on the CPH2585 with sensors on and location granted: janky frames 39-45 % to 22.5 %, main thread about 33 % to about 22 % CPU, 90th percentile frame time 36 ms. Single runs, so treat the figures as rough.
+Still not smooth: about a fifth of frames are janky, so the remaining cost is the amount of UI redrawn per update (the whole screen reads the state). Splitting the state reads is a UI refactor not done here.
+All checks green: host tests, lint, assembleDebug, 49 of 49 on-device tests on the phone.

@@ -556,7 +556,7 @@ class AndroidAcquisition(
                             if (
                                 now -
                                     lastPublish >=
-                                200_000_000L
+                                500_000_000L
                             ) {
 
                                 lastPublish =

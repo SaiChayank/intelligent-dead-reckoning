@@ -69,7 +69,7 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
     )
     // Presentation snapshots only: the recorder retains exact full-rate counters internally.
     @OptIn(FlowPreview::class)
-    val recording = recorder.state.sample(200).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RecorderState())
+    val recording = recorder.state.sample(500).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RecorderState())
     private var foreground = false
     private val files = SessionFiles { File(application.noBackupFilesDir, "recordings") }
     private val player = ReplayController(files, viewModelScope, SystemClock::elapsedRealtimeNanos)
