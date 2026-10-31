@@ -159,6 +159,34 @@ class IovnbdEvalTest {
     }
 
     @Test
+    fun theJobProfileDefaultsToIovnbdAndAPhoneDriveCanAskForTheAppsOwnSettings() {
+        val file = Files.createTempFile("jobs", ".json")
+        try {
+            Files.writeString(file, """{"jobs":[{"session":"s","output":"a.csv","arm":"app","outages_ns":[]},
+                {"session":"s","output":"b.csv","arm":"app","outages_ns":[],"profile":"phone"}]}""")
+            val jobs = IovnbdEval.readJobs(file)
+            assertEquals(IovnbdEval.PROFILE_IOVNBD, jobs[0].profile)
+            assertEquals(IovnbdEval.PROFILE_PHONE, jobs[1].profile)
+        } finally {
+            Files.deleteIfExists(file)
+        }
+    }
+
+    @Test
+    fun anUnknownJobProfileIsRejectedBeforeAnythingRuns() {
+        val dir = Files.createTempDirectory("profile")
+        try {
+            Files.writeString(dir.resolve("measurements.jsonl"), "")
+            val job = IovnbdEval.Job(dir, dir.resolve("o.csv"), IovnbdEval.Arm.APP, emptyList(), null, profile = "tablet")
+            val error = runCatching { IovnbdEval.run(job) }.exceptionOrNull()
+            assertTrue(error is IllegalArgumentException && error.message!!.contains("unknown profile"))
+        } finally {
+            Files.deleteIfExists(dir.resolve("measurements.jsonl"))
+            Files.deleteIfExists(dir)
+        }
+    }
+
+    @Test
     fun theAppArmsAreExactlyTheAppFusionConfigurationsWithAndWithoutTheMapSwitch() {
         assertEquals(AppFusion.config(experimentalMapMatching = false), IovnbdEval.Arm.APP.config())
         assertEquals(AppFusion.config(experimentalMapMatching = true), IovnbdEval.Arm.APP_MAP.config())

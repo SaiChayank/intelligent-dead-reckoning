@@ -59,8 +59,7 @@ You can test the system either during a natural outage (underpass, flyover tunne
    - The **`FIELD DRIFT BENCHMARK REPORT`** card appears and shows the duration, distance, final drift error and
      drift ratio the engine measured against the GNSS fixes it withheld. **Write the numbers down as they appear.**
      The card shows whether the run is under the 10 % gate; it is not a pass or fail until the drive has been
-     scored against the withheld fixes with the evaluation harness (field-drive scoring is not implemented yet, see
-     `reports/gap_closure_log.md`).
+     scored offline (Phase 5 below).
 
 ---
 
@@ -78,6 +77,34 @@ You can test the system either during a natural outage (underpass, flyover tunne
      ```
    - All `.kml` and `.gpx` files from the phone will be downloaded to `reports/exports/pulled/`.
    - Double-click the `.kml` file to open it in Google Earth desktop to view the 3D ground truth vs. dead-reckoning trajectory overlay.
+
+---
+
+### Phase 5: Recording for offline scoring, then scoring the drive
+
+**Before leaving (learned on a OnePlus CPH2585, Android 16):**
+- Install the debug build (`bash mobile/gradlew -p mobile installDebug`). ADB cannot grant location on this ROM unless "USB debugging (Security settings)" is on in Developer options, so on the phone: Home, tap **Allow location**, choose **Precise** and **While using the app**.
+- Keep the screen on and the app in the foreground; sensors and recording stop when the app leaves the foreground.
+- On the Home screen choose **Phone sensors**, then **Start sensors**, then **Start recording**. Check the Signals tab shows the accelerometer and gyroscope near 98.8 Hz (this phone, measured) and "Dropped 0".
+- Indoors the phone sees satellites but uses none; the first GPS fix can take a minute under open sky. Wait for a GPS fix before moving off. A recording with fewer than 30 GPS fixes cannot be scored.
+
+**After the drive:**
+1. Stop the recording, then the sensors. Leave the phone connected.
+2. Pull and validate (writes under `data/raw/phone/`, which is not committed):
+   ```bash
+   python tools/pull_phone_recording.py --list
+   python tools/pull_phone_recording.py --label hyderabad-morning-drive
+   ```
+   The newest real recording is pulled byte for byte and checked with `tools/validate_phone_recording.py --local`; it must say "accepted".
+3. Seal it before looking at any result: `python tools/seal_experiment.py` (see the two-wheeler steps for the rule about deciding the split first).
+4. Score it:
+   ```bash
+   python tools/field_drive_eval.py data/raw/phone/hyderabad-morning-drive/<recording-id>
+   ```
+   This replays the drive through the real engine with the app's own calibrator settings and cuts GNSS outages (50 m, 1 km, 30 s, 60 s) after a 120 s warm-up. Results go to `reports/field/<recording-id>/` (`summary.md`, `summary.json`, `outages.csv`).
+   - **The reference is the phone's own GPS**, so drift includes that GPS's error (the summary prints its reported accuracy). Record a second, better GNSS logger on the same vehicle if the number has to stand up to scrutiny, and say which in the notes.
+   - If the engine never produces a position, `summary.md` says why. The app's calibrator needs a still start and two separate straight acceleration or braking segments with good GPS; a short or twisty drive will not lock it. `--calibration <file.json>` takes an offline mount calibration for such a drive, and `--warmup-s` changes the warm-up.
+   - The tool was checked against the existing IO-VNBD harness on drive `m` (same outage counts; 30 s and 60 s medians within 0.1 points) and on the bundled synthetic demo drives (labelled "NOT A FIELD DRIVE"). It has not been run on a real phone drive: none exists yet.
 
 ### Two-wheeler recording (needed before the two-wheeler profile can be validated)
 

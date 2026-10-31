@@ -181,6 +181,8 @@ object IovnbdEval {
         val trustModel: Path? = null,
         /** Directory holding road-graph.json.gz; required by the map arms. */
         val roadGraph: Path? = null,
+        /** [PROFILE_IOVNBD] (the default) tunes the calibrator and the stationary test to the IO-VNBD phone; [PROFILE_PHONE] uses the app's own settings, for a drive recorded with the app. */
+        val profile: String = PROFILE_IOVNBD,
     )
 
     /**
@@ -269,6 +271,9 @@ object IovnbdEval {
     private val MAP_ARMS = setOf(Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT_MAP, Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT_MAPX,
         Arm.MAPX_VAR9, Arm.MAPX_VAR4, Arm.MAPX_CONF06, Arm.MAPX_CONF04, Arm.APP_MAP)
 
+    const val PROFILE_IOVNBD = "iovnbd"
+    const val PROFILE_PHONE = "phone"
+
     private fun FusionConfig.forIovnbd(): FusionConfig = copy(
         stationaryMinSamples = 15,
         stationaryAccelStdNormM_S2 = 0.25,
@@ -283,7 +288,9 @@ object IovnbdEval {
         // Replayed real data, same rule the app's ReplayReader applies to a `real` recording.
         val inputHeader = Header(sessionId, Source.REPLAY_REAL, "1.0.0")
         val outputHeader = Header(sessionId, Source.REPLAY_REAL, ENGINE_OUTPUT_CONTRACT_VERSION)
-        val config = job.arm.config().forIovnbd()
+        require(job.profile == PROFILE_IOVNBD || job.profile == PROFILE_PHONE) { "unknown profile ${job.profile}" }
+        val phoneProfile = job.profile == PROFILE_PHONE
+        val config = job.arm.config().let { if (phoneProfile) it else it.forIovnbd() }
         require(job.arm !in HELDOUT_ARMS || job.speedModel != null) { "held-out arm needs a speed_model file" }
         val speedModel = job.speedModel?.let { Files.newInputStream(it).use(SpeedCorrectionModel::fromStream) }
         require(job.arm != Arm.EKF_NHC_V3_HELDOUT_VEL_NHCOUT_TRUST || job.trustModel != null) { "trust arm needs a trust_model file" }
@@ -292,7 +299,7 @@ object IovnbdEval {
         val roadGraph = job.roadGraph?.let { RoadGraph.load(it.resolve(RoadGraph.GRAPH_FILE).toFile()) }
         val engine = CalibratingFusionEngine(
             calibrator = job.calibration?.let { ReleasedCalibration(it) }
-                ?: CalibrationNavigationEngine(IOVNBD_MOUNT, IOVNBD_STATIONARY),
+                ?: if (phoneProfile) CalibrationNavigationEngine() else CalibrationNavigationEngine(IOVNBD_MOUNT, IOVNBD_STATIONARY),
             fusionFactory = { heading ->
             FusionNavigationEngine(
                 initialHeadingRad = heading,
@@ -437,6 +444,7 @@ object IovnbdEval {
                 },
                 speedModel = o.get("speed_model")?.takeUnless { it.isJsonNull }?.asString?.let { Paths.get(it) },
                 roadGraph = o.get("road_graph")?.takeUnless { it.isJsonNull }?.asString?.let { Paths.get(it) },
+                profile = o.get("profile")?.takeUnless { it.isJsonNull }?.asString ?: PROFILE_IOVNBD,
                 trustModel = o.get("trust_model")?.takeUnless { it.isJsonNull }?.asString?.let { Paths.get(it) },
                 calibration = o.get("calibration")?.takeUnless { it.isJsonNull }?.asJsonObject?.let { c ->
                     val q = c.getAsJsonArray("q_vehicle_from_device_wxyz").map { it.asDouble }
