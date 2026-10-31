@@ -724,3 +724,12 @@ A sampling method trace (`am profile`, read with Perfetto trace processor) showe
 Result: main thread about 48 % to about 33 % CPU; janky frames 45-50 % to 39-45 % (single 15 s runs, noisy). NOT SOLVED: the screen still recomposes about 20 times a second (several state sources each trigger a pass over the whole app), so jank remains substantial on a flagship phone. Splitting the state reads is a UI refactor not done here.
 After the changes: 49 of 49 on-device tests pass on the phone, host tests, lint, assembleDebug, edge tests, Python suite (360), hygiene and claims are green.
 Not done: location-permission paths (the phone needs "USB debugging (security settings)" for ADB grants, which is the owner's setting), real GPS, and any drive.
+
+## 2026-11-01 N12: sensor rates, first real recording, IMU noise of the phone (CPH2585, desk, stationary) - DONE; no vehicle claim
+
+Measured in the app on the phone (Signals tab, 43 s then 92 s runs, no drops): accelerometer 98.8 Hz and gyroscope 98.8 Hz against 100 Hz requested (BMI26x), magnetometer 50.0 Hz, gravity 49.4 Hz. Capture queue peaked at 10 of 256, 0 dropped, 0 invalid.
+Location: after the system dialog (Precise, while using the app), the phone listed 17 satellites but used 0 indoors and reported a degraded network fix (4 fixes in 60 s, no speed or bearing). No GNSS accuracy conclusion is possible indoors.
+Recording: the app's own recorder wrote 27,578 records in 92 s with 0 dropped and 0 write errors; `tools/validate_phone_recording.py --local` accepts it (rate 98.8 Hz, 0 late samples, max receipt delay 21 ms, 4 TIME_GAP diagnostics from the 1 per 15 s network fix). The raw file stays under `data/raw/phone/` (untracked).
+IMU noise from that recording (`tools/phone_imu_noise.py`, `reports/phone_imu_cph2585_desk.json`): accelerometer white-noise density about 0.001 m/s2/sqrt(Hz), gyro about 7.5e-5 rad/s/sqrt(Hz), gyro bias about 0.1 to 0.23 deg/min.
+The engine assumes 0.05 and 0.005 (documented as "chosen, not measured"): about 50 and 66 times the bench noise. That is a conservative choice and stays: a still phone understates in-vehicle noise (engine and road vibration), so this is a floor, not a tuning input. Retuning needs a recording in a moving vehicle.
+Not done: any motion, GNSS outage or drift test; they need the phone in a vehicle.
