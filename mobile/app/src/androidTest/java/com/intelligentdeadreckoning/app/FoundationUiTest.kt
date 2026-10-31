@@ -31,7 +31,7 @@ class FoundationUiTest {
         compose.onNodeWithTag("start_button").performScrollTo().performClick()
         compose.onNodeWithTag("tab_DIAGNOSTICS").performClick()
         compose.onNodeWithText("SIMULATION").assertIsDisplayed()
-        compose.onNodeWithText("Accelerometer").assertIsDisplayed()
+        compose.onNodeWithText("Accelerometer").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Gyroscope").assertExists()
         compose.onNodeWithText("Running").assertExists()
         compose.onNodeWithTag("tab_ABOUT").performClick()

@@ -19,12 +19,12 @@ class FileRecordingStorage(rootProvider: () -> File) : RecordingStorage {
         val activeDirectories = hashSetOf<String>()
     }
     private fun recordingsRoot(create: Boolean = false): File {
-        val path = root.toPath().toAbsolutePath().normalize()
-        var ancestor: java.nio.file.Path? = path
-        while (ancestor != null) {
-            require(!Files.isSymbolicLink(ancestor)) { "UNSAFE_RECORDING_ROOT" }
-            ancestor = ancestor.parent
-        }
+        val requested = root.toPath().toAbsolutePath().normalize()
+        // The OS reaches app-private storage through its own symlink (/data/user/0 -> /data/data). Resolve the parent
+        // through it, then still refuse a link at the recordings root itself.
+        val parent = requested.parent?.let { if (Files.exists(it)) it.toRealPath() else it }
+        val path = parent?.resolve(requested.fileName) ?: requested
+        require(!Files.isSymbolicLink(path)) { "UNSAFE_RECORDING_ROOT" }
         if (create && !Files.exists(path, java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
             Files.createDirectories(path)
         }

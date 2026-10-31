@@ -274,6 +274,20 @@ class LocalRecorderTest {
         storage.finalize(metadata()) // Release process lease, leave interrupted metadata for fixture.
         assertEquals(1, FileRecordingStorage(root).recover().recovered)
     }
+    /** Android reaches app-private storage through a system symlink (/data/user/0 -> /data/data); that must not block recording. */
+    @Test fun filesystemStorageAcceptsARootReachedThroughASymlinkedParent() {
+        val real = temporary.newFolder()
+        val linkedParent = File(temporary.root, "linked-parent")
+        try {
+            Files.createSymbolicLink(linkedParent.toPath(), real.toPath())
+        } catch (_: Exception) {
+            return // Windows hosts may disable creating symlinks for unprivileged test users.
+        }
+        val storage = FileRecordingStorage(File(linkedParent, "recordings"))
+        storage.create(metadata()).close()
+        storage.finalize(metadata())
+        assertTrue(File(real, "recordings/recording-1/metadata.json").isFile)
+    }
     @Test fun filesystemStorageRejectsSymlinkedRootAndRecordingArtifacts() {
         val outside = temporary.newFolder()
         val linkedRoot = File(temporary.root, "linked-root")

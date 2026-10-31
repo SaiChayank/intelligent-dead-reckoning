@@ -9,6 +9,7 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.intelligentdeadreckoning.app.acquisition.CaptureState
@@ -161,7 +162,7 @@ class DesignSystemUiTest {
         }
         compose.onNodeWithText("Export copy (.zip)").assertIsNotEnabled()
         compose.onNodeWithText("Replay session").assertIsNotEnabled()
-        compose.onNodeWithText("Working… export and replay stay disabled until it finishes.").assertExists()
+        compose.onNodeWithText("Working… session actions stay disabled until it finishes.").assertExists()
         compose.onNodeWithText("Next page").assertIsNotEnabled()
     }
 
@@ -176,6 +177,6 @@ class DesignSystemUiTest {
         compose.onNodeWithText("RAW GNSS FIXES (AS REPORTED)").assertExists()
         compose.onNodeWithTag("gnss_empty").assertExists()
         // Missing values must read as unavailable, never as zero.
-        compose.onNodeWithText("Unavailable").assertExists()
+        compose.onAllNodesWithText("Unavailable")[0].assertExists()
     }
 }

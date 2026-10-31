@@ -22,7 +22,7 @@ class ReplayUiTest {
         id = "000-demo-replay-test-${UUID.randomUUID()}"
         dir = File(context.noBackupFilesDir,"recordings/$id").apply { check(mkdirs()) }
         for (name in listOf("metadata.json", "measurements.jsonl")) {
-            context.assets.open("demo-replay-v1/$name").use { input ->
+            instrumentation.context.assets.open("demo-replay-v1/$name").use { input ->
                 File(dir, name).outputStream().use { output ->
                     if (name == "metadata.json") {
                         val template = input.readBytes().toString(Charsets.UTF_8)
@@ -47,6 +47,8 @@ class ReplayUiTest {
     }
     @Test fun selectPauseResumeStopAndExactSourceLabel() {
         compose.onNodeWithTag("saved_sessions").performScrollTo().performClick()
+        compose.waitUntil(10_000) { compose.onAllNodes(hasScrollToIndexAction()).fetchSemanticsNodes().isNotEmpty() }
+        compose.onAllNodes(hasScrollToIndexAction())[0].performScrollToIndex(0)
         compose.waitUntil(10_000) { compose.onAllNodesWithTag("replay_$id").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("replay_$id").performClick()
         phase(ReplayPhase.PLAYING)

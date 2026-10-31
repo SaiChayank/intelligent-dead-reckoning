@@ -702,3 +702,13 @@ Finding kept: the engine has no demonstrated recovery from sparse (10 s) fixes; 
 
 A web search for open motorcycle or scooter IMU + GNSS datasets with RTK truth found only car and racing-car datasets (Ford Highway RTK, an F3 car, an RTK GNSS/INS car set). Nothing to validate a leaning two-wheeler against,
 so the profile stays marked unvalidated (N4) and not wired to any setting. Needs your own recording with `docs/FIELD_TEST_PROTOCOL.md`. BLOCKED: field data.
+
+## 2026-10-31 N10: on-device suite run on an emulator - 12 of 49 failed, all fixed; one was a real app bug
+
+Ran `connectedDebugAndroidTest` on an Android 16 x86_64 emulator (Google APIs image, not a physical phone). First run: 49 tests, 12 failures. Now: 49 of 49 pass, with host tests, lint and assembleDebug green.
+- REAL BUG (app): `FileRecordingStorage` and `SessionFiles` refused any recordings root with a symlinked ancestor, but Android reaches app-private storage through the OS symlink `/data/user/0 -> /data/data`. On Android 16 this made
+  local recording fail with `UNSAFE_RECORDING_ROOT` (this also failed 4 `RecordingUiTest`s and the export-lifecycle test). Fix: resolve the parent through the OS path and still refuse a symlink at the recordings root itself; the existing
+  symlinked-root tests still pass and `filesystemStorageAcceptsARootReachedThroughASymlinkedParent` pins the new behaviour. It is not known whether earlier builds failed the same way on the physical phone (the first phone run had 9 failures, never inspected).
+- Test bugs: `ReplayUiTest` read its fixture from the app's assets instead of the test APK's; a stale busy-dialog string; "Unavailable" matched 3 nodes; "Accelerometer" was off-screen on a small display; the saved-sessions list needed scrolling
+  to the first row; the security test now ignores the signature permission AndroidX adds for non-exported receivers (it grants nothing).
+Not done: a physical phone has not been used; the map-matching device checklist (`docs/MAP_MATCHING_DEVICE_CHECKLIST.md`) item 6 now has an emulator result, but items 1-5 and 7 are still manual and NOT RUN.

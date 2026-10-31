@@ -25,12 +25,12 @@ class SessionFiles(rootProvider: () -> File) {
     private val root by lazy(rootProvider)
 
     private fun recordingsRoot(): Path {
-        val path = root.toPath().toAbsolutePath().normalize()
-        var ancestor: Path? = path
-        while (ancestor != null) {
-            require(!Files.isSymbolicLink(ancestor)) { "UNSAFE_RECORDING_ROOT" }
-            ancestor = ancestor.parent
-        }
+        val requested = root.toPath().toAbsolutePath().normalize()
+        // The OS reaches app-private storage through its own symlink (/data/user/0 -> /data/data). Resolve the parent
+        // through it, then still refuse a link at the recordings root itself.
+        val parent = requested.parent?.let { if (Files.exists(it)) it.toRealPath() else it }
+        val path = parent?.resolve(requested.fileName) ?: requested
+        require(!Files.isSymbolicLink(path)) { "UNSAFE_RECORDING_ROOT" }
         require(!Files.exists(path, NOFOLLOW_LINKS) || Files.isDirectory(path, NOFOLLOW_LINKS)) {
             "UNSAFE_RECORDING_ROOT"
         }

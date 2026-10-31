@@ -24,7 +24,8 @@ class AndroidSecurityBoundaryTest {
     @Test
     fun installedAppRequestsOnlyForegroundLocationAndNoNetworkOrStoragePermission() {
         val info = context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)
-        val permissions = info.requestedPermissions.orEmpty().toSet()
+        // AndroidX adds this signature-protected permission for non-exported receivers; it grants nothing.
+        val permissions = info.requestedPermissions.orEmpty().toSet() - "${context.packageName}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
         assertEquals(
             setOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION),
             permissions,
