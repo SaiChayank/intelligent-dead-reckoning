@@ -34,6 +34,9 @@ import com.intelligentdeadreckoning.contracts.v1.GnssMeasurement
 import com.intelligentdeadreckoning.contracts.v1.Header
 import com.intelligentdeadreckoning.contracts.v1.Source
 import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.plus
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -86,7 +89,14 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
         ),
         viewModelScope, SystemClock::elapsedRealtimeNanos,
     )
-    val navigationState = navigation.state
+    /** The folds behind the live GNSS view and the engine map see every sensor record. One background thread keeps their
+     *  state confined (they were single-threaded on Main) without spending frame time on it. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val presentationDispatcher = Dispatchers.Default.limitedParallelism(1)
+    // The runtime state changes on every sensor record (about 400 a second on a phone). Unsampled, the screen recomposed every
+    // frame (45 percent janky frames on a OnePlus phone) and Compose never went idle; the counters stay exact inside the runtime.
+    @OptIn(FlowPreview::class)
+    val navigationState = navigation.state.sample(250).stateIn(viewModelScope, SharingStarted.Eagerly, navigation.state.value)
     val navigationEvents = navigation.output
     /** The producer session the engine was bound to. One bind per session: a failed engine is
      *  never rebound or restarted — a new session must be started explicitly. */
@@ -290,10 +300,11 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
         recorder.loadInterrupted()
         // Both canonical producers feed the navigation seam. Records are offered, never
         // awaited: a stopped or failed engine session simply refuses them.
-        viewModelScope.launch {
+        // Off the main thread: this runs once per sensor record (hundreds a second) and offer() is lock-based and non-blocking.
+        viewModelScope.launch(Dispatchers.Default) {
             real.events.collect { navigation.offer(it) }
         }
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             player.events.collect { navigation.offer(it) }
         }
         viewModelScope.launch {
@@ -381,7 +392,7 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
             delay(500)
             send(view())
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NO_LIVE_GNSS)
+    }.stateIn(viewModelScope + presentationDispatcher, SharingStarted.WhileSubscribed(5_000), NO_LIVE_GNSS)
     /**
      * The evaluation reports this app can show: the document staged from
      * `contracts/evaluation/v1/golden_report.json` at build time, plus anything installed under the
@@ -449,7 +460,7 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
             delay(500)
             send(fold.snapshot(now()))
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NO_ENGINE_VIEW)
+    }.stateIn(viewModelScope + presentationDispatcher, SharingStarted.WhileSubscribed(5_000), NO_ENGINE_VIEW)
     fun select(source: InputSource) {
         player.stop(); replayVisible.value = false
         // A source change ends the engine session; the new one binds only with a new session.

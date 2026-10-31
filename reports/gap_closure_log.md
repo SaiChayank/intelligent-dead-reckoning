@@ -712,3 +712,15 @@ Ran `connectedDebugAndroidTest` on an Android 16 x86_64 emulator (Google APIs im
 - Test bugs: `ReplayUiTest` read its fixture from the app's assets instead of the test APK's; a stale busy-dialog string; "Unavailable" matched 3 nodes; "Accelerometer" was off-screen on a small display; the saved-sessions list needed scrolling
   to the first row; the security test now ignores the signature permission AndroidX adds for non-exported receivers (it grants nothing).
 Not done: a physical phone has not been used; the map-matching device checklist (`docs/MAP_MATCHING_DEVICE_CHECKLIST.md`) item 6 now has an emulator result, but items 1-5 and 7 are still manual and NOT RUN.
+
+## 2026-11-01 N11: first run on a physical phone (CPH2585, Android 16) - 5 of 49 failed, found and reduced a real UI load problem; 49 of 49 pass
+
+First on-device run on the phone: 44 pass, 5 fail (4 `RecordingUiTest`, 1 `AcquisitionUiTest`), all `ComposeNotIdleException` in tests that start the real sensors. The emulator had passed these because its sensors are slow.
+Measured on the phone with real sensors running and no location permission (ADB cannot grant it on this ROM; `pm grant` is blocked): 164 frames in 15 s, 45 % janky, app at about 107 % CPU (main thread ~50 %, one DefaultDispatcher thread ~46 %).
+A sampling method trace (`am profile`, read with Perfetto trace processor) showed:
+- `AcquisitionProcessor.accept` validates every sample with `Codec.encodeJson`, which built a charset encoder per string (`checkedString`) and ran a regex per timestamp. Now an unpaired-surrogate scan and a digit check, same accept/reject behaviour, pinned by `ContractCodecFastPathTest`. Worker thread about 46 % to about 20-30 % CPU.
+- The sensor stream was offered to the navigation runtime from the main thread, and the live-GNSS and engine-map folds also ran on it. They now run off the main thread (the folds on one confined background thread, since they were single-threaded on Main).
+- The navigation runtime state changed on every sensor record and was observed unsampled by the UI; it is now sampled at 4 Hz like the recording and replay flows (counters stay exact inside the runtime).
+Result: main thread about 48 % to about 33 % CPU; janky frames 45-50 % to 39-45 % (single 15 s runs, noisy). NOT SOLVED: the screen still recomposes about 20 times a second (several state sources each trigger a pass over the whole app), so jank remains substantial on a flagship phone. Splitting the state reads is a UI refactor not done here.
+After the changes: 49 of 49 on-device tests pass on the phone, host tests, lint, assembleDebug, edge tests, Python suite (360), hygiene and claims are green.
+Not done: location-permission paths (the phone needs "USB debugging (security settings)" for ADB grants, which is the owner's setting), real GPS, and any drive.

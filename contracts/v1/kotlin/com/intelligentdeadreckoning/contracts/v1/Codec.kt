@@ -18,7 +18,6 @@ data class Limits(val maxRecordBytes: Int = 65536, val maxRecords: Int = 1_000_0
 }
 
 private fun fail(code: String, path: String = "$"): Nothing = throw ContractException(code, path)
-private val decimal = Regex("0|[1-9][0-9]*")
 private val integerToken = Regex("-?(0|[1-9][0-9]*)")
 private val codeToken = Regex("[A-Z][A-Z0-9_]*")
 
@@ -33,9 +32,30 @@ private class LexicalNumber(private val token: String) : Number() {
     override fun toString() = token
 }
 
+/** True when [value] encodes to UTF-8 without error, i.e. it has no unpaired surrogate. Equivalent to encoding with
+ * CodingErrorAction.REPORT, without building a charset encoder for every string (this runs on every sensor sample). */
+private fun isWellFormedUtf16(value: String): Boolean {
+    var i = 0
+    while (i < value.length) {
+        val c = value[i]
+        if (Character.isHighSurrogate(c)) {
+            if (i + 1 >= value.length || !Character.isLowSurrogate(value[i + 1])) return false
+            i += 2
+        } else if (Character.isLowSurrogate(c)) return false
+        else i++
+    }
+    return true
+}
+
+/** Matches 0|[1-9][0-9]*; the regex was a measurable cost per sample on a phone. */
+private fun isCanonicalDigits(text: String): Boolean {
+    if (text.isEmpty()) return false
+    if (text[0] == '0') return text.length == 1
+    return text.all { it in '0'..'9' }
+}
+
 private fun checkedString(value: String, path: String): String {
-    try { Charsets.UTF_8.newEncoder().onMalformedInput(CodingErrorAction.REPORT).encode(CharBuffer.wrap(value)) }
-    catch (_: java.nio.charset.CharacterCodingException) { fail("INVALID_UNICODE", path) }
+    if (!isWellFormedUtf16(value)) fail("INVALID_UNICODE", path)
     if (value.isBlank() || value.length > 2048) fail("OUT_OF_RANGE", path)
     return value
 }
@@ -80,7 +100,7 @@ private class Fields(value: JsonElement, val path: String) {
         val v = get(key)
         if (!v.isJsonPrimitive || !v.asJsonPrimitive.isString) fail("INVALID_TYPE", at(key))
         val text = v.asString
-        if (text.length > 19 || !decimal.matches(text)) fail("OUT_OF_RANGE", at(key))
+        if (text.length > 19 || !isCanonicalDigits(text)) fail("OUT_OF_RANGE", at(key))
         return text.toLongOrNull() ?: fail("OUT_OF_RANGE", at(key))
     }
     fun integer(key: String): Long {
