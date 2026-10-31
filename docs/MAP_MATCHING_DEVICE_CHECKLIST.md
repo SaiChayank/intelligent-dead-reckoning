@@ -1,6 +1,6 @@
 # Map-matching switch: manual device checklist
 
-STATUS: NOT RUN on a phone. Item 6 was run on an emulator (49 of 49 pass, see N10 in `reports/gap_closure_log.md`); the rest is manual. The switch is verified on the JVM only (`MapMatchingToggleTest`,
+STATUS: partly run on a phone (CPH2585). Steps 1 and 2 were run by hand (see N14 in `reports/gap_closure_log.md`) and item 6 passes (50 of 50 on-device tests); steps 3-5 and 7 need a route and are NOT RUN.
 `MapMatchingSwitchEngineTest`), and the evidence for map matching itself is synthetic motion on real Hyderabad road geometry.
 
 1. Fresh install. Open the offline map screen. Expect the chip to read "Map matching off" and the caveat text (starts with "Experimental", mentions

@@ -92,6 +92,7 @@ object SampleDriveInstaller {
     fun installSession(context: Context, recordingsRoot: File, sessionId: String): Boolean {
         val assetDir = "$BASE_ASSET_DIR/$sessionId"
         val targetDir = File(recordingsRoot, sessionId)
+        val existed = targetDir.exists()
         targetDir.mkdirs()
 
         val metadataFile = File(targetDir, "metadata.json")
@@ -99,30 +100,37 @@ object SampleDriveInstaller {
         val measurementsFile = File(targetDir, "measurements.jsonl")
         val tempMeasurements = File(targetDir, "measurements.jsonl.tmp")
 
-        // 1. Copy metadata.json
-        context.assets.open("$assetDir/metadata.json").use { input ->
-            FileOutputStream(tempMeta).use { output ->
-                input.copyTo(output)
-            }
-        }
-
-        // 2. Decompress measurements.jsonl.gz -> measurements.jsonl
-        context.assets.open("$assetDir/measurements.jsonl.gz").use { input ->
-            GZIPInputStream(input).use { gzInput ->
-                FileOutputStream(tempMeasurements).use { output ->
-                    gzInput.copyTo(output)
+        try {
+            // 1. Copy metadata.json
+            context.assets.open("$assetDir/metadata.json").use { input ->
+                FileOutputStream(tempMeta).use { output ->
+                    input.copyTo(output)
                 }
             }
-        }
 
-        if (!tempMeta.renameTo(metadataFile)) {
-            tempMeta.copyTo(metadataFile, overwrite = true)
+            // 2. Measurements. The Android build strips the .gz and packages the file already decompressed, so accept either name.
+            val compressed = try { context.assets.open("$assetDir/measurements.jsonl.gz") } catch (_: java.io.FileNotFoundException) { null }
+            (compressed?.let { GZIPInputStream(it) } ?: context.assets.open("$assetDir/measurements.jsonl")).use { source ->
+                FileOutputStream(tempMeasurements).use { output ->
+                    source.copyTo(output)
+                }
+            }
+
+            if (!tempMeta.renameTo(metadataFile)) {
+                tempMeta.copyTo(metadataFile, overwrite = true)
+                tempMeta.delete()
+            }
+
+            if (!tempMeasurements.renameTo(measurementsFile)) {
+                tempMeasurements.copyTo(measurementsFile, overwrite = true)
+                tempMeasurements.delete()
+            }
+        } catch (e: Exception) {
+            // A half-installed folder would be reported as a failed recording on every launch; leave nothing behind.
             tempMeta.delete()
-        }
-
-        if (!tempMeasurements.renameTo(measurementsFile)) {
-            tempMeasurements.copyTo(measurementsFile, overwrite = true)
             tempMeasurements.delete()
+            if (!existed && !metadataFile.exists()) targetDir.delete()
+            throw e
         }
 
         // 3. Copy evaluation_report.json into evaluation directory if available
