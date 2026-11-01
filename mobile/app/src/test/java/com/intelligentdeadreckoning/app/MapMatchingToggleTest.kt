@@ -95,17 +95,28 @@ class MapMatchingToggleTest {
     }
 
     @Test
+    fun theAppCalibratorRunsTheBatchCalibratorBesideTheInDriveOneAndCanBeSwitchedOff() {
+        assertTrue(AppFusion.BATCH_MOUNT_CALIBRATION_ENABLED)
+        assertTrue(AppFusion.calibrator() is com.intelligentdeadreckoning.app.calibration.FallbackCalibrator)
+        assertTrue(AppFusion.calibrator(batchFallback = true) is com.intelligentdeadreckoning.app.calibration.FallbackCalibrator)
+        assertTrue(AppFusion.calibrator(batchFallback = false) is com.intelligentdeadreckoning.app.calibration.CalibrationNavigationEngine)
+    }
+
+    @Test
     fun withTheSwitchOffTheEngineConfigurationIsExactlyTheShippedOneAndHasNoGraph() {
         val c = Captured()
         factory(c, { false }, { graph })(1.25)
         assertEquals(1.25, c.heading!!, 0.0)
         assertEquals(AppFusion.config(experimentalMapMatching = false), c.config)
         assertNull(c.graph)
+        // The AI speed estimator and the mount-slip detector are off: on real phone-in-car drives they made outage drift far worse
+        // (reports/gsdc_eval_development*, entry N17 in reports/gap_closure_log.md).
         val shipped = FusionConfig(
-            aiSpeedEstimationEnabled = true, adaptiveNoiseScalingEnabled = true,
-            mountSlipDetectionEnabled = true, mapHeadingFeedbackEnabled = true, adaptiveDecimationEnabled = true,
+            adaptiveNoiseScalingEnabled = true, mapHeadingFeedbackEnabled = true, adaptiveDecimationEnabled = true,
         )
-        assertEquals("the off configuration must equal the pre-switch app configuration", shipped, c.config)
+        assertEquals("the off configuration must equal the shipped app configuration", shipped, c.config)
+        assertFalse(c.config!!.aiSpeedEstimationEnabled)
+        assertFalse(c.config!!.mountSlipDetectionEnabled)
         assertFalse(c.config!!.hmmMapMatchingEnabled)
         assertFalse(c.config!!.mapCrossTrackEnabled)
     }

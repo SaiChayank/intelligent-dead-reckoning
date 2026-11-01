@@ -117,6 +117,34 @@ _Synthetic motion at constant speed along real road geometry, not a recorded dri
 
 _* interval excludes zero. The held-out rows are few outages on few drives. The switch in the app stays off by default: the app's own engine configuration was not what was evaluated, and no recorded Hyderabad drive exists._
 
+**Real phone-in-car drives** (Google Smartphone Decimeter Challenge 2023-2024, training split: 26 held-out trips from 26 drives that were fixed by a hash of the drive name before any result was seen, one phone per drive; California roads, Pixel, Samsung and Xiaomi phones). Forced outages after an offline mount calibration, scored against the 0.1 m reference receiver. GNSS aiding before and after the outage is that same reference at 1 Hz with a declared 2.5 m accuracy, which is better than a phone receiver gives; the mount calibration is offline because the app's own calibrator did not lock on these trips (0 of 38 development trips). The configuration was chosen on the 38 development drives only.
+
+| Configuration | Outage | Scored outages | Median drift | 90th percentile | Under 10 % |
+|---|---|---:|---:|---:|---:|
+| Shipped before (AI speed estimator and mount-slip detector on) | 50 m outage | 190 | 4.46 % | 92.12 % | 65 % |
+| Shipped before (AI speed estimator and mount-slip detector on) | 30 s outage | 163 | 283.92 % | 1653.99 % | 15 % |
+| Shipped before (AI speed estimator and mount-slip detector on) | 60 s outage | 147 | 749.4 % | 2668.22 % | 1 % |
+| Shipped before (AI speed estimator and mount-slip detector on) | 1 km outage | 122 | 270.8 % | 2739.56 % | 12 % |
+| Shipped now (both off) | 50 m outage | 186 | 0.72 % | 3.77 % | 96 % |
+| Shipped now (both off) | 30 s outage | 159 | 3.07 % | 20.25 % | 80 % |
+| Shipped now (both off) | 60 s outage | 145 | 9.22 % | 74.45 % | 55 % |
+| Shipped now (both off) | 1 km outage | 120 | 3.62 % | 82.82 % | 62 % |
+| Plain EKF with constraints | 50 m outage | 186 | 0.74 % | 3.88 % | 96 % |
+| Plain EKF with constraints | 30 s outage | 158 | 3.02 % | 18.37 % | 82 % |
+| Plain EKF with constraints | 60 s outage | 144 | 8.7 % | 72.46 % | 56 % |
+| Plain EKF with constraints | 1 km outage | 120 | 3.57 % | 80.98 % | 63 % |
+
+Paired difference, shipped before minus shipped now (percentage points; 95 % interval from resampling whole drives; positive = the new configuration drifts less):
+
+| Outage | Paired outages | Drives | Mean difference | 95 % interval |
+|---|---:|---:|---:|---|
+| 50 m outage | 186 | 26 | +93.4 | +30.7 to +187.0 * |
+| 30 s outage | 159 | 26 | +790.8 | +512.3 to +1149.7 * |
+| 60 s outage | 145 | 26 | +1461.9 | +934.1 to +2069.9 * |
+| 1 km outage | 120 | 26 | +874.7 | +542.9 to +1291.1 * |
+
+_* interval excludes zero. Citation: Fu, Khider, Gulati, van Diggelen, "Google Smartphone Decimeter Challenge" (2023), kaggle.com/competitions/smartphone-decimeter-2023/data; Fu, Khider, van Diggelen, ION GNSS+ 2020, doi:10.33012/2020.17628. Data licence CC BY-NC-SA 3.0 IGO. Not a drive recorded with this app, and no Indian roads._
+
 **Learned GNSS trust** (behind a flag, off by default; leave-one-drive-out, 6283 phone fixes): rank correlation with true fix error 0.28 (reported accuracy: 0.048); mean absolute error 2.487 m (reported accuracy: 2.638 m).
 
 Engine-level paired comparison on IO-VNBD (the best arm with and without the trust weighting; weights trained without the drive being run; positive difference = trust helps; interval is a 95 % bootstrap of the mean paired difference in percentage points):

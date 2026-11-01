@@ -1,0 +1,71 @@
+{
+ "baseline": "app_no_slip_no_ai",
+ "candidate": "ekf_nhc",
+ "positive_difference_means": "the candidate drifts less than the baseline",
+ "scenarios": {
+  "d50": {
+   "paired_outages": 265,
+   "drives": 38,
+   "median_drift_pct_baseline": 0.69,
+   "median_drift_pct_candidate": 0.69,
+   "share_under_10pct_baseline": 0.974,
+   "share_under_10pct_candidate": 0.977,
+   "median_paired_difference_pct_points": 0.0,
+   "mean_paired_difference_pct_points": 0.03,
+   "mean_difference_95pct_interval_drive_clustered": [
+    -0.02,
+    0.12
+   ],
+   "interval_excludes_zero": false,
+   "fraction_outages_candidate_better": 0.37
+  },
+  "t30": {
+   "paired_outages": 235,
+   "drives": 37,
+   "median_drift_pct_baseline": 2.26,
+   "median_drift_pct_candidate": 2.19,
+   "share_under_10pct_baseline": 0.915,
+   "share_under_10pct_candidate": 0.911,
+   "median_paired_difference_pct_points": 0.03,
+   "mean_paired_difference_pct_points": 0.16,
+   "mean_difference_95pct_interval_drive_clustered": [
+    0.02,
+    0.32
+   ],
+   "interval_excludes_zero": true,
+   "fraction_outages_candidate_better": 0.574
+  },
+  "t60": {
+   "paired_outages": 204,
+   "drives": 37,
+   "median_drift_pct_baseline": 5.99,
+   "median_drift_pct_candidate": 5.92,
+   "share_under_10pct_baseline": 0.647,
+   "share_under_10pct_candidate": 0.662,
+   "median_paired_difference_pct_points": 0.12,
+   "mean_paired_difference_pct_points": 0.8,
+   "mean_difference_95pct_interval_drive_clustered": [
+    0.22,
+    1.53
+   ],
+   "interval_excludes_zero": true,
+   "fraction_outages_candidate_better": 0.618
+  },
+  "d1000": {
+   "paired_outages": 182,
+   "drives": 37,
+   "median_drift_pct_baseline": 4.0,
+   "median_drift_pct_candidate": 3.98,
+   "share_under_10pct_baseline": 0.72,
+   "share_under_10pct_candidate": 0.709,
+   "median_paired_difference_pct_points": 0.03,
+   "mean_paired_difference_pct_points": 0.92,
+   "mean_difference_95pct_interval_drive_clustered": [
+    -0.09,
+    2.78
+   ],
+   "interval_excludes_zero": false,
+   "fraction_outages_candidate_better": 0.555
+  }
+ }
+}

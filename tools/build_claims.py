@@ -283,6 +283,68 @@ def _pct(x: float) -> str:
     return f"{x:.0f} %"
 
 
+GSDC_SHIPPED, GSDC_PREVIOUS = "app_no_slip_no_ai", "app"     # the configuration the app ships now (see AppFusion), and the one it shipped before
+GSDC_CITATION = ("Fu, Khider, Gulati, van Diggelen, \"Google Smartphone Decimeter Challenge\" (2023), kaggle.com/competitions/smartphone-decimeter-2023/data; "
+                 "Fu, Khider, van Diggelen, ION GNSS+ 2020, doi:10.33012/2020.17628. Data licence CC BY-NC-SA 3.0 IGO.")
+
+
+def _gsdc() -> dict | None:
+    """The held-out evaluation on real phone-in-car drives, or None when its result files are not there."""
+    held = load(REPORTS / "gsdc_eval_held_out" / "summary.json")
+    cmp_path = REPORTS / "gsdc_eval_held_out" / f"comparison_{GSDC_PREVIOUS}_vs_{GSDC_SHIPPED}.json"
+    cmp_ = load(cmp_path)
+    if held is None or cmp_ is None or GSDC_SHIPPED not in next(iter(held["scenarios"].values())):
+        return None
+    return {"held": held, "cmp": cmp_}
+
+
+def gsdc_headline() -> str | None:
+    g = _gsdc()
+    if g is None:
+        return None
+    sc = g["held"]["scenarios"]
+    now = {k: sc[k][GSDC_SHIPPED] for k in ("t30", "t60", "d1000")}
+    before = {k: sc[k][GSDC_PREVIOUS] for k in ("t30", "t60", "d1000")}
+    return (f"On real phone-in-car drives (Google Smartphone Decimeter Challenge, {g['held']['drives_calibrated']} held-out drives, offline mount "
+            f"calibration, reference-grade GNSS aiding) the shipped configuration's median drift is {now['t30']['drift_pct_median']:.1f} % (30 s), "
+            f"{now['t60']['drift_pct_median']:.1f} % (60 s) and {now['d1000']['drift_pct_median']:.1f} % (1 km); the configuration shipped before it "
+            f"drifted {before['t30']['drift_pct_median']:.0f} %, {before['t60']['drift_pct_median']:.0f} % and {before['d1000']['drift_pct_median']:.0f} %. "
+            f"Only {100 * now['t60']['pass_rate_incl_failures']:.0f} % of 60 s outages are under 10 %")
+
+
+def gsdc_section() -> list[str]:
+    g = _gsdc()
+    if g is None:
+        return ["_Real phone-in-car drives: not generated (reports/gsdc_eval_held_out)._", ""]
+    held, cmp_ = g["held"], g["cmp"]
+    labels = {GSDC_PREVIOUS: "Shipped before (AI speed estimator and mount-slip detector on)", GSDC_SHIPPED: "Shipped now (both off)",
+              "ekf_nhc": "Plain EKF with constraints"}
+    lines = [f"**Real phone-in-car drives** (Google Smartphone Decimeter Challenge 2023-2024, training split: {held['trips']} held-out trips from "
+             f"{held['drives_calibrated']} drives that were fixed by a hash of the drive name before any result was seen, one phone per drive; "
+             "California roads, Pixel, Samsung and Xiaomi phones). Forced outages after an offline mount calibration, scored against the 0.1 m reference "
+             "receiver. GNSS aiding before and after the outage is that same reference at 1 Hz with a declared 2.5 m accuracy, which is better than a phone "
+             "receiver gives; the mount calibration is offline because the app's own calibrator did not lock on these trips (0 of 38 development trips). "
+             "The configuration was chosen on the 38 development drives only.", "",
+             "| Configuration | Outage | Scored outages | Median drift | 90th percentile | Under 10 % |", "|---|---|---:|---:|---:|---:|"]
+    for name in (GSDC_PREVIOUS, GSDC_SHIPPED, "ekf_nhc"):
+        for sc_name in ("d50", "t30", "t60", "d1000"):
+            c = held["scenarios"][sc_name].get(name)
+            if c is None or not c.get("scored"):
+                continue
+            lines.append(f"| {labels[name]} | {SCENARIO_LABELS[sc_name]} | {c['scored']} | {c['drift_pct_median']} % | {c['drift_pct_p90']} % | "
+                         f"{100 * c['pass_rate_incl_failures']:.0f} % |")
+    lines += ["", "Paired difference, shipped before minus shipped now (percentage points; 95 % interval from resampling whole drives; positive = the new "
+                  "configuration drifts less):", "", "| Outage | Paired outages | Drives | Mean difference | 95 % interval |", "|---|---:|---:|---:|---|"]
+    for sc_name in ("d50", "t30", "t60", "d1000"):
+        r = cmp_["scenarios"].get(sc_name)
+        if r:
+            lo, hi = r["mean_difference_95pct_interval_drive_clustered"]
+            lines.append(f"| {SCENARIO_LABELS[sc_name]} | {r['paired_outages']} | {r['drives']} | {r['mean_paired_difference_pct_points']:+.1f} | "
+                         f"{lo:+.1f} to {hi:+.1f}{' *' if r['interval_excludes_zero'] else ''} |")
+    lines += ["", f"_* interval excludes zero. Citation: {GSDC_CITATION} Not a drive recorded with this app, and no Indian roads._", ""]
+    return lines
+
+
 def _held() -> dict | None:
     t4 = load(REPORTS / "t4_split_comparison.json")
     return None if t4 is None else t4["comparison"]["held_out"]
@@ -303,18 +365,49 @@ def drift_verdict() -> tuple[bool, str]:
 
 def status_rows() -> list[tuple[str, str, str]]:
     met, drift_text = drift_verdict()
+    gsdc = _gsdc()
     rows = [("No OBD-II / CAN-bus / wheel sensor", "Engine inputs are IMU and GNSS only", "Met by design"),
-            ("Dead-reckoning drift under 10 %", drift_text, "**Met on these data**" if met else "**Not met**"),
-            ("Phone IMU in a vehicle", "No phone drive has been scored", "**Not evaluated**")]
+            ("Dead-reckoning drift under 10 %", drift_text, "**Met on these data**" if met else "**Not met**")]
+    if gsdc is None:
+        rows.append(("Phone IMU in a vehicle", "No phone drive has been scored", "**Not evaluated**"))
+    else:
+        sc = gsdc["held"]["scenarios"]
+        shipped = {k: sc[k][GSDC_SHIPPED] for k in ("t30", "t60", "d1000")}
+        all_under = all(v["drift_pct_median"] < 10.0 for v in shipped.values())
+        rows.append(("Dead-reckoning drift under 10 %, real phone-in-car drives", gsdc_headline() + "; public data, not a drive recorded with this app",
+                     "**Met in median on these data**, 60 s outages only just" if all_under else "**Not met**"))
+        rows.append(("Phone IMU in a vehicle", f"Scored on {gsdc['held']['drives_calibrated']} held-out and 38 development real drives of a public dataset "
+                     "with an offline mount calibration; no drive recorded with this app", "Partly met"))
     s = load(REPORTS / "speed_v3_eval.json")
     if s is not None:
         r = s["speed_rmse"]
         rows.append(("AI speed estimation",
-                     f"v1 (synthetic) fails on real drives; v3 lowers leave-one-drive-out speed RMSE from "
+                     f"v1 (synthetic) fails on real drives and is switched off in the shipped app; v3 lowers leave-one-drive-out speed RMSE from "
                      f"{r['integrated']['all']} (integrated acceleration) and {r['hold']['all']} (hold last speed) to "
                      f"{r['learned']['all']} m/s", "Partly met, external-IMU input only"))
-    rows.append(("Auto mount calibration", "Implemented; the in-motion calibrator does not reach VALID on 10 Hz IO-VNBD data; a saved "
-                 "mount lets a drive start at the first accurate fix (synthetic replay, host only)", "Partly met, unverified in a vehicle"))
+    probe = load(REPORTS / "gsdc_calibrator_probe_development.json")
+    if probe is None:
+        rows.append(("Auto mount calibration", "Implemented; the in-motion calibrator does not reach VALID on 10 Hz IO-VNBD data; a saved "
+                     "mount lets a drive start at the first accurate fix (synthetic replay, host only)", "Partly met, unverified in a vehicle"))
+    else:
+        best = max(v["locked"] for v in probe["settings"].values())
+        dev_in = load(REPORTS / "gsdc_eval_development_inengine" / "summary.json")
+        held_in = load(REPORTS / "gsdc_eval_held_out_inengine" / "summary.json")
+        base = (f"The app's in-drive calibrator reached VALID on {best} of {probe['trips']} real phone-in-car trips under every threshold setting tried "
+                "(a phone in a running car vibrates too much for its parked test). ")
+        if dev_in is None or held_in is None:
+            rows.append(("Auto mount calibration", base + "An offline calibration from the first minutes (tools/gsdc_batch_calibration.py) works on every "
+                         "trip but is not in the app; a saved mount lets a drive start at the first accurate fix (synthetic replay, host only)",
+                         "**Not met in the app**; offline substitute only"))
+        else:
+            pd_, ph = dev_in["calibration_parity_with_python"], held_in["calibration_parity_with_python"]
+            found = pd_["trips_compared"] + ph["trips_compared"]
+            total = dev_in["calibrated"] + held_in["calibrated"]
+            worst = max(pd_["angle_deg_max"], ph["angle_deg_max"])
+            rows.append(("Auto mount calibration", base + f"The app now also runs a batch calibrator (first 2 to 8 minutes of driving, gravity while stopped, forward "
+                         f"from the speed derivative) beside it; the engine found a mount by itself on {found} of {total} real trips (within {worst:.1f} degrees of "
+                         "the Python reference method) and drifted as with an offline calibration. Public data only; needs about two minutes of driving with "
+                         "speed changes; not tested on a device in a vehicle", "**Met on real phone-in-car data**; not field-tested on a device"))
     rows.append(("10 Hz output", "Publication interval is 100 ms; host replay only", "Met on host, not on device"))
     mm = load(REPORTS / "map_matching_eval.json")
     if mm is not None:
@@ -349,7 +442,9 @@ def status_paragraph() -> str:
     met, text = drift_verdict()
     sentence = ("the PS #26168 mandate (drift under 10% of distance in an outage) is **met** on these data. " if met else
                 "the PS #26168 mandate (drift under 10% of distance in an outage) is **not yet met**. ")
-    return (f"**Status:** {sentence}Best measured: {text}. Nothing has been scored on a phone in a vehicle. The earlier "
+    real = gsdc_headline()
+    phone = f"{real}. " if real else "Nothing has been scored on a phone in a vehicle. "
+    return (f"**Status:** {sentence}Best measured: {text}. {phone}The earlier "
             "synthetic-trained Model A v1 (a 1D-CNN) fails on real drives, and figures this deck used to show came from a "
             "scripted synthetic drive and were not measured. Every result number in this deck is generated from files in "
             "`reports/` by `tools/build_claims.py`.")
@@ -364,6 +459,9 @@ def values() -> dict[str, str]:
         out["heldout_best_30s"] = f"{held['t30']['best_arm']['median_drift_pct']:.0f}%"
     met, _ = drift_verdict()
     out["verdict_word"] = "met" if met else "not met"
+    headline = gsdc_headline()
+    if headline:
+        out["gsdc_headline"] = headline + "."
     out["gate_sentence"] = "The 10% gate is met on these data." if met else "The 10% gate is not met."
     mm = load(REPORTS / "map_matching_eval.json")
     if mm is not None:
@@ -453,7 +551,7 @@ def build() -> str:
              "about every 9 s).", ""]
     parts += iovnbd_table("vehicle", "IO-VNBD, vehicle-frame inertial input (external-IMU case)")
     parts += iovnbd_table("phone", "IO-VNBD, phone IMU export")
-    parts += t4_section() + speed_v3_section() + hard_turn_section() + map_matching_section() + map_real_section() + gnss_trust_section()
+    parts += t4_section() + speed_v3_section() + hard_turn_section() + map_matching_section() + map_real_section() + gsdc_section() + gnss_trust_section()
     parts += edge_section() + synthetic_section()
     return "\n".join(parts).rstrip() + "\n"
 

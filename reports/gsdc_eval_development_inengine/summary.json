@@ -1,0 +1,863 @@
+{
+ "dataset": "Google Smartphone Decimeter Challenge 2023-2024, train split (CC BY-NC-SA 3.0 IGO)",
+ "split": "development",
+ "calibration_source": "in-app batch calibrator (Kotlin), found by the engine",
+ "calibration_parity_with_python": {
+  "trips_compared": 38,
+  "trips_without_kotlin_calibration": [],
+  "angle_deg_median": 0.0,
+  "angle_deg_max": 0.439,
+  "release_minus_python_s_median": 0.61,
+  "release_minus_python_s_max": 0.75
+ },
+ "trips": 38,
+ "calibrated": 38,
+ "drives_calibrated": 38,
+ "reference": "NovAtel SPAN, 0.1 m; also used at 1 Hz as GNSS aiding with a declared 2.5 m accuracy",
+ "mount_calibration": "offline, from the first minutes of each trip (tools/gsdc_batch_calibration.py)",
+ "settle_s_after_calibration": 120.0,
+ "configs": {
+  "app_no_slip_no_ai": {
+   "arm": "app_no_slip_no_ai",
+   "profile": "phone"
+  }
+ },
+ "scenarios": {
+  "d50": {
+   "app_no_slip_no_ai": {
+    "planned": 273,
+    "scored": 234,
+    "engine_failed": 0,
+    "not_navigating_at_start": 20,
+    "no_solution_in_outage": 19,
+    "median_distance_m": 57.3,
+    "median_duration_s": 3.0,
+    "drift_pct_median": 0.68,
+    "drift_pct_p90": 2.9,
+    "end_error_m_median": 0.4,
+    "end_error_m_p90": 1.53,
+    "pass_rate_drift_lt_10pct": 0.974,
+    "pass_rate_incl_failures": 0.974,
+    "pass_rate_end_error_lt_5m": 0.974,
+    "dr_declared_after_s_median": 2.01
+   }
+  },
+  "d1000": {
+   "app_no_slip_no_ai": {
+    "planned": 189,
+    "scored": 160,
+    "engine_failed": 0,
+    "not_navigating_at_start": 19,
+    "no_solution_in_outage": 10,
+    "median_distance_m": 1010.2,
+    "median_duration_s": 45.5,
+    "drift_pct_median": 4.08,
+    "drift_pct_p90": 27.92,
+    "end_error_m_median": 41.45,
+    "end_error_m_p90": 280.32,
+    "pass_rate_drift_lt_10pct": 0.713,
+    "pass_rate_incl_failures": 0.713,
+    "pass_rate_end_error_lt_100m": 0.706,
+    "dr_declared_after_s_median": 2.01
+   }
+  },
+  "t30": {
+   "app_no_slip_no_ai": {
+    "planned": 243,
+    "scored": 202,
+    "engine_failed": 0,
+    "not_navigating_at_start": 16,
+    "no_solution_in_outage": 25,
+    "median_distance_m": 479.1,
+    "median_duration_s": 30.0,
+    "drift_pct_median": 2.34,
+    "drift_pct_p90": 9.66,
+    "end_error_m_median": 11.08,
+    "end_error_m_p90": 32.77,
+    "pass_rate_drift_lt_10pct": 0.906,
+    "pass_rate_incl_failures": 0.906,
+    "dr_declared_after_s_median": 2.01
+   }
+  },
+  "t60": {
+   "app_no_slip_no_ai": {
+    "planned": 211,
+    "scored": 184,
+    "engine_failed": 0,
+    "not_navigating_at_start": 13,
+    "no_solution_in_outage": 14,
+    "median_distance_m": 1009.1,
+    "median_duration_s": 60.0,
+    "drift_pct_median": 5.79,
+    "drift_pct_p90": 31.99,
+    "end_error_m_median": 58.7,
+    "end_error_m_p90": 167.52,
+    "pass_rate_drift_lt_10pct": 0.641,
+    "pass_rate_incl_failures": 0.641,
+    "dr_declared_after_s_median": 2.01
+   }
+  }
+ },
+ "trip_info": [
+  {
+   "recording": "gsdc-2020-06-25-00-34-us-ca-mtv-sb-101-pixel4xl",
+   "drive": "2020-06-25-00-34-us-ca-mtv-sb-101",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.993,
+    "r_lat": 0.988,
+    "moving_seconds": 97,
+    "up_method": "accelerometer mean while stopped (13 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 6,
+    "d1000": 5,
+    "t30": 5,
+    "t60": 5
+   },
+   "distance_km": 32.1,
+   "duration_s": 1301.0
+  },
+  {
+   "recording": "gsdc-2020-07-08-22-28-us-ca-pixel4",
+   "drive": "2020-07-08-22-28-us-ca",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.933,
+    "r_lat": 0.94,
+    "moving_seconds": 75,
+    "up_method": "accelerometer mean while stopped (40 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 10,
+    "d1000": 7,
+    "t30": 8,
+    "t60": 7
+   },
+   "distance_km": 43.3,
+   "duration_s": 2130.0
+  },
+  {
+   "recording": "gsdc-2020-08-04-00-20-us-ca-sb-mtv-101-pixel4xl",
+   "drive": "2020-08-04-00-20-us-ca-sb-mtv-101",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.942,
+    "r_lat": 0.931,
+    "moving_seconds": 83,
+    "up_method": "accelerometer mean while stopped (34 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 8,
+    "d1000": 7,
+    "t30": 7,
+    "t60": 6
+   },
+   "distance_km": 43.1,
+   "duration_s": 1628.0
+  },
+  {
+   "recording": "gsdc-2020-08-13-21-41-us-ca-mtv-sf-280-pixel4xl",
+   "drive": "2020-08-13-21-41-us-ca-mtv-sf-280",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.963,
+    "r_lat": 0.966,
+    "moving_seconds": 53,
+    "up_method": "accelerometer mean while stopped (60 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 9,
+    "d1000": 7,
+    "t30": 8,
+    "t60": 7
+   },
+   "distance_km": 48.6,
+   "duration_s": 1868.0
+  },
+  {
+   "recording": "gsdc-2020-08-13-21-42-us-ca-mtv-sf-280-pixel5",
+   "drive": "2020-08-13-21-42-us-ca-mtv-sf-280",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.975,
+    "r_lat": 0.942,
+    "moving_seconds": 100,
+    "up_method": "accelerometer mean while stopped (11 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 9,
+    "d1000": 7,
+    "t30": 8,
+    "t60": 7
+   },
+   "distance_km": 48.6,
+   "duration_s": 1829.0
+  },
+  {
+   "recording": "gsdc-2021-01-04-21-50-us-ca-e1highway280driveroutea-pixel4",
+   "drive": "2021-01-04-21-50-us-ca-e1highway280driveroutea",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.884,
+    "r_lat": 0.939,
+    "moving_seconds": 66,
+    "up_method": "accelerometer mean while stopped (45 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 10,
+    "d1000": 8,
+    "t30": 9,
+    "t60": 8
+   },
+   "distance_km": 42.2,
+   "duration_s": 2002.0
+  },
+  {
+   "recording": "gsdc-2021-01-05-21-12-us-ca-mtv-d-pixel4",
+   "drive": "2021-01-05-21-12-us-ca-mtv-d",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.97,
+    "r_lat": 0.941,
+    "moving_seconds": 42,
+    "up_method": "accelerometer mean while stopped (52 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 5,
+    "d1000": 4,
+    "t30": 5,
+    "t60": 4
+   },
+   "distance_km": 21.2,
+   "duration_s": 1297.0
+  },
+  {
+   "recording": "gsdc-2021-01-05-21-52-us-ca-mtv-d-pixel4",
+   "drive": "2021-01-05-21-52-us-ca-mtv-d",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.965,
+    "r_lat": 0.916,
+    "moving_seconds": 96,
+    "up_method": "accelerometer mean while stopped (6 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 5,
+    "d1000": 4,
+    "t30": 5,
+    "t60": 4
+   },
+   "distance_km": 20.9,
+   "duration_s": 1158.0
+  },
+  {
+   "recording": "gsdc-2021-03-10-23-13-us-ca-mtv-h-pixel5",
+   "drive": "2021-03-10-23-13-us-ca-mtv-h",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.99,
+    "r_lat": 0.816,
+    "moving_seconds": 71,
+    "up_method": "accelerometer mean while stopped (27 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 7,
+    "d1000": 4,
+    "t30": 6,
+    "t60": 5
+   },
+   "distance_km": 12.7,
+   "duration_s": 1463.0
+  },
+  {
+   "recording": "gsdc-2021-03-16-18-59-us-ca-mtv-a-pixel5",
+   "drive": "2021-03-16-18-59-us-ca-mtv-a",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.523,
+    "r_lat": 0.977,
+    "moving_seconds": 31,
+    "up_method": "accelerometer mean while stopped (76 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 10,
+    "d1000": 9,
+    "t30": 9,
+    "t60": 8
+   },
+   "distance_km": 50.9,
+   "duration_s": 2158.0
+  },
+  {
+   "recording": "gsdc-2021-04-02-20-43-us-ca-mtv-f-pixel5",
+   "drive": "2021-04-02-20-43-us-ca-mtv-f",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.98,
+    "r_lat": 0.959,
+    "moving_seconds": 80,
+    "up_method": "accelerometer mean while stopped (25 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 12,
+    "d1000": 9,
+    "t30": 10,
+    "t60": 9
+   },
+   "distance_km": 48.1,
+   "duration_s": 2283.0
+  },
+  {
+   "recording": "gsdc-2021-07-14-20-50-us-ca-mtv-e-pixel4",
+   "drive": "2021-07-14-20-50-us-ca-mtv-e",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.922,
+    "r_lat": 0.907,
+    "moving_seconds": 73,
+    "up_method": "accelerometer mean while stopped (25 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 5,
+    "d1000": 4,
+    "t30": 5,
+    "t60": 4
+   },
+   "distance_km": 20.8,
+   "duration_s": 1187.0
+  },
+  {
+   "recording": "gsdc-2021-07-19-20-49-us-ca-mtv-a-pixel4",
+   "drive": "2021-07-19-20-49-us-ca-mtv-a",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.927,
+    "r_lat": 0.951,
+    "moving_seconds": 83,
+    "up_method": "accelerometer mean while stopped (20 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 9,
+    "d1000": 7,
+    "t30": 8,
+    "t60": 7
+   },
+   "distance_km": 42.2,
+   "duration_s": 1896.0
+  },
+  {
+   "recording": "gsdc-2021-08-04-20-40-us-ca-sjc-c-sm-g988b",
+   "drive": "2021-08-04-20-40-us-ca-sjc-c",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.981,
+    "r_lat": 0.883,
+    "moving_seconds": 39,
+    "up_method": "accelerometer mean while stopped (44 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 6,
+    "d1000": 5,
+    "t30": 6,
+    "t60": 5
+   },
+   "distance_km": 14.9,
+   "duration_s": 1553.0
+  },
+  {
+   "recording": "gsdc-2021-08-24-20-32-us-ca-mtv-h-pixel5",
+   "drive": "2021-08-24-20-32-us-ca-mtv-h",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 240.0,
+    "r_long": 0.995,
+    "r_lat": 0.97,
+    "moving_seconds": 123,
+    "up_method": "accelerometer mean while stopped (101 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 14,
+    "d1000": 9,
+    "t30": 13,
+    "t60": 11
+   },
+   "distance_km": 25.0,
+   "duration_s": 3138.0
+  },
+  {
+   "recording": "gsdc-2021-12-07-19-22-us-ca-lax-d-pixel6pro",
+   "drive": "2021-12-07-19-22-us-ca-lax-d",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.858,
+    "r_lat": 0.989,
+    "moving_seconds": 65,
+    "up_method": "accelerometer mean while stopped (49 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 8,
+    "d1000": 6,
+    "t30": 7,
+    "t60": 6
+   },
+   "distance_km": 38.3,
+   "duration_s": 1760.0
+  },
+  {
+   "recording": "gsdc-2021-12-07-22-21-us-ca-lax-g-pixel6pro",
+   "drive": "2021-12-07-22-21-us-ca-lax-g",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.978,
+    "r_lat": 0.959,
+    "moving_seconds": 64,
+    "up_method": "accelerometer mean while stopped (31 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 6,
+    "d1000": 3,
+    "t30": 6,
+    "t60": 5
+   },
+   "distance_km": 12.0,
+   "duration_s": 1433.0
+  },
+  {
+   "recording": "gsdc-2021-12-08-17-22-us-ca-lax-a-pixel6pro",
+   "drive": "2021-12-08-17-22-us-ca-lax-a",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.979,
+    "r_lat": 0.968,
+    "moving_seconds": 51,
+    "up_method": "accelerometer mean while stopped (47 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 7,
+    "d1000": 4,
+    "t30": 6,
+    "t60": 5
+   },
+   "distance_km": 20.9,
+   "duration_s": 1441.0
+  },
+  {
+   "recording": "gsdc-2021-12-08-18-52-us-ca-lax-b-pixel6pro",
+   "drive": "2021-12-08-18-52-us-ca-lax-b",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.992,
+    "r_lat": 0.958,
+    "moving_seconds": 34,
+    "up_method": "accelerometer mean while stopped (65 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 7,
+    "d1000": 4,
+    "t30": 6,
+    "t60": 5
+   },
+   "distance_km": 18.5,
+   "duration_s": 1417.0
+  },
+  {
+   "recording": "gsdc-2021-12-08-20-28-us-ca-lax-c-pixel6pro",
+   "drive": "2021-12-08-20-28-us-ca-lax-c",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 240.0,
+    "r_long": 0.975,
+    "r_lat": 0.985,
+    "moving_seconds": 84,
+    "up_method": "accelerometer mean while stopped (118 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 3,
+    "d1000": 2,
+    "t30": 3,
+    "t60": 3
+   },
+   "distance_km": 15.9,
+   "duration_s": 922.0
+  },
+  {
+   "recording": "gsdc-2021-12-09-17-06-us-ca-lax-e-pixel6pro",
+   "drive": "2021-12-09-17-06-us-ca-lax-e",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.919,
+    "r_lat": 0.953,
+    "moving_seconds": 88,
+    "up_method": "accelerometer mean while stopped (27 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 5,
+    "d1000": 3,
+    "t30": 4,
+    "t60": 4
+   },
+   "distance_km": 21.5,
+   "duration_s": 1100.0
+  },
+  {
+   "recording": "gsdc-2022-01-11-18-48-us-ca-mtv-n-pixel6pro",
+   "drive": "2022-01-11-18-48-us-ca-mtv-n",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 240.0,
+    "r_long": 0.978,
+    "r_lat": 0.955,
+    "moving_seconds": 90,
+    "up_method": "accelerometer mean while stopped (99 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 3,
+    "d1000": 2,
+    "t30": 3,
+    "t60": 3
+   },
+   "distance_km": 14.1,
+   "duration_s": 942.0
+  },
+  {
+   "recording": "gsdc-2022-02-24-18-29-us-ca-lax-o-pixel6pro",
+   "drive": "2022-02-24-18-29-us-ca-lax-o",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 480.0,
+    "r_long": 0.985,
+    "r_lat": 0.816,
+    "moving_seconds": 171,
+    "up_method": "accelerometer mean while stopped (222 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 10,
+    "d1000": 4,
+    "t30": 9,
+    "t60": 8
+   },
+   "distance_km": 15.4,
+   "duration_s": 2424.0
+  },
+  {
+   "recording": "gsdc-2022-04-01-18-22-us-ca-lax-t-pixel5",
+   "drive": "2022-04-01-18-22-us-ca-lax-t",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.988,
+    "r_lat": 0.948,
+    "moving_seconds": 71,
+    "up_method": "accelerometer mean while stopped (21 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 7,
+    "d1000": 6,
+    "t30": 6,
+    "t60": 5
+   },
+   "distance_km": 31.6,
+   "duration_s": 1464.0
+  },
+  {
+   "recording": "gsdc-2022-05-13-20-57-us-ca-mtv-pe1-pixel6pro",
+   "drive": "2022-05-13-20-57-us-ca-mtv-pe1",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.984,
+    "r_lat": 0.972,
+    "moving_seconds": 39,
+    "up_method": "accelerometer mean while stopped (61 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 8,
+    "d1000": 6,
+    "t30": 7,
+    "t60": 6
+   },
+   "distance_km": 37.0,
+   "duration_s": 2161.0
+  },
+  {
+   "recording": "gsdc-2022-08-04-20-07-us-ca-sjc-q-sm-a325f",
+   "drive": "2022-08-04-20-07-us-ca-sjc-q",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 240.0,
+    "r_long": 0.99,
+    "r_lat": 0.962,
+    "moving_seconds": 35,
+    "up_method": "accelerometer mean while stopped (189 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 6,
+    "d1000": 4,
+    "t30": 5,
+    "t60": 5
+   },
+   "distance_km": 22.9,
+   "duration_s": 1433.0
+  },
+  {
+   "recording": "gsdc-2022-10-06-21-51-us-ca-mtv-n-sm-a325f",
+   "drive": "2022-10-06-21-51-us-ca-mtv-n",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.991,
+    "r_lat": 0.984,
+    "moving_seconds": 48,
+    "up_method": "accelerometer mean while stopped (69 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 5,
+    "d1000": 2,
+    "t30": 5,
+    "t60": 4
+   },
+   "distance_km": 14.9,
+   "duration_s": 1226.0
+  },
+  {
+   "recording": "gsdc-2023-03-08-21-34-us-ca-mtv-u-pixel7pro",
+   "drive": "2023-03-08-21-34-us-ca-mtv-u",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.964,
+    "r_lat": 0.968,
+    "moving_seconds": 92,
+    "up_method": "accelerometer mean while stopped (13 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 5,
+    "d1000": 4,
+    "t30": 4,
+    "t60": 4
+   },
+   "distance_km": 17.3,
+   "duration_s": 1098.0
+  },
+  {
+   "recording": "gsdc-2023-05-24-20-26-us-ca-sjc-ge2-pixel7pro",
+   "drive": "2023-05-24-20-26-us-ca-sjc-ge2",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 240.0,
+    "r_long": 0.986,
+    "r_lat": 0.97,
+    "moving_seconds": 86,
+    "up_method": "accelerometer mean while stopped (126 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 5,
+    "d1000": 3,
+    "t30": 5,
+    "t60": 4
+   },
+   "distance_km": 7.4,
+   "duration_s": 1382.0
+  },
+  {
+   "recording": "gsdc-2023-09-05-20-13-us-ca-pixel7pro",
+   "drive": "2023-09-05-20-13-us-ca",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 240.0,
+    "r_long": 0.943,
+    "r_lat": 0.894,
+    "moving_seconds": 61,
+    "up_method": "accelerometer mean while stopped (130 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 7,
+    "d1000": 4,
+    "t30": 6,
+    "t60": 5
+   },
+   "distance_km": 12.4,
+   "duration_s": 1705.0
+  },
+  {
+   "recording": "gsdc-2023-09-05-20-59-us-ca-pixel5a",
+   "drive": "2023-09-05-20-59-us-ca",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.977,
+    "r_lat": 0.917,
+    "moving_seconds": 48,
+    "up_method": "accelerometer mean while stopped (20 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 7,
+    "d1000": 4,
+    "t30": 6,
+    "t60": 5
+   },
+   "distance_km": 12.4,
+   "duration_s": 1507.0
+  },
+  {
+   "recording": "gsdc-2023-09-05-23-07-us-ca-routen-pixel7pro",
+   "drive": "2023-09-05-23-07-us-ca-routen",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 240.0,
+    "r_long": 0.981,
+    "r_lat": 0.99,
+    "moving_seconds": 61,
+    "up_method": "accelerometer mean while stopped (112 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 6,
+    "d1000": 4,
+    "t30": 5,
+    "t60": 5
+   },
+   "distance_km": 12.1,
+   "duration_s": 1563.0
+  },
+  {
+   "recording": "gsdc-2023-09-06-00-01-us-ca-routen-pixel6pro",
+   "drive": "2023-09-06-00-01-us-ca-routen",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 480.0,
+    "r_long": 0.989,
+    "r_lat": 0.955,
+    "moving_seconds": 216,
+    "up_method": "accelerometer mean while stopped (203 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 5,
+    "d1000": 3,
+    "t30": 5,
+    "t60": 4
+   },
+   "distance_km": 12.1,
+   "duration_s": 1649.0
+  },
+  {
+   "recording": "gsdc-2023-09-06-18-47-us-ca-pixel6pro",
+   "drive": "2023-09-06-18-47-us-ca",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.994,
+    "r_lat": 0.984,
+    "moving_seconds": 69,
+    "up_method": "accelerometer mean while stopped (28 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 7,
+    "d1000": 5,
+    "t30": 6,
+    "t60": 5
+   },
+   "distance_km": 25.7,
+   "duration_s": 1485.0
+  },
+  {
+   "recording": "gsdc-2023-09-06-22-49-us-ca-routebb1-pixel7pro",
+   "drive": "2023-09-06-22-49-us-ca-routebb1",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.989,
+    "r_lat": 0.84,
+    "moving_seconds": 33,
+    "up_method": "accelerometer mean while stopped (45 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 8,
+    "d1000": 5,
+    "t30": 7,
+    "t60": 6
+   },
+   "distance_km": 28.6,
+   "duration_s": 1600.0
+  },
+  {
+   "recording": "gsdc-2023-09-07-18-59-us-ca-pixel7pro",
+   "drive": "2023-09-07-18-59-us-ca",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 240.0,
+    "r_long": 0.955,
+    "r_lat": 0.924,
+    "moving_seconds": 97,
+    "up_method": "accelerometer mean while stopped (122 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 5,
+    "d1000": 3,
+    "t30": 4,
+    "t60": 3
+   },
+   "distance_km": 20.1,
+   "duration_s": 1173.0
+  },
+  {
+   "recording": "gsdc-2023-09-07-22-47-us-ca-routebc2-pixel6pro",
+   "drive": "2023-09-07-22-47-us-ca-routebc2",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.913,
+    "r_lat": 0.853,
+    "moving_seconds": 42,
+    "up_method": "accelerometer mean while stopped (29 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 9,
+    "d1000": 6,
+    "t30": 8,
+    "t60": 7
+   },
+   "distance_km": 26.1,
+   "duration_s": 2066.0
+  },
+  {
+   "recording": "gsdc-2023-09-07-22-48-us-ca-routebc2-pixel5a",
+   "drive": "2023-09-07-22-48-us-ca-routebc2",
+   "calibration_status": "valid",
+   "calibration": {
+    "available_s": 120.0,
+    "r_long": 0.918,
+    "r_lat": 0.803,
+    "moving_seconds": 48,
+    "up_method": "accelerometer mean while stopped (24 stopped fixes)"
+   },
+   "planned_outages": {
+    "d50": 9,
+    "d1000": 6,
+    "t30": 8,
+    "t60": 7
+   },
+   "distance_km": 26.1,
+   "duration_s": 2070.0
+  }
+ ]
+}

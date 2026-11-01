@@ -87,5 +87,39 @@ class GeneratedDocumentsTest(unittest.TestCase):
             self.assertIn(f"{held[sc]['best_arm']['median_drift_pct']:.0f} %", text)
 
 
+    def test_the_real_phone_in_car_claims_quote_the_held_out_result_files(self):
+        import json
+        summary = json.loads((ROOT / "reports" / "gsdc_eval_held_out" / "summary.json").read_text(encoding="utf-8"))
+        shipped, previous = build_claims.GSDC_SHIPPED, build_claims.GSDC_PREVIOUS
+        headline = build_claims.gsdc_headline()
+        for sc in ("t30", "t60", "d1000"):
+            self.assertIn(f"{summary['scenarios'][sc][shipped]['drift_pct_median']:.1f} %", headline)
+            self.assertIn(f"{summary['scenarios'][sc][previous]['drift_pct_median']:.0f} %", headline)
+        self.assertIn(f"{summary['drives_calibrated']} held-out drives", headline)
+        section = "\n".join(build_claims.gsdc_section())
+        self.assertIn("CC BY-NC-SA 3.0 IGO", section)
+        self.assertIn("doi:10.33012/2020.17628", section)
+        self.assertIn(build_claims.gsdc_headline(), build_claims.status_paragraph())
+
+    def test_the_real_phone_rows_say_what_was_and_was_not_done(self):
+        rows = {name: (evidence, status) for name, evidence, status in build_claims.status_rows()}
+        evidence, status = rows["Dead-reckoning drift under 10 %, real phone-in-car drives"]
+        self.assertIn("not a drive recorded with this app", evidence)
+        calibration_evidence, calibration_status = rows["Auto mount calibration"]
+        self.assertIn("Met on real phone-in-car data", calibration_status)
+        self.assertIn("not field-tested on a device", calibration_status)
+        self.assertIn("0 of 38", calibration_evidence)
+        self.assertIn("batch calibrator", calibration_evidence)
+        self.assertEqual(rows["Phone IMU in a vehicle"][1], "Partly met")
+
+    def test_without_the_real_phone_files_the_old_wording_returns(self):
+        from unittest import mock
+        with mock.patch.object(build_claims, "_gsdc", return_value=None):
+            self.assertIsNone(build_claims.gsdc_headline())
+            rows = {name: status for name, _, status in build_claims.status_rows()}
+            self.assertEqual(rows["Phone IMU in a vehicle"], "**Not evaluated**")
+            self.assertNotIn("gsdc_headline", build_claims.values())
+
+
 if __name__ == "__main__":
     unittest.main()

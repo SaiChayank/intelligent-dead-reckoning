@@ -83,6 +83,7 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
      *  fusion waits for valid mounting and measured forward course. Field qualification is pending. */
     private val navigation = NavigationRuntime(
         CalibratingFusionEngine(
+            calibrator = com.intelligentdeadreckoning.app.navigation.AppFusion.calibrator(),
             fusionFactory = com.intelligentdeadreckoning.app.navigation.AppFusion.factory({ mapEvaluation.value }, { evaluationGraph }),
             store = com.intelligentdeadreckoning.app.calibration.FileCalibrationStore(File(application.noBackupFilesDir, "calibration")),
             deviceKey = "${android.os.Build.MANUFACTURER}_${android.os.Build.MODEL}",

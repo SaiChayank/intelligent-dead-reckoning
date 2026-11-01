@@ -142,6 +142,18 @@ data class FusionConfig(
     val nhcMaxForwardAccelM_S2: Double = 0.35,
 
     /**
+     * Time constant, seconds, of a first-order low-pass on the forward specific force that the benign-dynamics gate reads. 0 (the default, and what
+     * ships) gates on every raw sample.
+     *
+     * TRIED AND NOT ADOPTED. On real phone-in-car drives the raw gate almost never opens (a constraint was applied in 4 of 152 sessions), because the
+     * raw forward acceleration vibrates by about 1 m/s^2 against its 0.35 m/s^2 limit. Smoothing at 1 s makes the constraints act, and on the 38
+     * development drives that made outage drift WORSE (median 5.98 % to 12.81 % at 60 s, 4.28 % to 10.46 % at 1 km; intervals that resample whole drives
+     * exclude zero; reports/gsdc_eval_development_gate). The constraints assume a well-aligned mount and a rigid one; with the offline calibration used here
+     * they inject more error than they remove. Kept as an option so the experiment can be repeated.
+     */
+    val nhcGateSmoothingS: Double = 0.0,
+
+    /**
      * Contiguous benign-dynamics time required before NHC may (re)start, seconds.
      *
      * The first constraint after a dynamic phase meets a filter whose attitude/velocity cross-

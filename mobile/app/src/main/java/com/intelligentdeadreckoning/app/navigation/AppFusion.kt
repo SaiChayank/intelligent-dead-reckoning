@@ -16,18 +16,42 @@ object AppFusion {
      */
     const val MAP_CROSS_TRACK_MIN_CONFIDENCE = 0.6
 
-    /** The shipped app configuration; [experimentalMapMatching] adds the HMM matcher and its cross-track correction. */
+    /**
+     * The shipped app configuration; [experimentalMapMatching] adds the HMM matcher and its cross-track correction.
+     *
+     * The AI speed estimator and the mount-slip detector are OFF. On 38 real phone-in-car drives (Google Smartphone Decimeter Challenge,
+     * development split, reports/gsdc_eval_development*) the configuration that had both on drifted a median 311 % in 30 s outages and 651 % in
+     * 60 s outages; with both off it drifted 2.3 % and 6.0 %. The slip detector reads sustained braking or acceleration as a tilt of the mount (about
+     * 0.7 m/s^2 crosses its 4 degree threshold) and re-levels the attitude wrongly; the speed estimator (trained on synthetic data) adds error.
+     * Both are still in the code and tested on their own; they stay off until they beat this configuration on held-out drives.
+     */
     fun config(experimentalMapMatching: Boolean): FusionConfig {
         val base = FusionConfig(
-            aiSpeedEstimationEnabled = true,
             adaptiveNoiseScalingEnabled = true,
-            mountSlipDetectionEnabled = true,
             mapHeadingFeedbackEnabled = true,
             adaptiveDecimationEnabled = true,
         )
         return if (experimentalMapMatching) base.copy(
             hmmMapMatchingEnabled = true, mapCrossTrackEnabled = true, mapCrossTrackMinConfidence = MAP_CROSS_TRACK_MIN_CONFIDENCE,
         ) else base
+    }
+
+    /**
+     * Whether the app also runs the batch mount calibrator beside the in-drive one. The in-drive calibrator reached VALID on 0 of 38 real phone-in-car
+     * trips under every threshold setting tried (reports/gsdc_calibrator_probe_development.json); the batch calibrator found a mount on every trip
+     * (38 of 38 development, 26 of 26 held-out) and the engine then drifted as much as with an offline calibration (reports/gsdc_eval_*_inengine).
+     * Its result is used only when the in-drive calibrator has not produced one.
+     */
+    const val BATCH_MOUNT_CALIBRATION_ENABLED = true
+
+    /** The calibrator the app hands to [com.intelligentdeadreckoning.app.navigation.CalibratingFusionEngine]. */
+    fun calibrator(batchFallback: Boolean = BATCH_MOUNT_CALIBRATION_ENABLED): NavigationEngine {
+        val inDrive = com.intelligentdeadreckoning.app.calibration.CalibrationNavigationEngine()
+        return if (batchFallback) {
+            com.intelligentdeadreckoning.app.calibration.FallbackCalibrator(inDrive, com.intelligentdeadreckoning.app.calibration.BatchMountCalibrator())
+        } else {
+            inDrive
+        }
     }
 
     /** What the factory hands to the engine constructor; a seam so tests can see the choice without running an engine. */

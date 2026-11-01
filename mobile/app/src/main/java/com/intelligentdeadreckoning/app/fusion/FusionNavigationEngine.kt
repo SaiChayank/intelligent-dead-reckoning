@@ -221,6 +221,8 @@ class FusionNavigationEngine(
     private var constraintAcceptedAnnounced = false
     private var constraintRejectedAnnounced = false
     private var nhcBenignSinceNs: Long? = null
+    private var nhcForwardAccelSmoothed: Double? = null
+    private var nhcForwardAccelSmoothedNs = 0L
     private var nhcSuspendedUntilNs = 0L
     private var zuptEngaged = false
 
@@ -304,6 +306,7 @@ class FusionNavigationEngine(
         constraintAcceptedAnnounced = false
         constraintRejectedAnnounced = false
         nhcBenignSinceNs = null
+        nhcForwardAccelSmoothed = null
         nhcSuspendedUntilNs = 0L
         zuptEngaged = false
         lastAcceptedGnssSpeedM_S = null
@@ -436,6 +439,7 @@ class FusionNavigationEngine(
         constraintAcceptedAnnounced = false
         constraintRejectedAnnounced = false
         nhcBenignSinceNs = null
+        nhcForwardAccelSmoothed = null
         nhcSuspendedUntilNs = 0L
         zuptEngaged = false
         publishedStatus = null
@@ -1260,8 +1264,19 @@ class FusionNavigationEngine(
         val forwardAccel = forwardDevice?.let {
             it[0] * accelDeviceM_S2.x + it[1] * accelDeviceM_S2.y + it[2] * accelDeviceM_S2.z
         }
-        val benign = forwardAccel != null &&
-            abs(forwardAccel) <= config.nhcMaxForwardAccelM_S2 &&
+        val gateAccel = if (config.nhcGateSmoothingS > 0.0 && forwardAccel != null) {
+            val previous = nhcForwardAccelSmoothed
+            val dtS = ((tNs - nhcForwardAccelSmoothedNs) / 1e9).coerceIn(0.0, 1.0)
+            val alpha = if (previous == null) 1.0 else 1.0 - kotlin.math.exp(-dtS / config.nhcGateSmoothingS)
+            val next = if (previous == null) forwardAccel else previous + alpha * (forwardAccel - previous)
+            nhcForwardAccelSmoothed = next
+            nhcForwardAccelSmoothedNs = tNs
+            next
+        } else {
+            forwardAccel
+        }
+        val benign = gateAccel != null &&
+            abs(gateAccel) <= config.nhcMaxForwardAccelM_S2 &&
             yawNorm <= config.nhcMaxYawRateRad_S
         nhcBenignSinceNs = when {
             !benign -> null

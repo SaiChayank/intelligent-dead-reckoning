@@ -1,7 +1,9 @@
 package com.intelligentdeadreckoning.edge
 
 import com.google.gson.JsonParser
+import com.intelligentdeadreckoning.app.calibration.BatchMountCalibrator
 import com.intelligentdeadreckoning.app.calibration.CalibrationNavigationEngine
+import com.intelligentdeadreckoning.app.calibration.FallbackCalibrator
 import com.intelligentdeadreckoning.app.calibration.MountThresholds
 import com.intelligentdeadreckoning.app.calibration.StationaryThresholds
 import com.intelligentdeadreckoning.app.fusion.FusionConfig
@@ -98,11 +100,35 @@ object IovnbdEval {
         /** Cross-track accepted from match confidence 0.4. */
         MAPX_CONF04("mapx_conf04"),
 
-        /** The configuration the app runs with the experimental map-matching switch on (AppFusion.config(true)); needs a road graph. */
+        /** The PREVIOUS shipped configuration (see [APP]) with the experimental map-matching switch on; needs a road graph. */
         APP_MAP("app_map"),
 
-        /** Exactly the configuration the app runs (see CalibratingFusionEngine). */
-        APP("app");
+        /**
+         * The configuration the app shipped UNTIL the real-phone evaluation (reports/gsdc_eval_*): AI speed estimator and mount-slip detector on.
+         * Frozen on purpose so every earlier result stays reproducible. The configuration the app runs now is [APP_CURRENT].
+         */
+        APP("app"),
+
+        /** Exactly the configuration the app runs now ([AppFusion.config] without the map switch). */
+        APP_CURRENT("app_current"),
+
+        /** The app configuration with exactly one feature switched off, to find which one hurts (ablation). */
+        APP_NO_AI("app_no_ai"),
+        APP_NO_ADAPTIVE_NOISE("app_no_adaptive_noise"),
+        APP_NO_MOUNT_SLIP("app_no_mount_slip"),
+        APP_NO_DECIMATION("app_no_decimation"),
+
+        /** The app configuration without mount-slip detection and without the AI speed estimator: the two switches the ablation implicates. */
+        APP_NO_SLIP_NO_AI("app_no_slip_no_ai"),
+
+        /** Plain EKF + constraints with the constraints allowed to keep working after GNSS goes quiet (raw gate, as before). */
+        EKF_NHC_NHCOUT("ekf_nhc_nhcout"),
+
+        /** Plain EKF + constraints with the benign-dynamics gate low-passed at 1 s (see FusionConfig.nhcGateSmoothingS). */
+        EKF_NHC_SMOOTH1("ekf_nhc_smooth1"),
+
+        /** The smoothed gate and constraints that keep working through an outage. */
+        EKF_NHC_SMOOTH1_NHCOUT("ekf_nhc_smooth1_nhcout");
 
         fun config(): FusionConfig = when (this) {
             INS -> FusionConfig(motionConstraintsEnabled = false)
@@ -135,7 +161,10 @@ object IovnbdEval {
             MAPX_VAR4 -> EKF_NHC_V3_HELDOUT_VEL_NHCOUT_MAPX.config().copy(mapCrossTrackVarianceM2 = 4.0)
             MAPX_CONF06 -> EKF_NHC_V3_HELDOUT_VEL_NHCOUT_MAPX.config().copy(mapCrossTrackMinConfidence = 0.6)
             MAPX_CONF04 -> EKF_NHC_V3_HELDOUT_VEL_NHCOUT_MAPX.config().copy(mapCrossTrackMinConfidence = 0.4)
-            APP_MAP -> AppFusion.config(experimentalMapMatching = true)
+            APP_MAP -> APP.config().copy(
+                hmmMapMatchingEnabled = true, mapCrossTrackEnabled = true, mapCrossTrackMinConfidence = AppFusion.MAP_CROSS_TRACK_MIN_CONFIDENCE,
+            )
+            APP_CURRENT -> AppFusion.config(experimentalMapMatching = false)
             APP -> FusionConfig(
                 aiSpeedEstimationEnabled = true,
                 adaptiveNoiseScalingEnabled = true,
@@ -143,6 +172,14 @@ object IovnbdEval {
                 mapHeadingFeedbackEnabled = true,
                 adaptiveDecimationEnabled = true,
             )
+            APP_NO_AI -> APP.config().copy(aiSpeedEstimationEnabled = false)
+            APP_NO_ADAPTIVE_NOISE -> APP.config().copy(adaptiveNoiseScalingEnabled = false)
+            APP_NO_MOUNT_SLIP -> APP.config().copy(mountSlipDetectionEnabled = false)
+            APP_NO_DECIMATION -> APP.config().copy(adaptiveDecimationEnabled = false)
+            APP_NO_SLIP_NO_AI -> APP.config().copy(mountSlipDetectionEnabled = false, aiSpeedEstimationEnabled = false)
+            EKF_NHC_NHCOUT -> FusionConfig(nhcActiveDuringOutage = true)
+            EKF_NHC_SMOOTH1 -> FusionConfig(nhcGateSmoothingS = 1.0)
+            EKF_NHC_SMOOTH1_NHCOUT -> FusionConfig(nhcGateSmoothingS = 1.0, nhcActiveDuringOutage = true)
         }
 
         companion object {
@@ -183,6 +220,10 @@ object IovnbdEval {
         val roadGraph: Path? = null,
         /** [PROFILE_IOVNBD] (the default) tunes the calibrator and the stationary test to the IO-VNBD phone; [PROFILE_PHONE] uses the app's own settings, for a drive recorded with the app. */
         val profile: String = PROFILE_IOVNBD,
+        /** Overrides of the in-drive calibrator's thresholds (keys in [calibratorThresholds]); empty keeps the profile's own. */
+        val calibrator: Map<String, Double> = emptyMap(),
+        /** Run the in-app batch mount calibrator beside the in-drive one (see [FallbackCalibrator]); ignored when [calibration] is given. */
+        val batchFallback: Boolean = false,
     )
 
     /**
@@ -234,6 +275,10 @@ object IovnbdEval {
         val diagnostics: Map<String, Long>,
         val firstMessages: Map<String, String>,
         val restarts: Long,
+        /** The first VALID mount the calibrator published: its id, time and quaternion (w, x, y, z), for checking one calibrator against another. */
+        val calibrationId: String? = null,
+        val calibrationNs: Long? = null,
+        val calibrationQ: List<Double>? = null,
     )
 
     /** Same publication cadence the app uses (CalibratingFusionEngine): 10 Hz. */
@@ -274,6 +319,34 @@ object IovnbdEval {
     const val PROFILE_IOVNBD = "iovnbd"
     const val PROFILE_PHONE = "phone"
 
+    /**
+     * The calibrator thresholds for a profile, with named overrides applied on top. An unknown key is an error, so a typo cannot
+     * silently leave the default in place.
+     */
+    fun calibratorThresholds(profile: String, overrides: Map<String, Double>): Pair<MountThresholds, StationaryThresholds> {
+        var mount = if (profile == PROFILE_PHONE) MountThresholds() else IOVNBD_MOUNT
+        var stationary = if (profile == PROFILE_PHONE) StationaryThresholds() else IOVNBD_STATIONARY
+        for ((key, value) in overrides) {
+            when (key) {
+                "stationary_accel_std" -> stationary = stationary.copy(maxAccelStdM_S2 = value)
+                "stationary_gyro_std" -> stationary = stationary.copy(maxGyroStdRad_S = value)
+                "stationary_gyro_rate" -> stationary = stationary.copy(maxGyroRateRad_S = value)
+                "stationary_min_samples" -> stationary = stationary.copy(minSamples = value.toInt())
+                "stationary_sub_window_s" -> stationary = stationary.copy(subWindowS = value)
+                "gravity_spread" -> mount = mount.copy(maxGravitySpreadM_S2 = value)
+                "yaw_rate" -> mount = mount.copy(maxYawRateRad_S = value)
+                "straight_fraction" -> mount = mount.copy(minStraightFraction = value)
+                "excitation" -> mount = mount.copy(minExcitationM_S2 = value)
+                "speed_slope" -> mount = mount.copy(minSpeedSlopeM_S2 = value)
+                "min_gnss_fixes" -> mount = mount.copy(minGnssFixes = value.toInt())
+                "min_baseline_m" -> mount = mount.copy(minBaselineM = value)
+                "max_segment_s" -> mount = mount.copy(maxSegmentS = value)
+                else -> throw IllegalArgumentException("unknown calibrator threshold $key")
+            }
+        }
+        return mount to stationary
+    }
+
     private fun FusionConfig.forIovnbd(): FusionConfig = copy(
         stationaryMinSamples = 15,
         stationaryAccelStdNormM_S2 = 0.25,
@@ -299,7 +372,10 @@ object IovnbdEval {
         val roadGraph = job.roadGraph?.let { RoadGraph.load(it.resolve(RoadGraph.GRAPH_FILE).toFile()) }
         val engine = CalibratingFusionEngine(
             calibrator = job.calibration?.let { ReleasedCalibration(it) }
-                ?: if (phoneProfile) CalibrationNavigationEngine() else CalibrationNavigationEngine(IOVNBD_MOUNT, IOVNBD_STATIONARY),
+                ?: calibratorThresholds(job.profile, job.calibrator).let { (mount, stationary) ->
+                    val inDrive = CalibrationNavigationEngine(mount, stationary)
+                    if (job.batchFallback) FallbackCalibrator(inDrive, BatchMountCalibrator()) else inDrive
+                },
             fusionFactory = { heading ->
             FusionNavigationEngine(
                 initialHeadingRad = heading,
@@ -317,6 +393,7 @@ object IovnbdEval {
         var gnssWithheld = 0L
         var rows = 0L
         var calibrations = 0L
+        var firstCalibration: Record? = null
         var firstPositionNs: Long? = null
         var lastHorizontal95: Double? = null
         var initialized = false
@@ -335,7 +412,10 @@ object IovnbdEval {
                 for (record in engine.drain()) {
                     when (val data = record.event.data) {
                         is Confidence -> lastHorizontal95 = data.horizontal_accuracy_95_m
-                        is CalibrationResult -> calibrations++
+                        is CalibrationResult -> {
+                            calibrations++
+                            if (data.status == CalibrationStatus.VALID && firstCalibration == null) firstCalibration = record
+                        }
                         is DiagnosticEvent -> {
                             diagnostics.merge(data.code, 1L, Long::plus)
                             firstMessages.putIfAbsent(data.code, "t_ns=${record.event.t_ns}: ${data.message}")
@@ -399,7 +479,9 @@ object IovnbdEval {
             drain()
         }
         return Result(imu, gnssOffered, gnssWithheld, rows, calibrations, firstPositionNs,
-            (System.nanoTime() - started) / 1_000_000, diagnostics, firstMessages, restarts)
+            (System.nanoTime() - started) / 1_000_000, diagnostics, firstMessages, restarts,
+            (firstCalibration?.event?.data as? CalibrationResult)?.id, firstCalibration?.event?.t_ns,
+            (firstCalibration?.event?.data as? CalibrationResult)?.q_vehicle_from_device_wxyz?.let { listOf(it.w, it.x, it.y, it.z) })
     }
 
     internal fun withheld(tNs: Long, outages: List<Outage>): Boolean = outages.any { tNs in it }
@@ -445,6 +527,9 @@ object IovnbdEval {
                 speedModel = o.get("speed_model")?.takeUnless { it.isJsonNull }?.asString?.let { Paths.get(it) },
                 roadGraph = o.get("road_graph")?.takeUnless { it.isJsonNull }?.asString?.let { Paths.get(it) },
                 profile = o.get("profile")?.takeUnless { it.isJsonNull }?.asString ?: PROFILE_IOVNBD,
+                calibrator = o.get("calibrator")?.takeUnless { it.isJsonNull }?.asJsonObject?.entrySet()
+                    ?.associate { it.key to it.value.asDouble } ?: emptyMap(),
+                batchFallback = o.get("batch_fallback")?.takeUnless { it.isJsonNull }?.asBoolean ?: false,
                 trustModel = o.get("trust_model")?.takeUnless { it.isJsonNull }?.asString?.let { Paths.get(it) },
                 calibration = o.get("calibration")?.takeUnless { it.isJsonNull }?.asJsonObject?.let { c ->
                     val q = c.getAsJsonArray("q_vehicle_from_device_wxyz").map { it.asDouble }
@@ -490,6 +575,9 @@ fun main(args: Array<String>) {
             .append("\"first_position_ns\":").append(r.firstPositionNs?.let { "\"$it\"" } ?: "null").append(',')
             .append("\"elapsed_ms\":").append(r.elapsedMs).append(',')
             .append("\"restarts_after_failure\":").append(r.restarts).append(',')
+            .append("\"calibration_id\":").append(r.calibrationId?.let { "\"${jsonEscape(it)}\"" } ?: "null").append(',')
+            .append("\"calibration_ns\":").append(r.calibrationNs?.let { "\"$it\"" } ?: "null").append(',')
+            .append("\"calibration_q\":").append(r.calibrationQ?.joinToString(",", "[", "]") ?: "null").append(',')
             .append("\"diagnostics\":{")
             .append(r.diagnostics.entries.joinToString(",") { "\"${it.key}\":${it.value}" })
             .append("},\"first_messages\":{")

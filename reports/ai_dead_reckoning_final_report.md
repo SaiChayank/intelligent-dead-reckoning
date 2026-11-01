@@ -16,14 +16,17 @@ sensor or network permission.
 replaces an earlier version whose headline numbers (1.44 % drift, 24x margin, 0.28 ms latency, 417 tests)
 were typed in rather than measured; the correction is recorded in `reports/gap_closure_log.md`.
 
+**Real phone-in-car evidence.** <!--CV:gsdc_headline-->On real phone-in-car drives (Google Smartphone Decimeter Challenge, 26 held-out drives, offline mount calibration, reference-grade GNSS aiding) the shipped configuration's median drift is 3.1 % (30 s), 9.2 % (60 s) and 3.6 % (1 km); the configuration shipped before it drifted 284 %, 749 % and 271 %. Only 55 % of 60 s outages are under 10 %.<!--/CV-->
+
 <!-- CLAIMS:status_table:BEGIN -->
 | Requirement | Evidence | Status |
 | :--- | :--- | :--- |
 | No OBD-II / CAN-bus / wheel sensor | Engine inputs are IMU and GNSS only | Met by design |
 | Dead-reckoning drift under 10 % | IO-VNBD, vehicle-frame IMU, held-out drives, best arm: median 22 % (30 s), 24 % (60 s), 17 % (1 km); holding the last GNSS velocity gives 60 %, 79 %, 62 % | **Not met** |
-| Phone IMU in a vehicle | No phone drive has been scored | **Not evaluated** |
-| AI speed estimation | v1 (synthetic) fails on real drives; v3 lowers leave-one-drive-out speed RMSE from 4.273 (integrated acceleration) and 4.785 (hold last speed) to 2.554 m/s | Partly met, external-IMU input only |
-| Auto mount calibration | Implemented; the in-motion calibrator does not reach VALID on 10 Hz IO-VNBD data; a saved mount lets a drive start at the first accurate fix (synthetic replay, host only) | Partly met, unverified in a vehicle |
+| Dead-reckoning drift under 10 %, real phone-in-car drives | On real phone-in-car drives (Google Smartphone Decimeter Challenge, 26 held-out drives, offline mount calibration, reference-grade GNSS aiding) the shipped configuration's median drift is 3.1 % (30 s), 9.2 % (60 s) and 3.6 % (1 km); the configuration shipped before it drifted 284 %, 749 % and 271 %. Only 55 % of 60 s outages are under 10 %; public data, not a drive recorded with this app | **Met in median on these data**, 60 s outages only just |
+| Phone IMU in a vehicle | Scored on 26 held-out and 38 development real drives of a public dataset with an offline mount calibration; no drive recorded with this app | Partly met |
+| AI speed estimation | v1 (synthetic) fails on real drives and is switched off in the shipped app; v3 lowers leave-one-drive-out speed RMSE from 4.273 (integrated acceleration) and 4.785 (hold last speed) to 2.554 m/s | Partly met, external-IMU input only |
+| Auto mount calibration | The app's in-drive calibrator reached VALID on 0 of 38 real phone-in-car trips under every threshold setting tried (a phone in a running car vibrates too much for its parked test). The app now also runs a batch calibrator (first 2 to 8 minutes of driving, gravity while stopped, forward from the speed derivative) beside it; the engine found a mount by itself on 64 of 64 real trips (within 0.4 degrees of the Python reference method) and drifted as with an offline calibration. Public data only; needs about two minutes of driving with speed changes; not tested on a device in a vehicle | **Met on real phone-in-car data**; not field-tested on a device |
 | 10 Hz output | Publication interval is 100 ms; host replay only | Met on host, not on device |
 | Offline map and matching | HMM matcher with cross-track feedback on synthetic motion over real Hyderabad roads (30 s outages): median 4-7 % against 14-15 % with no map; not a recorded drive; the in-app switch is experimental and off by default | Implemented; not verified in a vehicle |
 | Edge engine, external IMU at 200 Hz | SYNTHETIC drive: 12 m RMSE during a 20 s outage, 26 m final, 200.01 Hz paired processing, 0 drops; no real FOG hardware | Partly met (synthetic only) |
@@ -230,6 +233,34 @@ _Synthetic motion at constant speed along real road geometry, not a recorded dri
 
 _* interval excludes zero. The held-out rows are few outages on few drives. The switch in the app stays off by default: the app's own engine configuration was not what was evaluated, and no recorded Hyderabad drive exists._
 
+**Real phone-in-car drives** (Google Smartphone Decimeter Challenge 2023-2024, training split: 26 held-out trips from 26 drives that were fixed by a hash of the drive name before any result was seen, one phone per drive; California roads, Pixel, Samsung and Xiaomi phones). Forced outages after an offline mount calibration, scored against the 0.1 m reference receiver. GNSS aiding before and after the outage is that same reference at 1 Hz with a declared 2.5 m accuracy, which is better than a phone receiver gives; the mount calibration is offline because the app's own calibrator did not lock on these trips (0 of 38 development trips). The configuration was chosen on the 38 development drives only.
+
+| Configuration | Outage | Scored outages | Median drift | 90th percentile | Under 10 % |
+|---|---|---:|---:|---:|---:|
+| Shipped before (AI speed estimator and mount-slip detector on) | 50 m outage | 190 | 4.46 % | 92.12 % | 65 % |
+| Shipped before (AI speed estimator and mount-slip detector on) | 30 s outage | 163 | 283.92 % | 1653.99 % | 15 % |
+| Shipped before (AI speed estimator and mount-slip detector on) | 60 s outage | 147 | 749.4 % | 2668.22 % | 1 % |
+| Shipped before (AI speed estimator and mount-slip detector on) | 1 km outage | 122 | 270.8 % | 2739.56 % | 12 % |
+| Shipped now (both off) | 50 m outage | 186 | 0.72 % | 3.77 % | 96 % |
+| Shipped now (both off) | 30 s outage | 159 | 3.07 % | 20.25 % | 80 % |
+| Shipped now (both off) | 60 s outage | 145 | 9.22 % | 74.45 % | 55 % |
+| Shipped now (both off) | 1 km outage | 120 | 3.62 % | 82.82 % | 62 % |
+| Plain EKF with constraints | 50 m outage | 186 | 0.74 % | 3.88 % | 96 % |
+| Plain EKF with constraints | 30 s outage | 158 | 3.02 % | 18.37 % | 82 % |
+| Plain EKF with constraints | 60 s outage | 144 | 8.7 % | 72.46 % | 56 % |
+| Plain EKF with constraints | 1 km outage | 120 | 3.57 % | 80.98 % | 63 % |
+
+Paired difference, shipped before minus shipped now (percentage points; 95 % interval from resampling whole drives; positive = the new configuration drifts less):
+
+| Outage | Paired outages | Drives | Mean difference | 95 % interval |
+|---|---:|---:|---:|---|
+| 50 m outage | 186 | 26 | +93.4 | +30.7 to +187.0 * |
+| 30 s outage | 159 | 26 | +790.8 | +512.3 to +1149.7 * |
+| 60 s outage | 145 | 26 | +1461.9 | +934.1 to +2069.9 * |
+| 1 km outage | 120 | 26 | +874.7 | +542.9 to +1291.1 * |
+
+_* interval excludes zero. Citation: Fu, Khider, Gulati, van Diggelen, "Google Smartphone Decimeter Challenge" (2023), kaggle.com/competitions/smartphone-decimeter-2023/data; Fu, Khider, van Diggelen, ION GNSS+ 2020, doi:10.33012/2020.17628. Data licence CC BY-NC-SA 3.0 IGO. Not a drive recorded with this app, and no Indian roads._
+
 **Learned GNSS trust** (behind a flag, off by default; leave-one-drive-out, 6283 phone fixes): rank correlation with true fix error 0.28 (reported accuracy: 0.048); mean absolute error 2.487 m (reported accuracy: 2.638 m).
 
 Engine-level paired comparison on IO-VNBD (the best arm with and without the trust weighting; weights trained without the drive being run; positive difference = trust helps; interval is a 95 % bootstrap of the mean paired difference in percentage points):
@@ -279,7 +310,7 @@ _Declaring a zero accelerometer bias is an assumption (the generator adds a smal
 - **Model A v3** (`training/speed_v3.py`, `OutageSpeedCorrection.kt`): learned correction of integrated
   acceleration, anchored at the last GNSS fix. Off by default; needs a vehicle-frame inertial input.
 - **15-state ES-EKF** (`GnssInsEkf.kt`) with ZUPT, NHC, forward-speed and heading rows, and Joseph-form updates.
-- **Mount calibration and slip detection** (`MountEstimator.kt`, `MountSlipDetector.kt`).
+- **Mount calibration and slip detection** (`MountEstimator.kt`, `MountSlipDetector.kt`). The slip detector is OFF in the shipped configuration: on real phone-in-car drives it read ordinary braking and acceleration as a slipping mount and made outage drift hundreds of percent (see the real phone-in-car table below). The in-drive calibrator did not reach VALID on any real phone-in-car trip.
 - **Map matching** (`HmmMapMatcher.kt`): online fixed-lag HMM matcher with a cross-track position row in the EKF (off by default); the greedy `MapMatcher.kt` feeds a heading row. Scored on synthetic motion over the real Hyderabad road graph (`reports/map_matching_eval.json`); no recorded drive yet.
 - **Adaptive rate decimation:** implemented; its power saving is not measured.
 - **Saved mount calibration** (`SavedCalibration.kt`): the last valid mount per device lets a drive start at the first accurate

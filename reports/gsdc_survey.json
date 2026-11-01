@@ -1,0 +1,4530 @@
+{
+ "dataset": "Google Smartphone Decimeter Challenge 2023-2024, train split",
+ "license": "CC BY-NC-SA 3.0 IGO",
+ "trips": [
+  {
+   "drive": "2020-06-25-00-34-us-ca-mtv-sb-101",
+   "phone": "pixel4",
+   "accelerometer": {
+    "samples": 70813,
+    "rate_hz": 54.5,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 67443,
+    "rate_hz": 51.9,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.93,
+   "truth_fixes": 1299,
+   "truth_duration_s": 1298.0,
+   "imu_truth_overlap_s": 1298.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 32.07,
+   "median_speed_m_s": 27.87,
+   "fraction_above_5_m_s": 0.95,
+   "max_speed_m_s": 39.2
+  },
+  {
+   "drive": "2020-06-25-00-34-us-ca-mtv-sb-101",
+   "phone": "pixel4xl",
+   "accelerometer": {
+    "samples": 71375,
+    "rate_hz": 54.8,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 67852,
+    "rate_hz": 52.1,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.907,
+   "truth_fixes": 1302,
+   "truth_duration_s": 1301.0,
+   "imu_truth_overlap_s": 1301.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 32.07,
+   "median_speed_m_s": 27.86,
+   "fraction_above_5_m_s": 0.948,
+   "max_speed_m_s": 39.2
+  },
+  {
+   "drive": "2020-07-08-22-28-us-ca",
+   "phone": "pixel4",
+   "accelerometer": {
+    "samples": 133950,
+    "rate_hz": 62.9,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 110527,
+    "rate_hz": 51.9,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.854,
+   "truth_fixes": 2131,
+   "truth_duration_s": 2130.0,
+   "imu_truth_overlap_s": 2130.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 43.26,
+   "median_speed_m_s": 27.41,
+   "fraction_above_5_m_s": 0.789,
+   "max_speed_m_s": 36.0
+  },
+  {
+   "drive": "2020-07-08-22-28-us-ca",
+   "phone": "pixel4xl",
+   "accelerometer": {
+    "samples": 134719,
+    "rate_hz": 62.7,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 110819,
+    "rate_hz": 51.6,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.864,
+   "truth_fixes": 2147,
+   "truth_duration_s": 2146.0,
+   "imu_truth_overlap_s": 2146.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 43.26,
+   "median_speed_m_s": 27.36,
+   "fraction_above_5_m_s": 0.783,
+   "max_speed_m_s": 36.0
+  },
+  {
+   "drive": "2020-07-17-22-27-us-ca-mtv-sf-280",
+   "phone": "pixel4",
+   "accelerometer": {
+    "samples": 106558,
+    "rate_hz": 55.2,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 100042,
+    "rate_hz": 51.9,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.896,
+   "truth_fixes": 1929,
+   "truth_duration_s": 1928.0,
+   "imu_truth_overlap_s": 1928.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 50.35,
+   "median_speed_m_s": 28.8,
+   "fraction_above_5_m_s": 0.934,
+   "max_speed_m_s": 40.1
+  },
+  {
+   "drive": "2020-07-17-23-13-us-ca-sf-mtv-280",
+   "phone": "pixel4",
+   "accelerometer": {
+    "samples": 93661,
+    "rate_hz": 55.1,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 88129,
+    "rate_hz": 51.9,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.885,
+   "truth_fixes": 1698,
+   "truth_duration_s": 1697.0,
+   "imu_truth_overlap_s": 1697.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 47.69,
+   "median_speed_m_s": 30.68,
+   "fraction_above_5_m_s": 0.938,
+   "max_speed_m_s": 38.7
+  },
+  {
+   "drive": "2020-07-17-23-13-us-ca-sf-mtv-280",
+   "phone": "pixel4xl",
+   "accelerometer": {
+    "samples": 93385,
+    "rate_hz": 54.9,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 87761,
+    "rate_hz": 51.6,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.882,
+   "truth_fixes": 1699,
+   "truth_duration_s": 1698.0,
+   "imu_truth_overlap_s": 1698.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 47.69,
+   "median_speed_m_s": 30.68,
+   "fraction_above_5_m_s": 0.938,
+   "max_speed_m_s": 38.7
+  },
+  {
+   "drive": "2020-08-04-00-19-us-ca-sb-mtv-101",
+   "phone": "pixel4",
+   "accelerometer": {
+    "samples": 102217,
+    "rate_hz": 60.5,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 87761,
+    "rate_hz": 51.9,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.849,
+   "truth_fixes": 1690,
+   "truth_duration_s": 1689.0,
+   "imu_truth_overlap_s": 1689.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 43.06,
+   "median_speed_m_s": 33.28,
+   "fraction_above_5_m_s": 0.838,
+   "max_speed_m_s": 43.6
+  },
+  {
+   "drive": "2020-08-04-00-20-us-ca-sb-mtv-101",
+   "phone": "pixel4xl",
+   "accelerometer": {
+    "samples": 95139,
+    "rate_hz": 58.4,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 84098,
+    "rate_hz": 51.6,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.867,
+   "truth_fixes": 1629,
+   "truth_duration_s": 1628.0,
+   "imu_truth_overlap_s": 1628.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 43.06,
+   "median_speed_m_s": 33.58,
+   "fraction_above_5_m_s": 0.869,
+   "max_speed_m_s": 43.6
+  },
+  {
+   "drive": "2020-08-04-00-20-us-ca-sb-mtv-101",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 94714,
+    "rate_hz": 58.0,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 83626,
+    "rate_hz": 51.2,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.84,
+   "truth_fixes": 1628,
+   "truth_duration_s": 1629.0,
+   "imu_truth_overlap_s": 1629.0,
+   "truth_max_gap_s": 3.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 43.06,
+   "median_speed_m_s": 33.58,
+   "fraction_above_5_m_s": 0.87,
+   "max_speed_m_s": 43.6
+  },
+  {
+   "drive": "2020-08-13-21-41-us-ca-mtv-sf-280",
+   "phone": "pixel4",
+   "accelerometer": {
+    "samples": 107247,
+    "rate_hz": 57.0,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 97559,
+    "rate_hz": 51.9,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.881,
+   "truth_fixes": 1881,
+   "truth_duration_s": 1880.0,
+   "imu_truth_overlap_s": 1880.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 48.59,
+   "median_speed_m_s": 30.1,
+   "fraction_above_5_m_s": 0.902,
+   "max_speed_m_s": 39.0
+  },
+  {
+   "drive": "2020-08-13-21-41-us-ca-mtv-sf-280",
+   "phone": "pixel4xl",
+   "accelerometer": {
+    "samples": 105643,
+    "rate_hz": 56.5,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 96544,
+    "rate_hz": 51.6,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.854,
+   "truth_fixes": 1869,
+   "truth_duration_s": 1868.0,
+   "imu_truth_overlap_s": 1868.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 48.59,
+   "median_speed_m_s": 30.14,
+   "fraction_above_5_m_s": 0.907,
+   "max_speed_m_s": 39.0
+  },
+  {
+   "drive": "2020-08-13-21-42-us-ca-mtv-sf-280",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 99476,
+    "rate_hz": 54.4,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 92447,
+    "rate_hz": 50.5,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.864,
+   "truth_fixes": 1830,
+   "truth_duration_s": 1829.0,
+   "imu_truth_overlap_s": 1829.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 48.59,
+   "median_speed_m_s": 30.25,
+   "fraction_above_5_m_s": 0.927,
+   "max_speed_m_s": 39.0
+  },
+  {
+   "drive": "2020-12-10-22-17-us-ca-sjc-c",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 112691,
+    "rate_hz": 75.4,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 74696,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.896,
+   "truth_fixes": 1495,
+   "truth_duration_s": 1494.0,
+   "imu_truth_overlap_s": 1494.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 14.93,
+   "median_speed_m_s": 4.46,
+   "fraction_above_5_m_s": 0.488,
+   "max_speed_m_s": 36.6
+  },
+  {
+   "drive": "2020-12-10-22-52-us-ca-sjc-c",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 104432,
+    "rate_hz": 74.2,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 70339,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.896,
+   "truth_fixes": 1408,
+   "truth_duration_s": 1407.0,
+   "imu_truth_overlap_s": 1407.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 14.97,
+   "median_speed_m_s": 5.7,
+   "fraction_above_5_m_s": 0.516,
+   "max_speed_m_s": 34.9
+  },
+  {
+   "drive": "2020-12-10-22-52-us-ca-sjc-c",
+   "phone": "pixel4",
+   "accelerometer": {
+    "samples": 108381,
+    "rate_hz": 77.0,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 73005,
+    "rate_hz": 51.9,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.864,
+   "truth_fixes": 1407,
+   "truth_duration_s": 1406.0,
+   "imu_truth_overlap_s": 1406.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 14.96,
+   "median_speed_m_s": 5.72,
+   "fraction_above_5_m_s": 0.516,
+   "max_speed_m_s": 34.9
+  },
+  {
+   "drive": "2020-12-10-22-52-us-ca-sjc-c",
+   "phone": "pixel4xl",
+   "accelerometer": {
+    "samples": 107895,
+    "rate_hz": 76.7,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 72672,
+    "rate_hz": 51.6,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.823,
+   "truth_fixes": 1407,
+   "truth_duration_s": 1406.0,
+   "imu_truth_overlap_s": 1406.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 14.96,
+   "median_speed_m_s": 5.71,
+   "fraction_above_5_m_s": 0.516,
+   "max_speed_m_s": 34.9
+  },
+  {
+   "drive": "2020-12-10-22-52-us-ca-sjc-c",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 105733,
+    "rate_hz": 75.1,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 71172,
+    "rate_hz": 50.6,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.819,
+   "truth_fixes": 1407,
+   "truth_duration_s": 1406.0,
+   "imu_truth_overlap_s": 1406.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 14.96,
+   "median_speed_m_s": 5.72,
+   "fraction_above_5_m_s": 0.516,
+   "max_speed_m_s": 34.9
+  },
+  {
+   "drive": "2021-01-04-21-50-us-ca-e1highway280driveroutea",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 114304,
+    "rate_hz": 57.1,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.05,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 100035,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.906,
+   "truth_fixes": 2002,
+   "truth_duration_s": 2001.0,
+   "imu_truth_overlap_s": 2001.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 42.21,
+   "median_speed_m_s": 26.56,
+   "fraction_above_5_m_s": 0.858,
+   "max_speed_m_s": 35.3
+  },
+  {
+   "drive": "2021-01-04-21-50-us-ca-e1highway280driveroutea",
+   "phone": "pixel4",
+   "accelerometer": {
+    "samples": 118917,
+    "rate_hz": 59.3,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 103984,
+    "rate_hz": 51.9,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.875,
+   "truth_fixes": 2003,
+   "truth_duration_s": 2002.0,
+   "imu_truth_overlap_s": 2002.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 42.21,
+   "median_speed_m_s": 26.57,
+   "fraction_above_5_m_s": 0.856,
+   "max_speed_m_s": 35.3
+  },
+  {
+   "drive": "2021-01-04-21-50-us-ca-e1highway280driveroutea",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 115632,
+    "rate_hz": 57.7,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 101261,
+    "rate_hz": 50.6,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.838,
+   "truth_fixes": 2001,
+   "truth_duration_s": 2000.0,
+   "imu_truth_overlap_s": 2000.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 42.21,
+   "median_speed_m_s": 26.57,
+   "fraction_above_5_m_s": 0.857,
+   "max_speed_m_s": 35.3
+  },
+  {
+   "drive": "2021-01-04-22-40-us-ca-mtv-a",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 104874,
+    "rate_hz": 56.5,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 92710,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.909,
+   "truth_fixes": 1856,
+   "truth_duration_s": 1855.0,
+   "imu_truth_overlap_s": 1855.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 42.21,
+   "median_speed_m_s": 27.76,
+   "fraction_above_5_m_s": 0.869,
+   "max_speed_m_s": 37.2
+  },
+  {
+   "drive": "2021-01-04-22-40-us-ca-mtv-a",
+   "phone": "pixel4",
+   "accelerometer": {
+    "samples": 108456,
+    "rate_hz": 58.6,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 96048,
+    "rate_hz": 51.9,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.884,
+   "truth_fixes": 1850,
+   "truth_duration_s": 1849.0,
+   "imu_truth_overlap_s": 1849.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 42.21,
+   "median_speed_m_s": 27.82,
+   "fraction_above_5_m_s": 0.871,
+   "max_speed_m_s": 37.2
+  },
+  {
+   "drive": "2021-01-04-22-40-us-ca-mtv-a",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 106068,
+    "rate_hz": 57.2,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 93791,
+    "rate_hz": 50.6,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.849,
+   "truth_fixes": 1854,
+   "truth_duration_s": 1853.0,
+   "imu_truth_overlap_s": 1853.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 42.21,
+   "median_speed_m_s": 27.8,
+   "fraction_above_5_m_s": 0.869,
+   "max_speed_m_s": 37.2
+  },
+  {
+   "drive": "2021-01-05-21-12-us-ca-mtv-d",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 86350,
+    "rate_hz": 66.3,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 65042,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.916,
+   "truth_fixes": 1302,
+   "truth_duration_s": 1301.0,
+   "imu_truth_overlap_s": 1301.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 21.16,
+   "median_speed_m_s": 15.51,
+   "fraction_above_5_m_s": 0.673,
+   "max_speed_m_s": 38.4
+  },
+  {
+   "drive": "2021-01-05-21-12-us-ca-mtv-d",
+   "phone": "pixel4",
+   "accelerometer": {
+    "samples": 89447,
+    "rate_hz": 68.8,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 67430,
+    "rate_hz": 51.9,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.865,
+   "truth_fixes": 1298,
+   "truth_duration_s": 1297.0,
+   "imu_truth_overlap_s": 1297.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 21.16,
+   "median_speed_m_s": 15.76,
+   "fraction_above_5_m_s": 0.676,
+   "max_speed_m_s": 38.4
+  },
+  {
+   "drive": "2021-01-05-21-52-us-ca-mtv-d",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 70542,
+    "rate_hz": 60.6,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.05,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 58159,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.923,
+   "truth_fixes": 1164,
+   "truth_duration_s": 1163.0,
+   "imu_truth_overlap_s": 1163.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 20.86,
+   "median_speed_m_s": 20.0,
+   "fraction_above_5_m_s": 0.79,
+   "max_speed_m_s": 32.8
+  },
+  {
+   "drive": "2021-01-05-21-52-us-ca-mtv-d",
+   "phone": "pixel4",
+   "accelerometer": {
+    "samples": 72622,
+    "rate_hz": 62.6,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 60181,
+    "rate_hz": 51.9,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.878,
+   "truth_fixes": 1159,
+   "truth_duration_s": 1158.0,
+   "imu_truth_overlap_s": 1158.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 20.87,
+   "median_speed_m_s": 20.11,
+   "fraction_above_5_m_s": 0.794,
+   "max_speed_m_s": 32.8
+  },
+  {
+   "drive": "2021-03-10-23-13-us-ca-mtv-h",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 102177,
+    "rate_hz": 69.9,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.05,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 73014,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.898,
+   "truth_fixes": 1461,
+   "truth_duration_s": 1460.0,
+   "imu_truth_overlap_s": 1460.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 12.67,
+   "median_speed_m_s": 12.06,
+   "fraction_above_5_m_s": 0.602,
+   "max_speed_m_s": 17.9
+  },
+  {
+   "drive": "2021-03-10-23-13-us-ca-mtv-h",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 104409,
+    "rate_hz": 71.3,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 74584,
+    "rate_hz": 50.9,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.799,
+   "truth_fixes": 1464,
+   "truth_duration_s": 1463.0,
+   "imu_truth_overlap_s": 1463.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 12.67,
+   "median_speed_m_s": 12.0,
+   "fraction_above_5_m_s": 0.602,
+   "max_speed_m_s": 17.9
+  },
+  {
+   "drive": "2021-03-16-18-59-us-ca-mtv-a",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 129576,
+    "rate_hz": 60.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 107962,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.904,
+   "truth_fixes": 2161,
+   "truth_duration_s": 2160.0,
+   "imu_truth_overlap_s": 2160.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 50.9,
+   "median_speed_m_s": 30.55,
+   "fraction_above_5_m_s": 0.798,
+   "max_speed_m_s": 44.3
+  },
+  {
+   "drive": "2021-03-16-18-59-us-ca-mtv-a",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 132011,
+    "rate_hz": 61.1,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 109790,
+    "rate_hz": 50.8,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.859,
+   "truth_fixes": 2159,
+   "truth_duration_s": 2158.0,
+   "imu_truth_overlap_s": 2158.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 50.89,
+   "median_speed_m_s": 30.56,
+   "fraction_above_5_m_s": 0.798,
+   "max_speed_m_s": 44.3
+  },
+  {
+   "drive": "2021-03-16-18-59-us-ca-mtv-a",
+   "phone": "sm-g988b",
+   "accelerometer": {
+    "samples": 129910,
+    "rate_hz": 60.1,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 108084,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.846,
+   "truth_fixes": 2162,
+   "truth_duration_s": 2161.0,
+   "imu_truth_overlap_s": 2161.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 50.9,
+   "median_speed_m_s": 30.54,
+   "fraction_above_5_m_s": 0.798,
+   "max_speed_m_s": 44.3
+  },
+  {
+   "drive": "2021-03-16-19-00-us-ca-mtv-a",
+   "phone": "pixel4xl",
+   "accelerometer": {
+    "samples": 128185,
+    "rate_hz": 61.3,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 108975,
+    "rate_hz": 52.1,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.878,
+   "truth_fixes": 2091,
+   "truth_duration_s": 2090.0,
+   "imu_truth_overlap_s": 2090.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 50.89,
+   "median_speed_m_s": 30.87,
+   "fraction_above_5_m_s": 0.824,
+   "max_speed_m_s": 44.3
+  },
+  {
+   "drive": "2021-03-16-20-40-us-ca-mtv-b",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 81346,
+    "rate_hz": 55.2,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.05,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 73583,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.957,
+   "truth_fixes": 1457,
+   "truth_duration_s": 1456.0,
+   "imu_truth_overlap_s": 1456.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 33.48,
+   "median_speed_m_s": 26.91,
+   "fraction_above_5_m_s": 0.905,
+   "max_speed_m_s": 40.8
+  },
+  {
+   "drive": "2021-03-16-20-40-us-ca-mtv-b",
+   "phone": "pixel4xl",
+   "accelerometer": {
+    "samples": 85048,
+    "rate_hz": 57.6,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 76883,
+    "rate_hz": 52.1,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.894,
+   "truth_fixes": 1461,
+   "truth_duration_s": 1460.0,
+   "imu_truth_overlap_s": 1460.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 33.48,
+   "median_speed_m_s": 26.83,
+   "fraction_above_5_m_s": 0.903,
+   "max_speed_m_s": 40.7
+  },
+  {
+   "drive": "2021-03-16-20-40-us-ca-mtv-b",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 82472,
+    "rate_hz": 56.1,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 74749,
+    "rate_hz": 50.9,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.879,
+   "truth_fixes": 1456,
+   "truth_duration_s": 1455.0,
+   "imu_truth_overlap_s": 1455.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 33.48,
+   "median_speed_m_s": 26.87,
+   "fraction_above_5_m_s": 0.906,
+   "max_speed_m_s": 40.7
+  },
+  {
+   "drive": "2021-04-02-20-43-us-ca-mtv-f",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 124787,
+    "rate_hz": 54.6,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.05,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 114082,
+    "rate_hz": 49.9,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.902,
+   "truth_fixes": 2284,
+   "truth_duration_s": 2283.0,
+   "imu_truth_overlap_s": 2283.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 48.08,
+   "median_speed_m_s": 23.59,
+   "fraction_above_5_m_s": 0.906,
+   "max_speed_m_s": 39.0
+  },
+  {
+   "drive": "2021-04-02-20-43-us-ca-mtv-f",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 127040,
+    "rate_hz": 55.6,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 116118,
+    "rate_hz": 50.8,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.852,
+   "truth_fixes": 2284,
+   "truth_duration_s": 2283.0,
+   "imu_truth_overlap_s": 2283.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 48.09,
+   "median_speed_m_s": 23.58,
+   "fraction_above_5_m_s": 0.908,
+   "max_speed_m_s": 38.8
+  },
+  {
+   "drive": "2021-04-02-20-43-us-ca-mtv-f",
+   "phone": "sm-g988b",
+   "accelerometer": {
+    "samples": 124884,
+    "rate_hz": 54.7,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 114246,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.821,
+   "truth_fixes": 2284,
+   "truth_duration_s": 2283.0,
+   "imu_truth_overlap_s": 2283.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 48.08,
+   "median_speed_m_s": 23.59,
+   "fraction_above_5_m_s": 0.906,
+   "max_speed_m_s": 39.0
+  },
+  {
+   "drive": "2021-04-08-21-28-us-ca-mtv-k",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 72322,
+    "rate_hz": 72.8,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 52659,
+    "rate_hz": 53.0,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.829,
+   "truth_fixes": 992,
+   "truth_duration_s": 991.0,
+   "imu_truth_overlap_s": 991.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 9.02,
+   "median_speed_m_s": 8.59,
+   "fraction_above_5_m_s": 0.626,
+   "max_speed_m_s": 27.2
+  },
+  {
+   "drive": "2021-04-08-21-28-us-ca-mtv-k",
+   "phone": "sm-g988b",
+   "accelerometer": {
+    "samples": 68147,
+    "rate_hz": 68.7,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 49628,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.797,
+   "truth_fixes": 993,
+   "truth_duration_s": 992.0,
+   "imu_truth_overlap_s": 992.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 9.02,
+   "median_speed_m_s": 8.52,
+   "fraction_above_5_m_s": 0.622,
+   "max_speed_m_s": 27.1
+  },
+  {
+   "drive": "2021-04-26-23-38-us-ca-mtv-h",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 229342,
+    "rate_hz": 73.5,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.05,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 155791,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.883,
+   "truth_fixes": 3119,
+   "truth_duration_s": 3118.0,
+   "imu_truth_overlap_s": 3118.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 25.13,
+   "median_speed_m_s": 7.07,
+   "fraction_above_5_m_s": 0.528,
+   "max_speed_m_s": 22.6
+  },
+  {
+   "drive": "2021-04-26-23-38-us-ca-mtv-h",
+   "phone": "sm-g988b",
+   "accelerometer": {
+    "samples": 229670,
+    "rate_hz": 73.6,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 156040,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.79,
+   "truth_fixes": 3121,
+   "truth_duration_s": 3120.0,
+   "imu_truth_overlap_s": 3120.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 25.13,
+   "median_speed_m_s": 7.06,
+   "fraction_above_5_m_s": 0.528,
+   "max_speed_m_s": 22.6
+  },
+  {
+   "drive": "2021-07-14-20-50-us-ca-mtv-e",
+   "phone": "pixel4",
+   "accelerometer": {
+    "samples": 73407,
+    "rate_hz": 61.8,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 60777,
+    "rate_hz": 51.1,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.873,
+   "truth_fixes": 1188,
+   "truth_duration_s": 1187.0,
+   "imu_truth_overlap_s": 1187.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 20.83,
+   "median_speed_m_s": 16.35,
+   "fraction_above_5_m_s": 0.79,
+   "max_speed_m_s": 36.7
+  },
+  {
+   "drive": "2021-07-14-20-50-us-ca-mtv-e",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 72682,
+    "rate_hz": 61.2,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 60182,
+    "rate_hz": 50.7,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.856,
+   "truth_fixes": 1187,
+   "truth_duration_s": 1186.0,
+   "imu_truth_overlap_s": 1186.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 20.82,
+   "median_speed_m_s": 16.37,
+   "fraction_above_5_m_s": 0.791,
+   "max_speed_m_s": 36.7
+  },
+  {
+   "drive": "2021-07-14-20-50-us-ca-mtv-e",
+   "phone": "sm-g988b",
+   "accelerometer": {
+    "samples": 69407,
+    "rate_hz": 59.6,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 58240,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.849,
+   "truth_fixes": 1165,
+   "truth_duration_s": 1164.0,
+   "imu_truth_overlap_s": 1164.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 20.83,
+   "median_speed_m_s": 17.44,
+   "fraction_above_5_m_s": 0.806,
+   "max_speed_m_s": 36.6
+  },
+  {
+   "drive": "2021-07-19-20-49-us-ca-mtv-a",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 105924,
+    "rate_hz": 55.8,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 94960,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.982,
+   "truth_fixes": 1898,
+   "truth_duration_s": 1897.0,
+   "imu_truth_overlap_s": 1897.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 42.19,
+   "median_speed_m_s": 26.33,
+   "fraction_above_5_m_s": 0.884,
+   "max_speed_m_s": 34.8
+  },
+  {
+   "drive": "2021-07-19-20-49-us-ca-mtv-a",
+   "phone": "pixel4",
+   "accelerometer": {
+    "samples": 108140,
+    "rate_hz": 57.0,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 97041,
+    "rate_hz": 51.2,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.869,
+   "truth_fixes": 1897,
+   "truth_duration_s": 1896.0,
+   "imu_truth_overlap_s": 1896.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 42.19,
+   "median_speed_m_s": 26.31,
+   "fraction_above_5_m_s": 0.884,
+   "max_speed_m_s": 34.8
+  },
+  {
+   "drive": "2021-07-19-20-49-us-ca-mtv-a",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 107102,
+    "rate_hz": 56.5,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 96115,
+    "rate_hz": 50.7,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.853,
+   "truth_fixes": 1896,
+   "truth_duration_s": 1895.0,
+   "imu_truth_overlap_s": 1895.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 42.19,
+   "median_speed_m_s": 26.33,
+   "fraction_above_5_m_s": 0.884,
+   "max_speed_m_s": 34.8
+  },
+  {
+   "drive": "2021-07-19-20-49-us-ca-mtv-a",
+   "phone": "sm-g988b",
+   "accelerometer": {
+    "samples": 105889,
+    "rate_hz": 55.8,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 94895,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.882,
+   "truth_fixes": 1898,
+   "truth_duration_s": 1897.0,
+   "imu_truth_overlap_s": 1897.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 42.19,
+   "median_speed_m_s": 26.33,
+   "fraction_above_5_m_s": 0.884,
+   "max_speed_m_s": 34.8
+  },
+  {
+   "drive": "2021-07-27-19-49-us-ca-mtv-b",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 97723,
+    "rate_hz": 57.5,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 85032,
+    "rate_hz": 50.1,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 10.001,
+   "truth_fixes": 1699,
+   "truth_duration_s": 1698.0,
+   "imu_truth_overlap_s": 1698.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 33.44,
+   "median_speed_m_s": 24.48,
+   "fraction_above_5_m_s": 0.852,
+   "max_speed_m_s": 36.4
+  },
+  {
+   "drive": "2021-07-27-19-49-us-ca-mtv-b",
+   "phone": "pixel4",
+   "accelerometer": {
+    "samples": 99279,
+    "rate_hz": 59.2,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 87373,
+    "rate_hz": 52.1,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.878,
+   "truth_fixes": 1677,
+   "truth_duration_s": 1676.0,
+   "imu_truth_overlap_s": 1676.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 33.44,
+   "median_speed_m_s": 24.77,
+   "fraction_above_5_m_s": 0.864,
+   "max_speed_m_s": 36.4
+  },
+  {
+   "drive": "2021-07-27-19-49-us-ca-mtv-b",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 101098,
+    "rate_hz": 60.2,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 89084,
+    "rate_hz": 53.0,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.857,
+   "truth_fixes": 1679,
+   "truth_duration_s": 1678.0,
+   "imu_truth_overlap_s": 1678.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 33.45,
+   "median_speed_m_s": 24.73,
+   "fraction_above_5_m_s": 0.863,
+   "max_speed_m_s": 36.4
+  },
+  {
+   "drive": "2021-08-04-20-40-us-ca-sjc-c",
+   "phone": "sm-g988b",
+   "accelerometer": {
+    "samples": 117904,
+    "rate_hz": 75.9,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 77677,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.852,
+   "truth_fixes": 1554,
+   "truth_duration_s": 1553.0,
+   "imu_truth_overlap_s": 1553.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 14.91,
+   "median_speed_m_s": 3.88,
+   "fraction_above_5_m_s": 0.483,
+   "max_speed_m_s": 31.0
+  },
+  {
+   "drive": "2021-08-24-20-32-us-ca-mtv-h",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 229814,
+    "rate_hz": 73.2,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 157175,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.96,
+   "truth_fixes": 3140,
+   "truth_duration_s": 3139.0,
+   "imu_truth_overlap_s": 3139.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 24.99,
+   "median_speed_m_s": 8.01,
+   "fraction_above_5_m_s": 0.538,
+   "max_speed_m_s": 20.6
+  },
+  {
+   "drive": "2021-08-24-20-32-us-ca-mtv-h",
+   "phone": "pixel4",
+   "accelerometer": {
+    "samples": 239001,
+    "rate_hz": 76.1,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 163504,
+    "rate_hz": 52.1,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.85,
+   "truth_fixes": 3140,
+   "truth_duration_s": 3139.0,
+   "imu_truth_overlap_s": 3139.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 24.99,
+   "median_speed_m_s": 7.92,
+   "fraction_above_5_m_s": 0.539,
+   "max_speed_m_s": 20.6
+  },
+  {
+   "drive": "2021-08-24-20-32-us-ca-mtv-h",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 243457,
+    "rate_hz": 77.6,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 166502,
+    "rate_hz": 53.0,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.822,
+   "truth_fixes": 3139,
+   "truth_duration_s": 3138.0,
+   "imu_truth_overlap_s": 3138.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 24.99,
+   "median_speed_m_s": 7.94,
+   "fraction_above_5_m_s": 0.539,
+   "max_speed_m_s": 20.6
+  },
+  {
+   "drive": "2021-08-24-20-32-us-ca-mtv-h",
+   "phone": "sm-g988b",
+   "accelerometer": {
+    "samples": 229442,
+    "rate_hz": 73.1,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 157052,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.856,
+   "truth_fixes": 3141,
+   "truth_duration_s": 3140.0,
+   "imu_truth_overlap_s": 3140.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 24.99,
+   "median_speed_m_s": 8.0,
+   "fraction_above_5_m_s": 0.537,
+   "max_speed_m_s": 20.6
+  },
+  {
+   "drive": "2021-12-07-19-22-us-ca-lax-d",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 104959,
+    "rate_hz": 59.6,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.05,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 88109,
+    "rate_hz": 50.1,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.978,
+   "truth_fixes": 1760,
+   "truth_duration_s": 1759.0,
+   "imu_truth_overlap_s": 1759.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 38.3,
+   "median_speed_m_s": 28.65,
+   "fraction_above_5_m_s": 0.809,
+   "max_speed_m_s": 37.3
+  },
+  {
+   "drive": "2021-12-07-19-22-us-ca-lax-d",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 111148,
+    "rate_hz": 63.1,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 93372,
+    "rate_hz": 53.0,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.816,
+   "truth_fixes": 1759,
+   "truth_duration_s": 1758.0,
+   "imu_truth_overlap_s": 1758.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 38.3,
+   "median_speed_m_s": 28.77,
+   "fraction_above_5_m_s": 0.811,
+   "max_speed_m_s": 37.3
+  },
+  {
+   "drive": "2021-12-07-19-22-us-ca-lax-d",
+   "phone": "pixel6pro",
+   "accelerometer": {
+    "samples": 114364,
+    "rate_hz": 65.0,
+    "median_dt_ms": 18.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 96097,
+    "rate_hz": 54.6,
+    "median_dt_ms": 18.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.804,
+   "truth_fixes": 1761,
+   "truth_duration_s": 1760.0,
+   "imu_truth_overlap_s": 1760.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 38.3,
+   "median_speed_m_s": 28.64,
+   "fraction_above_5_m_s": 0.809,
+   "max_speed_m_s": 37.3
+  },
+  {
+   "drive": "2021-12-07-19-22-us-ca-lax-d",
+   "phone": "sm-g988b",
+   "accelerometer": {
+    "samples": 104752,
+    "rate_hz": 59.5,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 88036,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.859,
+   "truth_fixes": 1761,
+   "truth_duration_s": 1760.0,
+   "imu_truth_overlap_s": 1760.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 38.3,
+   "median_speed_m_s": 28.64,
+   "fraction_above_5_m_s": 0.809,
+   "max_speed_m_s": 37.3
+  },
+  {
+   "drive": "2021-12-07-22-21-us-ca-lax-g",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 105516,
+    "rate_hz": 73.6,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.05,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 71772,
+    "rate_hz": 50.1,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.982,
+   "truth_fixes": 1434,
+   "truth_duration_s": 1433.0,
+   "imu_truth_overlap_s": 1433.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 11.97,
+   "median_speed_m_s": 6.48,
+   "fraction_above_5_m_s": 0.531,
+   "max_speed_m_s": 25.1
+  },
+  {
+   "drive": "2021-12-07-22-21-us-ca-lax-g",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 111755,
+    "rate_hz": 78.0,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 76013,
+    "rate_hz": 53.0,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.818,
+   "truth_fixes": 1433,
+   "truth_duration_s": 1432.0,
+   "imu_truth_overlap_s": 1432.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 11.97,
+   "median_speed_m_s": 6.44,
+   "fraction_above_5_m_s": 0.53,
+   "max_speed_m_s": 25.0
+  },
+  {
+   "drive": "2021-12-07-22-21-us-ca-lax-g",
+   "phone": "pixel6pro",
+   "accelerometer": {
+    "samples": 114924,
+    "rate_hz": 80.2,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 78256,
+    "rate_hz": 54.6,
+    "median_dt_ms": 18.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.802,
+   "truth_fixes": 1434,
+   "truth_duration_s": 1433.0,
+   "imu_truth_overlap_s": 1433.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 11.97,
+   "median_speed_m_s": 6.48,
+   "fraction_above_5_m_s": 0.531,
+   "max_speed_m_s": 25.1
+  },
+  {
+   "drive": "2021-12-07-22-21-us-ca-lax-g",
+   "phone": "sm-g988b",
+   "accelerometer": {
+    "samples": 105452,
+    "rate_hz": 73.5,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 71713,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.843,
+   "truth_fixes": 1433,
+   "truth_duration_s": 1432.0,
+   "imu_truth_overlap_s": 1432.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 11.97,
+   "median_speed_m_s": 6.5,
+   "fraction_above_5_m_s": 0.531,
+   "max_speed_m_s": 25.1
+  },
+  {
+   "drive": "2021-12-08-17-22-us-ca-lax-a",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 96663,
+    "rate_hz": 67.0,
+    "median_dt_ms": 18.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 76502,
+    "rate_hz": 53.0,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.836,
+   "truth_fixes": 1442,
+   "truth_duration_s": 1441.0,
+   "imu_truth_overlap_s": 1441.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 20.94,
+   "median_speed_m_s": 11.55,
+   "fraction_above_5_m_s": 0.738,
+   "max_speed_m_s": 36.1
+  },
+  {
+   "drive": "2021-12-08-17-22-us-ca-lax-a",
+   "phone": "pixel6pro",
+   "accelerometer": {
+    "samples": 99492,
+    "rate_hz": 69.0,
+    "median_dt_ms": 18.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 78723,
+    "rate_hz": 54.6,
+    "median_dt_ms": 18.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.823,
+   "truth_fixes": 1442,
+   "truth_duration_s": 1441.0,
+   "imu_truth_overlap_s": 1441.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 20.94,
+   "median_speed_m_s": 11.48,
+   "fraction_above_5_m_s": 0.736,
+   "max_speed_m_s": 36.1
+  },
+  {
+   "drive": "2021-12-08-18-52-us-ca-lax-b",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 92230,
+    "rate_hz": 63.1,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.05,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 73175,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.977,
+   "truth_fixes": 1458,
+   "truth_duration_s": 1457.0,
+   "imu_truth_overlap_s": 1457.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 18.53,
+   "median_speed_m_s": 13.08,
+   "fraction_above_5_m_s": 0.748,
+   "max_speed_m_s": 32.5
+  },
+  {
+   "drive": "2021-12-08-18-52-us-ca-lax-b",
+   "phone": "pixel6pro",
+   "accelerometer": {
+    "samples": 95535,
+    "rate_hz": 67.4,
+    "median_dt_ms": 18.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 77405,
+    "rate_hz": 54.6,
+    "median_dt_ms": 18.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.808,
+   "truth_fixes": 1418,
+   "truth_duration_s": 1417.0,
+   "imu_truth_overlap_s": 1417.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 18.53,
+   "median_speed_m_s": 13.29,
+   "fraction_above_5_m_s": 0.769,
+   "max_speed_m_s": 32.5
+  },
+  {
+   "drive": "2021-12-08-20-28-us-ca-lax-c",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 63359,
+    "rate_hz": 68.5,
+    "median_dt_ms": 18.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 49054,
+    "rate_hz": 53.0,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.821,
+   "truth_fixes": 924,
+   "truth_duration_s": 923.0,
+   "imu_truth_overlap_s": 923.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 15.9,
+   "median_speed_m_s": 21.98,
+   "fraction_above_5_m_s": 0.708,
+   "max_speed_m_s": 33.8
+  },
+  {
+   "drive": "2021-12-08-20-28-us-ca-lax-c",
+   "phone": "pixel6pro",
+   "accelerometer": {
+    "samples": 65109,
+    "rate_hz": 70.5,
+    "median_dt_ms": 18.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 50407,
+    "rate_hz": 54.6,
+    "median_dt_ms": 18.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.804,
+   "truth_fixes": 923,
+   "truth_duration_s": 922.0,
+   "imu_truth_overlap_s": 922.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 15.9,
+   "median_speed_m_s": 22.2,
+   "fraction_above_5_m_s": 0.709,
+   "max_speed_m_s": 33.8
+  },
+  {
+   "drive": "2021-12-08-20-28-us-ca-lax-c",
+   "phone": "sm-g988b",
+   "accelerometer": {
+    "samples": 59303,
+    "rate_hz": 64.4,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 46028,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.821,
+   "truth_fixes": 921,
+   "truth_duration_s": 920.0,
+   "imu_truth_overlap_s": 920.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 15.9,
+   "median_speed_m_s": 22.24,
+   "fraction_above_5_m_s": 0.71,
+   "max_speed_m_s": 33.8
+  },
+  {
+   "drive": "2021-12-09-17-06-us-ca-lax-e",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 70434,
+    "rate_hz": 63.9,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 58429,
+    "rate_hz": 53.0,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.844,
+   "truth_fixes": 1100,
+   "truth_duration_s": 1099.0,
+   "imu_truth_overlap_s": 1099.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 21.48,
+   "median_speed_m_s": 25.55,
+   "fraction_above_5_m_s": 0.795,
+   "max_speed_m_s": 33.9
+  },
+  {
+   "drive": "2021-12-09-17-06-us-ca-lax-e",
+   "phone": "pixel6pro",
+   "accelerometer": {
+    "samples": 72599,
+    "rate_hz": 65.9,
+    "median_dt_ms": 18.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 60125,
+    "rate_hz": 54.6,
+    "median_dt_ms": 18.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.834,
+   "truth_fixes": 1101,
+   "truth_duration_s": 1100.0,
+   "imu_truth_overlap_s": 1100.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 21.48,
+   "median_speed_m_s": 25.56,
+   "fraction_above_5_m_s": 0.795,
+   "max_speed_m_s": 33.9
+  },
+  {
+   "drive": "2022-01-11-18-48-us-ca-mtv-n",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 66920,
+    "rate_hz": 69.4,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 48263,
+    "rate_hz": 50.1,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.961,
+   "truth_fixes": 941,
+   "truth_duration_s": 940.0,
+   "imu_truth_overlap_s": 940.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 14.1,
+   "median_speed_m_s": 14.37,
+   "fraction_above_5_m_s": 0.631,
+   "max_speed_m_s": 30.8
+  },
+  {
+   "drive": "2022-01-11-18-48-us-ca-mtv-n",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 70314,
+    "rate_hz": 71.1,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 50353,
+    "rate_hz": 50.9,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.811,
+   "truth_fixes": 949,
+   "truth_duration_s": 948.0,
+   "imu_truth_overlap_s": 948.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 14.1,
+   "median_speed_m_s": 13.83,
+   "fraction_above_5_m_s": 0.627,
+   "max_speed_m_s": 30.8
+  },
+  {
+   "drive": "2022-01-11-18-48-us-ca-mtv-n",
+   "phone": "pixel6pro",
+   "accelerometer": {
+    "samples": 72905,
+    "rate_hz": 74.5,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.07,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 52620,
+    "rate_hz": 53.8,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.783,
+   "truth_fixes": 944,
+   "truth_duration_s": 942.5,
+   "imu_truth_overlap_s": 942.5,
+   "truth_max_gap_s": 1.02,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 14.1,
+   "median_speed_m_s": 14.29,
+   "fraction_above_5_m_s": 0.629,
+   "max_speed_m_s": 30.8
+  },
+  {
+   "drive": "2022-01-26-20-02-us-ca-mtv-pe1",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 102917,
+    "rate_hz": 60.6,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 85019,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.961,
+   "truth_fixes": 1699,
+   "truth_duration_s": 1698.0,
+   "imu_truth_overlap_s": 1698.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 36.91,
+   "median_speed_m_s": 28.84,
+   "fraction_above_5_m_s": 0.79,
+   "max_speed_m_s": 34.2
+  },
+  {
+   "drive": "2022-01-26-20-02-us-ca-mtv-pe1",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 109012,
+    "rate_hz": 64.2,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 90044,
+    "rate_hz": 53.0,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.822,
+   "truth_fixes": 1698,
+   "truth_duration_s": 1697.0,
+   "imu_truth_overlap_s": 1697.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 36.91,
+   "median_speed_m_s": 28.87,
+   "fraction_above_5_m_s": 0.791,
+   "max_speed_m_s": 34.2
+  },
+  {
+   "drive": "2022-01-26-20-02-us-ca-mtv-pe1",
+   "phone": "sm-g988b",
+   "accelerometer": {
+    "samples": 102992,
+    "rate_hz": 60.6,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 84937,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.838,
+   "truth_fixes": 1698,
+   "truth_duration_s": 1696.3,
+   "imu_truth_overlap_s": 1696.3,
+   "truth_max_gap_s": 1.01,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 36.91,
+   "median_speed_m_s": 28.85,
+   "fraction_above_5_m_s": 0.791,
+   "max_speed_m_s": 34.2
+  },
+  {
+   "drive": "2022-02-24-18-29-us-ca-lax-o",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 188040,
+    "rate_hz": 76.3,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.05,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 123383,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.967,
+   "truth_fixes": 2466,
+   "truth_duration_s": 2465.0,
+   "imu_truth_overlap_s": 2465.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 15.4,
+   "median_speed_m_s": 4.1,
+   "fraction_above_5_m_s": 0.477,
+   "max_speed_m_s": 20.9
+  },
+  {
+   "drive": "2022-02-24-18-29-us-ca-lax-o",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 188257,
+    "rate_hz": 77.2,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 124143,
+    "rate_hz": 50.9,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.791,
+   "truth_fixes": 2438,
+   "truth_duration_s": 2437.0,
+   "imu_truth_overlap_s": 2437.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 15.4,
+   "median_speed_m_s": 4.3,
+   "fraction_above_5_m_s": 0.482,
+   "max_speed_m_s": 20.9
+  },
+  {
+   "drive": "2022-02-24-18-29-us-ca-lax-o",
+   "phone": "pixel6pro",
+   "accelerometer": {
+    "samples": 197951,
+    "rate_hz": 81.6,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 130342,
+    "rate_hz": 53.7,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.797,
+   "truth_fixes": 2423,
+   "truth_duration_s": 2424.0,
+   "imu_truth_overlap_s": 2424.0,
+   "truth_max_gap_s": 2.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 15.4,
+   "median_speed_m_s": 4.37,
+   "fraction_above_5_m_s": 0.485,
+   "max_speed_m_s": 20.9
+  },
+  {
+   "drive": "2022-04-01-18-22-us-ca-lax-t",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 84643,
+    "rate_hz": 57.9,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 73216,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 10.0,
+   "truth_fixes": 1463,
+   "truth_duration_s": 1462.0,
+   "imu_truth_overlap_s": 1462.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 31.58,
+   "median_speed_m_s": 26.24,
+   "fraction_above_5_m_s": 0.848,
+   "max_speed_m_s": 36.1
+  },
+  {
+   "drive": "2022-04-01-18-22-us-ca-lax-t",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 90008,
+    "rate_hz": 61.4,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 77758,
+    "rate_hz": 53.0,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.834,
+   "truth_fixes": 1465,
+   "truth_duration_s": 1464.0,
+   "imu_truth_overlap_s": 1464.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 31.59,
+   "median_speed_m_s": 26.24,
+   "fraction_above_5_m_s": 0.842,
+   "max_speed_m_s": 36.1
+  },
+  {
+   "drive": "2022-04-01-18-22-us-ca-lax-t",
+   "phone": "pixel6pro",
+   "accelerometer": {
+    "samples": 89923,
+    "rate_hz": 61.3,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 77616,
+    "rate_hz": 52.9,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.815,
+   "truth_fixes": 1466,
+   "truth_duration_s": 1467.0,
+   "imu_truth_overlap_s": 1467.0,
+   "truth_max_gap_s": 2.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 31.59,
+   "median_speed_m_s": 26.23,
+   "fraction_above_5_m_s": 0.846,
+   "max_speed_m_s": 36.1
+  },
+  {
+   "drive": "2022-05-13-20-57-us-ca-mtv-pe1",
+   "phone": "pixel6pro",
+   "accelerometer": {
+    "samples": 169240,
+    "rate_hz": 77.7,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 118494,
+    "rate_hz": 54.4,
+    "median_dt_ms": 18.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.816,
+   "truth_fixes": 2162,
+   "truth_duration_s": 2161.0,
+   "imu_truth_overlap_s": 2161.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 36.96,
+   "median_speed_m_s": 14.54,
+   "fraction_above_5_m_s": 0.579,
+   "max_speed_m_s": 39.1
+  },
+  {
+   "drive": "2022-05-13-20-57-us-ca-mtv-pe1",
+   "phone": "samsungs21ultra",
+   "accelerometer": {
+    "samples": 155922,
+    "rate_hz": 71.4,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 109163,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.868,
+   "truth_fixes": 2164,
+   "truth_duration_s": 2163.0,
+   "imu_truth_overlap_s": 2163.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 36.96,
+   "median_speed_m_s": 14.51,
+   "fraction_above_5_m_s": 0.578,
+   "max_speed_m_s": 39.1
+  },
+  {
+   "drive": "2022-05-13-20-57-us-ca-mtv-pe1",
+   "phone": "sm-g988b",
+   "accelerometer": {
+    "samples": 155687,
+    "rate_hz": 71.4,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 109071,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.818,
+   "truth_fixes": 2163,
+   "truth_duration_s": 2162.0,
+   "imu_truth_overlap_s": 2162.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 36.96,
+   "median_speed_m_s": 14.53,
+   "fraction_above_5_m_s": 0.578,
+   "max_speed_m_s": 39.1
+  },
+  {
+   "drive": "2022-07-26-21-01-us-ca-sjc-s",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 97954,
+    "rate_hz": 64.9,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 76441,
+    "rate_hz": 50.7,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.82,
+   "truth_fixes": 1480,
+   "truth_duration_s": 1479.0,
+   "imu_truth_overlap_s": 1479.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 27.99,
+   "median_speed_m_s": 25.51,
+   "fraction_above_5_m_s": 0.732,
+   "max_speed_m_s": 33.2
+  },
+  {
+   "drive": "2022-07-26-21-01-us-ca-sjc-s",
+   "phone": "samsunga325g",
+   "accelerometer": {
+    "samples": 302395,
+    "rate_hz": 200.0,
+    "median_dt_ms": 5.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 302395,
+    "rate_hz": 200.0,
+    "median_dt_ms": 5.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.856,
+   "truth_fixes": 1487,
+   "truth_duration_s": 1486.0,
+   "imu_truth_overlap_s": 1486.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 27.99,
+   "median_speed_m_s": 25.43,
+   "fraction_above_5_m_s": 0.73,
+   "max_speed_m_s": 33.2
+  },
+  {
+   "drive": "2022-08-04-20-07-us-ca-sjc-q",
+   "phone": "mi8",
+   "accelerometer": {
+    "samples": 95807,
+    "rate_hz": 67.6,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.05,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 70904,
+    "rate_hz": 50.0,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.967,
+   "truth_fixes": 1400,
+   "truth_duration_s": 1399.0,
+   "imu_truth_overlap_s": 1399.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 22.87,
+   "median_speed_m_s": 18.71,
+   "fraction_above_5_m_s": 0.656,
+   "max_speed_m_s": 35.3
+  },
+  {
+   "drive": "2022-08-04-20-07-us-ca-sjc-q",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 100741,
+    "rate_hz": 69.5,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 73739,
+    "rate_hz": 50.8,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.827,
+   "truth_fixes": 1431,
+   "truth_duration_s": 1430.0,
+   "imu_truth_overlap_s": 1430.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 22.87,
+   "median_speed_m_s": 17.73,
+   "fraction_above_5_m_s": 0.644,
+   "max_speed_m_s": 35.3
+  },
+  {
+   "drive": "2022-08-04-20-07-us-ca-sjc-q",
+   "phone": "sm-a325f",
+   "accelerometer": {
+    "samples": 290366,
+    "rate_hz": 200.0,
+    "median_dt_ms": 5.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 28228
+   },
+   "gyroscope": {
+    "samples": 290366,
+    "rate_hz": 200.0,
+    "median_dt_ms": 5.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 26713
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.843,
+   "truth_fixes": 1434,
+   "truth_duration_s": 1433.0,
+   "imu_truth_overlap_s": 1433.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 22.87,
+   "median_speed_m_s": 17.55,
+   "fraction_above_5_m_s": 0.641,
+   "max_speed_m_s": 35.3
+  },
+  {
+   "drive": "2022-10-06-21-51-us-ca-mtv-n",
+   "phone": "sm-a205u",
+   "accelerometer": {
+    "samples": 85611,
+    "rate_hz": 70.3,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 121446,
+    "rate_hz": 99.7,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.88,
+   "truth_fixes": 1213,
+   "truth_duration_s": 1213.0,
+   "imu_truth_overlap_s": 1213.0,
+   "truth_max_gap_s": 2.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 14.87,
+   "median_speed_m_s": 9.42,
+   "fraction_above_5_m_s": 0.586,
+   "max_speed_m_s": 34.9
+  },
+  {
+   "drive": "2022-10-06-21-51-us-ca-mtv-n",
+   "phone": "sm-a217m",
+   "accelerometer": {
+    "samples": 86314,
+    "rate_hz": 70.6,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 60848,
+    "rate_hz": 49.8,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.04,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.82,
+   "truth_fixes": 1221,
+   "truth_duration_s": 1219.0,
+   "imu_truth_overlap_s": 1219.0,
+   "truth_max_gap_s": 1.01,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 14.87,
+   "median_speed_m_s": 8.99,
+   "fraction_above_5_m_s": 0.582,
+   "max_speed_m_s": 34.9
+  },
+  {
+   "drive": "2022-10-06-21-51-us-ca-mtv-n",
+   "phone": "sm-a325f",
+   "accelerometer": {
+    "samples": 245317,
+    "rate_hz": 199.8,
+    "median_dt_ms": 5.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 7801
+   },
+   "gyroscope": {
+    "samples": 245297,
+    "rate_hz": 199.8,
+    "median_dt_ms": 5.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 8379
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.835,
+   "truth_fixes": 1230,
+   "truth_duration_s": 1225.8,
+   "imu_truth_overlap_s": 1225.8,
+   "truth_max_gap_s": 1.5,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 14.87,
+   "median_speed_m_s": 8.79,
+   "fraction_above_5_m_s": 0.578,
+   "max_speed_m_s": 34.9
+  },
+  {
+   "drive": "2022-11-15-00-53-us-ca-mtv-a",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 84068,
+    "rate_hz": 68.4,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 62334,
+    "rate_hz": 50.7,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.812,
+   "truth_fixes": 1196,
+   "truth_duration_s": 1195.0,
+   "imu_truth_overlap_s": 1195.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 17.51,
+   "median_speed_m_s": 14.86,
+   "fraction_above_5_m_s": 0.671,
+   "max_speed_m_s": 35.9
+  },
+  {
+   "drive": "2022-11-15-00-53-us-ca-mtv-a",
+   "phone": "pixel7",
+   "accelerometer": {
+    "samples": 99541,
+    "rate_hz": 80.9,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 73667,
+    "rate_hz": 59.9,
+    "median_dt_ms": 17.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.743,
+   "truth_fixes": 1195,
+   "truth_duration_s": 1194.0,
+   "imu_truth_overlap_s": 1194.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 17.51,
+   "median_speed_m_s": 14.85,
+   "fraction_above_5_m_s": 0.672,
+   "max_speed_m_s": 35.9
+  },
+  {
+   "drive": "2022-11-15-00-53-us-ca-mtv-a",
+   "phone": "pixel7pro",
+   "accelerometer": {
+    "samples": 100100,
+    "rate_hz": 81.3,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 74009,
+    "rate_hz": 60.1,
+    "median_dt_ms": 17.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.893,
+   "truth_fixes": 1193,
+   "truth_duration_s": 1192.0,
+   "imu_truth_overlap_s": 1192.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 17.51,
+   "median_speed_m_s": 14.9,
+   "fraction_above_5_m_s": 0.673,
+   "max_speed_m_s": 35.9
+  },
+  {
+   "drive": "2023-03-08-21-34-us-ca-mtv-u",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 67433,
+    "rate_hz": 61.2,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.03,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 55860,
+    "rate_hz": 50.7,
+    "median_dt_ms": 20.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.843,
+   "truth_fixes": 1102,
+   "truth_duration_s": 1101.0,
+   "imu_truth_overlap_s": 1101.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 17.29,
+   "median_speed_m_s": 19.68,
+   "fraction_above_5_m_s": 0.793,
+   "max_speed_m_s": 29.2
+  },
+  {
+   "drive": "2023-03-08-21-34-us-ca-mtv-u",
+   "phone": "pixel6pro",
+   "accelerometer": {
+    "samples": 70229,
+    "rate_hz": 63.8,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 58255,
+    "rate_hz": 52.9,
+    "median_dt_ms": 19.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.791,
+   "truth_fixes": 1102,
+   "truth_duration_s": 1101.0,
+   "imu_truth_overlap_s": 1101.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 17.3,
+   "median_speed_m_s": 19.69,
+   "fraction_above_5_m_s": 0.794,
+   "max_speed_m_s": 29.2
+  },
+  {
+   "drive": "2023-03-08-21-34-us-ca-mtv-u",
+   "phone": "pixel7pro",
+   "accelerometer": {
+    "samples": 77821,
+    "rate_hz": 70.7,
+    "median_dt_ms": 17.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 64626,
+    "rate_hz": 58.7,
+    "median_dt_ms": 17.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 1
+   },
+   "elapsed_realtime_present": false,
+   "accel_norm_median_m_s2": 9.884,
+   "truth_fixes": 1099,
+   "truth_duration_s": 1098.0,
+   "imu_truth_overlap_s": 1098.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 17.3,
+   "median_speed_m_s": 19.71,
+   "fraction_above_5_m_s": 0.796,
+   "max_speed_m_s": 29.2
+  },
+  {
+   "drive": "2023-05-09-21-32-us-ca-mtv-pe1",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 226131,
+    "rate_hz": 106.1,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 226128,
+    "rate_hz": 106.1,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.856,
+   "truth_fixes": 2132,
+   "truth_duration_s": 2131.0,
+   "imu_truth_overlap_s": 2131.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 44.8,
+   "median_speed_m_s": 26.22,
+   "fraction_above_5_m_s": 0.849,
+   "max_speed_m_s": 33.0
+  },
+  {
+   "drive": "2023-05-09-21-32-us-ca-mtv-pe1",
+   "phone": "pixel7pro",
+   "accelerometer": {
+    "samples": 256073,
+    "rate_hz": 120.2,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 1
+   },
+   "gyroscope": {
+    "samples": 256110,
+    "rate_hz": 120.2,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 1
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.859,
+   "truth_fixes": 2130,
+   "truth_duration_s": 2129.0,
+   "imu_truth_overlap_s": 2129.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 44.8,
+   "median_speed_m_s": 26.23,
+   "fraction_above_5_m_s": 0.851,
+   "max_speed_m_s": 33.0
+  },
+  {
+   "drive": "2023-05-09-21-32-us-ca-mtv-pe1",
+   "phone": "samsungs22ultra",
+   "accelerometer": {
+    "samples": 213138,
+    "rate_hz": 99.9,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 1
+   },
+   "gyroscope": {
+    "samples": 213138,
+    "rate_hz": 99.9,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 1
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.904,
+   "truth_fixes": 2132,
+   "truth_duration_s": 2131.0,
+   "imu_truth_overlap_s": 2131.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 44.8,
+   "median_speed_m_s": 26.22,
+   "fraction_above_5_m_s": 0.85,
+   "max_speed_m_s": 33.0
+  },
+  {
+   "drive": "2023-05-16-19-54-us-ca-mtv-xe1",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 246421,
+    "rate_hz": 106.1,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 246420,
+    "rate_hz": 106.1,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.837,
+   "truth_fixes": 2322,
+   "truth_duration_s": 2321.0,
+   "imu_truth_overlap_s": 2321.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 50.06,
+   "median_speed_m_s": 24.58,
+   "fraction_above_5_m_s": 0.902,
+   "max_speed_m_s": 30.4
+  },
+  {
+   "drive": "2023-05-16-19-55-us-ca-mtv-xe1",
+   "phone": "pixel7pro",
+   "accelerometer": {
+    "samples": 279297,
+    "rate_hz": 120.2,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 279320,
+    "rate_hz": 120.2,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 1
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.836,
+   "truth_fixes": 2323,
+   "truth_duration_s": 2322.0,
+   "imu_truth_overlap_s": 2322.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 50.06,
+   "median_speed_m_s": 24.59,
+   "fraction_above_5_m_s": 0.901,
+   "max_speed_m_s": 30.4
+  },
+  {
+   "drive": "2023-05-19-20-10-us-ca-mtv-ie2",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 130638,
+    "rate_hz": 106.1,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 130637,
+    "rate_hz": 106.1,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.821,
+   "truth_fixes": 1230,
+   "truth_duration_s": 1229.0,
+   "imu_truth_overlap_s": 1229.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 5.93,
+   "median_speed_m_s": 3.1,
+   "fraction_above_5_m_s": 0.439,
+   "max_speed_m_s": 15.2
+  },
+  {
+   "drive": "2023-05-19-20-10-us-ca-mtv-ie2",
+   "phone": "pixel7pro",
+   "accelerometer": {
+    "samples": 148283,
+    "rate_hz": 120.2,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 1
+   },
+   "gyroscope": {
+    "samples": 148332,
+    "rate_hz": 120.3,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 3
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.819,
+   "truth_fixes": 1233,
+   "truth_duration_s": 1232.0,
+   "imu_truth_overlap_s": 1232.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 5.93,
+   "median_speed_m_s": 3.05,
+   "fraction_above_5_m_s": 0.432,
+   "max_speed_m_s": 15.2
+  },
+  {
+   "drive": "2023-05-19-20-10-us-ca-mtv-ie2",
+   "phone": "sm-s908b",
+   "accelerometer": {
+    "samples": 122778,
+    "rate_hz": 99.9,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 122778,
+    "rate_hz": 99.9,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.855,
+   "truth_fixes": 1229,
+   "truth_duration_s": 1228.0,
+   "imu_truth_overlap_s": 1228.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 5.93,
+   "median_speed_m_s": 3.06,
+   "fraction_above_5_m_s": 0.434,
+   "max_speed_m_s": 15.2
+  },
+  {
+   "drive": "2023-05-23-19-16-us-ca-mtv-ie2",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 108942,
+    "rate_hz": 101.7,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 108942,
+    "rate_hz": 101.7,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.804,
+   "truth_fixes": 1070,
+   "truth_duration_s": 1069.0,
+   "imu_truth_overlap_s": 1069.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 5.82,
+   "median_speed_m_s": 3.75,
+   "fraction_above_5_m_s": 0.454,
+   "max_speed_m_s": 18.8
+  },
+  {
+   "drive": "2023-05-23-19-16-us-ca-mtv-ie2",
+   "phone": "sm-s908b",
+   "accelerometer": {
+    "samples": 107449,
+    "rate_hz": 100.0,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 107449,
+    "rate_hz": 100.0,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.864,
+   "truth_fixes": 1074,
+   "truth_duration_s": 1073.0,
+   "imu_truth_overlap_s": 1073.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 5.82,
+   "median_speed_m_s": 3.52,
+   "fraction_above_5_m_s": 0.455,
+   "max_speed_m_s": 18.8
+  },
+  {
+   "drive": "2023-05-23-19-56-us-ca-mtv-ie2",
+   "phone": "sm-a226b",
+   "accelerometer": {
+    "samples": 223146,
+    "rate_hz": 200.8,
+    "median_dt_ms": 5.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 223146,
+    "rate_hz": 200.8,
+    "median_dt_ms": 5.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.899,
+   "truth_fixes": 1112,
+   "truth_duration_s": 1111.0,
+   "imu_truth_overlap_s": 1111.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 5.82,
+   "median_speed_m_s": 3.44,
+   "fraction_above_5_m_s": 0.45,
+   "max_speed_m_s": 19.8
+  },
+  {
+   "drive": "2023-05-23-19-56-us-ca-mtv-ie2",
+   "phone": "sm-a505g",
+   "accelerometer": {
+    "samples": 140362,
+    "rate_hz": 125.9,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 140362,
+    "rate_hz": 125.9,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.913,
+   "truth_fixes": 1114,
+   "truth_duration_s": 1113.0,
+   "imu_truth_overlap_s": 1113.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 5.82,
+   "median_speed_m_s": 3.42,
+   "fraction_above_5_m_s": 0.449,
+   "max_speed_m_s": 19.8
+  },
+  {
+   "drive": "2023-05-23-19-56-us-ca-mtv-ie2",
+   "phone": "sm-a600t",
+   "accelerometer": {
+    "samples": 110438,
+    "rate_hz": 98.9,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 109571,
+    "rate_hz": 98.1,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.822,
+   "truth_fixes": 1117,
+   "truth_duration_s": 1116.0,
+   "imu_truth_overlap_s": 1116.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 5.82,
+   "median_speed_m_s": 3.4,
+   "fraction_above_5_m_s": 0.448,
+   "max_speed_m_s": 19.8
+  },
+  {
+   "drive": "2023-05-24-20-26-us-ca-sjc-ge2",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 140984,
+    "rate_hz": 101.7,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 140981,
+    "rate_hz": 101.7,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.807,
+   "truth_fixes": 1386,
+   "truth_duration_s": 1385.0,
+   "imu_truth_overlap_s": 1385.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 7.36,
+   "median_speed_m_s": 3.75,
+   "fraction_above_5_m_s": 0.469,
+   "max_speed_m_s": 19.6
+  },
+  {
+   "drive": "2023-05-24-20-26-us-ca-sjc-ge2",
+   "phone": "pixel7pro",
+   "accelerometer": {
+    "samples": 166305,
+    "rate_hz": 120.2,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 166369,
+    "rate_hz": 120.3,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 6
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.828,
+   "truth_fixes": 1383,
+   "truth_duration_s": 1382.0,
+   "imu_truth_overlap_s": 1382.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 7.36,
+   "median_speed_m_s": 3.81,
+   "fraction_above_5_m_s": 0.467,
+   "max_speed_m_s": 19.7
+  },
+  {
+   "drive": "2023-05-25-19-10-us-ca-sjc-be2",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 141687,
+    "rate_hz": 101.7,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 141685,
+    "rate_hz": 101.7,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.811,
+   "truth_fixes": 1393,
+   "truth_duration_s": 1392.0,
+   "imu_truth_overlap_s": 1392.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 13.36,
+   "median_speed_m_s": 10.74,
+   "fraction_above_5_m_s": 0.654,
+   "max_speed_m_s": 22.3
+  },
+  {
+   "drive": "2023-05-25-19-10-us-ca-sjc-be2",
+   "phone": "pixel7pro",
+   "accelerometer": {
+    "samples": 167479,
+    "rate_hz": 120.2,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 167531,
+    "rate_hz": 120.3,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 2
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.836,
+   "truth_fixes": 1393,
+   "truth_duration_s": 1392.0,
+   "imu_truth_overlap_s": 1392.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 13.37,
+   "median_speed_m_s": 10.81,
+   "fraction_above_5_m_s": 0.65,
+   "max_speed_m_s": 22.3
+  },
+  {
+   "drive": "2023-05-25-19-10-us-ca-sjc-be2",
+   "phone": "sm-s908b",
+   "accelerometer": {
+    "samples": 140306,
+    "rate_hz": 100.3,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 2
+   },
+   "gyroscope": {
+    "samples": 140306,
+    "rate_hz": 100.3,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 2
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.918,
+   "truth_fixes": 1399,
+   "truth_duration_s": 1398.0,
+   "imu_truth_overlap_s": 1398.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 13.36,
+   "median_speed_m_s": 10.78,
+   "fraction_above_5_m_s": 0.647,
+   "max_speed_m_s": 22.3
+  },
+  {
+   "drive": "2023-05-25-20-11-us-ca-sjc-he2",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 128638,
+    "rate_hz": 101.7,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 128636,
+    "rate_hz": 101.7,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.806,
+   "truth_fixes": 1264,
+   "truth_duration_s": 1263.0,
+   "imu_truth_overlap_s": 1263.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 10.71,
+   "median_speed_m_s": 9.03,
+   "fraction_above_5_m_s": 0.57,
+   "max_speed_m_s": 22.5
+  },
+  {
+   "drive": "2023-05-25-20-11-us-ca-sjc-he2",
+   "phone": "pixel7pro",
+   "accelerometer": {
+    "samples": 151298,
+    "rate_hz": 120.2,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 151335,
+    "rate_hz": 120.2,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 1
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.833,
+   "truth_fixes": 1258,
+   "truth_duration_s": 1257.0,
+   "imu_truth_overlap_s": 1257.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 10.71,
+   "median_speed_m_s": 9.2,
+   "fraction_above_5_m_s": 0.572,
+   "max_speed_m_s": 22.5
+  },
+  {
+   "drive": "2023-05-25-20-11-us-ca-sjc-he2",
+   "phone": "sm-s908b",
+   "accelerometer": {
+    "samples": 125669,
+    "rate_hz": 99.8,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 125669,
+    "rate_hz": 99.8,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.906,
+   "truth_fixes": 1259,
+   "truth_duration_s": 1258.0,
+   "imu_truth_overlap_s": 1258.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 10.71,
+   "median_speed_m_s": 9.18,
+   "fraction_above_5_m_s": 0.572,
+   "max_speed_m_s": 22.5
+  },
+  {
+   "drive": "2023-05-26-18-50-us-ca-sjc-ge2",
+   "phone": "sm-s908b",
+   "accelerometer": {
+    "samples": 152781,
+    "rate_hz": 100.2,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 1
+   },
+   "gyroscope": {
+    "samples": 152786,
+    "rate_hz": 100.2,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 1
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.849,
+   "truth_fixes": 1524,
+   "truth_duration_s": 1523.0,
+   "imu_truth_overlap_s": 1523.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 7.39,
+   "median_speed_m_s": 3.51,
+   "fraction_above_5_m_s": 0.436,
+   "max_speed_m_s": 15.5
+  },
+  {
+   "drive": "2023-05-26-18-51-us-ca-sjc-ge2",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 155242,
+    "rate_hz": 106.1,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 155241,
+    "rate_hz": 106.1,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.806,
+   "truth_fixes": 1462,
+   "truth_duration_s": 1461.0,
+   "imu_truth_overlap_s": 1461.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 7.38,
+   "median_speed_m_s": 3.97,
+   "fraction_above_5_m_s": 0.458,
+   "max_speed_m_s": 15.5
+  },
+  {
+   "drive": "2023-05-26-18-51-us-ca-sjc-ge2",
+   "phone": "pixel7pro",
+   "accelerometer": {
+    "samples": 175717,
+    "rate_hz": 120.2,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 175818,
+    "rate_hz": 120.3,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.02,
+    "duplicate_timestamps": 4
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.825,
+   "truth_fixes": 1461,
+   "truth_duration_s": 1460.0,
+   "imu_truth_overlap_s": 1460.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 7.38,
+   "median_speed_m_s": 3.94,
+   "fraction_above_5_m_s": 0.454,
+   "max_speed_m_s": 15.5
+  },
+  {
+   "drive": "2023-06-06-23-26-us-ca-sjc-he2",
+   "phone": "sm-a226b",
+   "accelerometer": {
+    "samples": 334026,
+    "rate_hz": 200.8,
+    "median_dt_ms": 5.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 334025,
+    "rate_hz": 200.8,
+    "median_dt_ms": 5.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.892,
+   "truth_fixes": 1663,
+   "truth_duration_s": 1662.0,
+   "imu_truth_overlap_s": 1662.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 11.63,
+   "median_speed_m_s": 3.99,
+   "fraction_above_5_m_s": 0.464,
+   "max_speed_m_s": 23.1
+  },
+  {
+   "drive": "2023-09-05-20-13-us-ca",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 183486,
+    "rate_hz": 107.6,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 183484,
+    "rate_hz": 107.6,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.807,
+   "truth_fixes": 1704,
+   "truth_duration_s": 1703.0,
+   "imu_truth_overlap_s": 1703.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 12.42,
+   "median_speed_m_s": 5.31,
+   "fraction_above_5_m_s": 0.505,
+   "max_speed_m_s": 20.1
+  },
+  {
+   "drive": "2023-09-05-20-13-us-ca",
+   "phone": "pixel7pro",
+   "accelerometer": {
+    "samples": 205113,
+    "rate_hz": 120.2,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 205149,
+    "rate_hz": 120.2,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.809,
+   "truth_fixes": 1706,
+   "truth_duration_s": 1705.0,
+   "imu_truth_overlap_s": 1705.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 12.42,
+   "median_speed_m_s": 5.18,
+   "fraction_above_5_m_s": 0.505,
+   "max_speed_m_s": 20.1
+  },
+  {
+   "drive": "2023-09-05-20-59-us-ca",
+   "phone": "pixel4xl",
+   "accelerometer": {
+    "samples": 154870,
+    "rate_hz": 102.4,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 154868,
+    "rate_hz": 102.4,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.812,
+   "truth_fixes": 1511,
+   "truth_duration_s": 1510.0,
+   "imu_truth_overlap_s": 1510.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 12.4,
+   "median_speed_m_s": 8.19,
+   "fraction_above_5_m_s": 0.58,
+   "max_speed_m_s": 19.6
+  },
+  {
+   "drive": "2023-09-05-20-59-us-ca",
+   "phone": "pixel5a",
+   "accelerometer": {
+    "samples": 157962,
+    "rate_hz": 104.7,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 157960,
+    "rate_hz": 104.7,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.827,
+   "truth_fixes": 1508,
+   "truth_duration_s": 1507.0,
+   "imu_truth_overlap_s": 1507.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 12.41,
+   "median_speed_m_s": 8.21,
+   "fraction_above_5_m_s": 0.582,
+   "max_speed_m_s": 19.6
+  },
+  {
+   "drive": "2023-09-05-23-07-us-ca-routen",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 168375,
+    "rate_hz": 107.7,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 168374,
+    "rate_hz": 107.7,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.812,
+   "truth_fixes": 1564,
+   "truth_duration_s": 1563.0,
+   "imu_truth_overlap_s": 1563.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 12.14,
+   "median_speed_m_s": 8.7,
+   "fraction_above_5_m_s": 0.594,
+   "max_speed_m_s": 20.9
+  },
+  {
+   "drive": "2023-09-05-23-07-us-ca-routen",
+   "phone": "pixel7pro",
+   "accelerometer": {
+    "samples": 188005,
+    "rate_hz": 120.2,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 188046,
+    "rate_hz": 120.3,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 1
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.817,
+   "truth_fixes": 1564,
+   "truth_duration_s": 1563.0,
+   "imu_truth_overlap_s": 1563.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 12.14,
+   "median_speed_m_s": 8.65,
+   "fraction_above_5_m_s": 0.593,
+   "max_speed_m_s": 21.0
+  },
+  {
+   "drive": "2023-09-06-00-01-us-ca-routen",
+   "phone": "pixel4xl",
+   "accelerometer": {
+    "samples": 169155,
+    "rate_hz": 102.5,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 169154,
+    "rate_hz": 102.5,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.802,
+   "truth_fixes": 1651,
+   "truth_duration_s": 1650.0,
+   "imu_truth_overlap_s": 1650.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 12.13,
+   "median_speed_m_s": 8.16,
+   "fraction_above_5_m_s": 0.569,
+   "max_speed_m_s": 18.7
+  },
+  {
+   "drive": "2023-09-06-00-01-us-ca-routen",
+   "phone": "pixel5a",
+   "accelerometer": {
+    "samples": 172882,
+    "rate_hz": 104.7,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 172880,
+    "rate_hz": 104.7,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.813,
+   "truth_fixes": 1651,
+   "truth_duration_s": 1650.0,
+   "imu_truth_overlap_s": 1650.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 12.13,
+   "median_speed_m_s": 8.15,
+   "fraction_above_5_m_s": 0.569,
+   "max_speed_m_s": 18.7
+  },
+  {
+   "drive": "2023-09-06-00-01-us-ca-routen",
+   "phone": "pixel6pro",
+   "accelerometer": {
+    "samples": 182920,
+    "rate_hz": 110.9,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 182920,
+    "rate_hz": 110.9,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.772,
+   "truth_fixes": 1650,
+   "truth_duration_s": 1649.0,
+   "imu_truth_overlap_s": 1649.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 12.13,
+   "median_speed_m_s": 8.19,
+   "fraction_above_5_m_s": 0.57,
+   "max_speed_m_s": 18.6
+  },
+  {
+   "drive": "2023-09-06-00-01-us-ca-routen",
+   "phone": "sm-g955f",
+   "accelerometer": {
+    "samples": 164883,
+    "rate_hz": 99.9,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 164883,
+    "rate_hz": 99.9,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.983,
+   "truth_fixes": 1650,
+   "truth_duration_s": 1649.0,
+   "imu_truth_overlap_s": 1649.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 12.13,
+   "median_speed_m_s": 8.19,
+   "fraction_above_5_m_s": 0.57,
+   "max_speed_m_s": 18.6
+  },
+  {
+   "drive": "2023-09-06-18-04-us-ca",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 156316,
+    "rate_hz": 107.7,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 156314,
+    "rate_hz": 107.7,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.829,
+   "truth_fixes": 1452,
+   "truth_duration_s": 1451.0,
+   "imu_truth_overlap_s": 1451.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 25.71,
+   "median_speed_m_s": 16.56,
+   "fraction_above_5_m_s": 0.837,
+   "max_speed_m_s": 32.5
+  },
+  {
+   "drive": "2023-09-06-18-04-us-ca",
+   "phone": "pixel7pro",
+   "accelerometer": {
+    "samples": 174555,
+    "rate_hz": 120.2,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 174577,
+    "rate_hz": 120.3,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.84,
+   "truth_fixes": 1452,
+   "truth_duration_s": 1451.0,
+   "imu_truth_overlap_s": 1451.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 25.71,
+   "median_speed_m_s": 16.55,
+   "fraction_above_5_m_s": 0.837,
+   "max_speed_m_s": 32.5
+  },
+  {
+   "drive": "2023-09-06-18-04-us-ca",
+   "phone": "sm-s908b",
+   "accelerometer": {
+    "samples": 145266,
+    "rate_hz": 100.0,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 145266,
+    "rate_hz": 100.0,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.899,
+   "truth_fixes": 1452,
+   "truth_duration_s": 1451.0,
+   "imu_truth_overlap_s": 1451.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 25.71,
+   "median_speed_m_s": 16.55,
+   "fraction_above_5_m_s": 0.837,
+   "max_speed_m_s": 32.5
+  },
+  {
+   "drive": "2023-09-06-18-47-us-ca",
+   "phone": "pixel4xl",
+   "accelerometer": {
+    "samples": 152240,
+    "rate_hz": 102.5,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 152239,
+    "rate_hz": 102.5,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.825,
+   "truth_fixes": 1485,
+   "truth_duration_s": 1484.0,
+   "imu_truth_overlap_s": 1484.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 25.72,
+   "median_speed_m_s": 16.81,
+   "fraction_above_5_m_s": 0.855,
+   "max_speed_m_s": 31.2
+  },
+  {
+   "drive": "2023-09-06-18-47-us-ca",
+   "phone": "pixel6pro",
+   "accelerometer": {
+    "samples": 164733,
+    "rate_hz": 110.9,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 164734,
+    "rate_hz": 110.9,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.797,
+   "truth_fixes": 1486,
+   "truth_duration_s": 1485.0,
+   "imu_truth_overlap_s": 1485.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 25.72,
+   "median_speed_m_s": 16.79,
+   "fraction_above_5_m_s": 0.855,
+   "max_speed_m_s": 31.1
+  },
+  {
+   "drive": "2023-09-06-22-49-us-ca-routebb1",
+   "phone": "pixel7pro",
+   "accelerometer": {
+    "samples": 192545,
+    "rate_hz": 120.2,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 192566,
+    "rate_hz": 120.2,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 2
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.831,
+   "truth_fixes": 1601,
+   "truth_duration_s": 1600.0,
+   "imu_truth_overlap_s": 1600.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 28.61,
+   "median_speed_m_s": 20.54,
+   "fraction_above_5_m_s": 0.809,
+   "max_speed_m_s": 31.9
+  },
+  {
+   "drive": "2023-09-06-22-49-us-ca-routebb1",
+   "phone": "sm-s908b",
+   "accelerometer": {
+    "samples": 160212,
+    "rate_hz": 99.9,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 160212,
+    "rate_hz": 99.9,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.897,
+   "truth_fixes": 1603,
+   "truth_duration_s": 1602.0,
+   "imu_truth_overlap_s": 1602.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 28.61,
+   "median_speed_m_s": 20.54,
+   "fraction_above_5_m_s": 0.808,
+   "max_speed_m_s": 31.9
+  },
+  {
+   "drive": "2023-09-07-18-59-us-ca",
+   "phone": "pixel5",
+   "accelerometer": {
+    "samples": 126227,
+    "rate_hz": 107.7,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 126226,
+    "rate_hz": 107.7,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.814,
+   "truth_fixes": 1172,
+   "truth_duration_s": 1171.0,
+   "imu_truth_overlap_s": 1171.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 20.14,
+   "median_speed_m_s": 24.62,
+   "fraction_above_5_m_s": 0.724,
+   "max_speed_m_s": 30.3
+  },
+  {
+   "drive": "2023-09-07-18-59-us-ca",
+   "phone": "pixel7pro",
+   "accelerometer": {
+    "samples": 141171,
+    "rate_hz": 120.2,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 141186,
+    "rate_hz": 120.3,
+    "median_dt_ms": 8.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.819,
+   "truth_fixes": 1174,
+   "truth_duration_s": 1173.0,
+   "imu_truth_overlap_s": 1173.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 20.14,
+   "median_speed_m_s": 24.58,
+   "fraction_above_5_m_s": 0.72,
+   "max_speed_m_s": 30.3
+  },
+  {
+   "drive": "2023-09-07-19-33-us-ca",
+   "phone": "pixel4xl",
+   "accelerometer": {
+    "samples": 111338,
+    "rate_hz": 102.5,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 111337,
+    "rate_hz": 102.5,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.821,
+   "truth_fixes": 1086,
+   "truth_duration_s": 1085.0,
+   "imu_truth_overlap_s": 1085.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 20.14,
+   "median_speed_m_s": 25.05,
+   "fraction_above_5_m_s": 0.773,
+   "max_speed_m_s": 32.3
+  },
+  {
+   "drive": "2023-09-07-19-33-us-ca",
+   "phone": "pixel5a",
+   "accelerometer": {
+    "samples": 113592,
+    "rate_hz": 104.7,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 113589,
+    "rate_hz": 104.7,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.837,
+   "truth_fixes": 1084,
+   "truth_duration_s": 1083.0,
+   "imu_truth_overlap_s": 1083.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 20.14,
+   "median_speed_m_s": 25.08,
+   "fraction_above_5_m_s": 0.776,
+   "max_speed_m_s": 32.3
+  },
+  {
+   "drive": "2023-09-07-19-33-us-ca",
+   "phone": "pixel6pro",
+   "accelerometer": {
+    "samples": 120785,
+    "rate_hz": 110.9,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 120785,
+    "rate_hz": 110.9,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.783,
+   "truth_fixes": 1089,
+   "truth_duration_s": 1088.0,
+   "imu_truth_overlap_s": 1088.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 20.14,
+   "median_speed_m_s": 24.98,
+   "fraction_above_5_m_s": 0.772,
+   "max_speed_m_s": 32.3
+  },
+  {
+   "drive": "2023-09-07-19-33-us-ca",
+   "phone": "sm-g955f",
+   "accelerometer": {
+    "samples": 108732,
+    "rate_hz": 99.9,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 108731,
+    "rate_hz": 99.9,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.991,
+   "truth_fixes": 1087,
+   "truth_duration_s": 1086.0,
+   "imu_truth_overlap_s": 1086.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 20.14,
+   "median_speed_m_s": 25.06,
+   "fraction_above_5_m_s": 0.774,
+   "max_speed_m_s": 32.3
+  },
+  {
+   "drive": "2023-09-07-22-47-us-ca-routebc2",
+   "phone": "pixel6pro",
+   "accelerometer": {
+    "samples": 229178,
+    "rate_hz": 110.9,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 229179,
+    "rate_hz": 110.9,
+    "median_dt_ms": 9.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.773,
+   "truth_fixes": 2067,
+   "truth_duration_s": 2066.0,
+   "imu_truth_overlap_s": 2066.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 26.13,
+   "median_speed_m_s": 10.06,
+   "fraction_above_5_m_s": 0.674,
+   "max_speed_m_s": 31.4
+  },
+  {
+   "drive": "2023-09-07-22-48-us-ca-routebc2",
+   "phone": "pixel4xl",
+   "accelerometer": {
+    "samples": 212126,
+    "rate_hz": 102.5,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 212125,
+    "rate_hz": 102.5,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.802,
+   "truth_fixes": 2070,
+   "truth_duration_s": 2069.0,
+   "imu_truth_overlap_s": 2069.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 26.13,
+   "median_speed_m_s": 9.99,
+   "fraction_above_5_m_s": 0.673,
+   "max_speed_m_s": 31.4
+  },
+  {
+   "drive": "2023-09-07-22-48-us-ca-routebc2",
+   "phone": "pixel5a",
+   "accelerometer": {
+    "samples": 216813,
+    "rate_hz": 104.7,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "gyroscope": {
+    "samples": 216811,
+    "rate_hz": 104.7,
+    "median_dt_ms": 10.0,
+    "max_gap_s": 0.01,
+    "duplicate_timestamps": 0
+   },
+   "elapsed_realtime_present": true,
+   "accel_norm_median_m_s2": 9.806,
+   "truth_fixes": 2071,
+   "truth_duration_s": 2070.0,
+   "imu_truth_overlap_s": 2070.0,
+   "truth_max_gap_s": 1.0,
+   "truth_accuracy_median_m": 0.1,
+   "distance_km": 26.13,
+   "median_speed_m_s": 9.99,
+   "fraction_above_5_m_s": 0.673,
+   "max_speed_m_s": 31.4
+  }
+ ]
+}

@@ -1,0 +1,71 @@
+{
+ "baseline": "app",
+ "candidate": "app_no_slip_no_ai",
+ "positive_difference_means": "the candidate drifts less than the baseline",
+ "scenarios": {
+  "d50": {
+   "paired_outages": 264,
+   "drives": 37,
+   "median_drift_pct_baseline": 4.36,
+   "median_drift_pct_candidate": 0.69,
+   "share_under_10pct_baseline": 0.602,
+   "share_under_10pct_candidate": 0.977,
+   "median_paired_difference_pct_points": 3.58,
+   "mean_paired_difference_pct_points": 56.05,
+   "mean_difference_95pct_interval_drive_clustered": [
+    26.49,
+    95.73
+   ],
+   "interval_excludes_zero": true,
+   "fraction_outages_candidate_better": 0.905
+  },
+  "t30": {
+   "paired_outages": 236,
+   "drives": 38,
+   "median_drift_pct_baseline": 299.09,
+   "median_drift_pct_candidate": 2.28,
+   "share_under_10pct_baseline": 0.119,
+   "share_under_10pct_candidate": 0.911,
+   "median_paired_difference_pct_points": 297.55,
+   "mean_paired_difference_pct_points": 511.29,
+   "mean_difference_95pct_interval_drive_clustered": [
+    412.6,
+    634.73
+   ],
+   "interval_excludes_zero": true,
+   "fraction_outages_candidate_better": 0.983
+  },
+  "t60": {
+   "paired_outages": 203,
+   "drives": 37,
+   "median_drift_pct_baseline": 652.42,
+   "median_drift_pct_candidate": 5.89,
+   "share_under_10pct_baseline": 0.034,
+   "share_under_10pct_candidate": 0.65,
+   "median_paired_difference_pct_points": 641.98,
+   "mean_paired_difference_pct_points": 1340.64,
+   "mean_difference_95pct_interval_drive_clustered": [
+    993.65,
+    1774.27
+   ],
+   "interval_excludes_zero": true,
+   "fraction_outages_candidate_better": 0.995
+  },
+  "d1000": {
+   "paired_outages": 182,
+   "drives": 37,
+   "median_drift_pct_baseline": 418.71,
+   "median_drift_pct_candidate": 4.0,
+   "share_under_10pct_baseline": 0.082,
+   "share_under_10pct_candidate": 0.72,
+   "median_paired_difference_pct_points": 408.29,
+   "mean_paired_difference_pct_points": 990.25,
+   "mean_difference_95pct_interval_drive_clustered": [
+    751.02,
+    1297.89
+   ],
+   "interval_excludes_zero": true,
+   "fraction_outages_candidate_better": 0.995
+  }
+ }
+}

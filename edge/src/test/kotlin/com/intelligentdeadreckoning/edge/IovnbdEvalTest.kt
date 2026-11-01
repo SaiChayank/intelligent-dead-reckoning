@@ -173,6 +173,37 @@ class IovnbdEvalTest {
     }
 
     @Test
+    fun theCalibratorThresholdsComeFromTheProfileAndNamedOverridesApplyOnTop() {
+        val (phoneMount, phoneStationary) = IovnbdEval.calibratorThresholds(IovnbdEval.PROFILE_PHONE, emptyMap())
+        assertEquals(com.intelligentdeadreckoning.app.calibration.MountThresholds(), phoneMount)
+        assertEquals(com.intelligentdeadreckoning.app.calibration.StationaryThresholds(), phoneStationary)
+        val (iovMount, iovStationary) = IovnbdEval.calibratorThresholds(IovnbdEval.PROFILE_IOVNBD, emptyMap())
+        assertEquals(IovnbdEval.IOVNBD_MOUNT, iovMount)
+        assertEquals(IovnbdEval.IOVNBD_STATIONARY, iovStationary)
+        val (mount, stationary) = IovnbdEval.calibratorThresholds(IovnbdEval.PROFILE_PHONE,
+            mapOf("stationary_accel_std" to 0.3, "gravity_spread" to 0.1, "min_gnss_fixes" to 2.0))
+        assertEquals(0.3, stationary.maxAccelStdM_S2, 0.0)
+        assertEquals(phoneStationary.maxGyroStdRad_S, stationary.maxGyroStdRad_S, 0.0)
+        assertEquals(0.1, mount.maxGravitySpreadM_S2, 0.0)
+        assertEquals(2, mount.minGnssFixes)
+        assertEquals(phoneMount.minExcitationM_S2, mount.minExcitationM_S2, 0.0)
+    }
+
+    @Test
+    fun anUnknownCalibratorThresholdIsRejectedAndTheJobsFileCarriesThem() {
+        val error = runCatching { IovnbdEval.calibratorThresholds(IovnbdEval.PROFILE_PHONE, mapOf("gravity_sprad" to 0.1)) }.exceptionOrNull()
+        assertTrue(error is IllegalArgumentException && error.message!!.contains("gravity_sprad"))
+        val file = Files.createTempFile("jobs", ".json")
+        try {
+            Files.writeString(file, """{"jobs":[{"session":"s","output":"o.csv","arm":"app","outages_ns":[],"profile":"phone",
+                "calibrator":{"excitation":0.15,"stationary_accel_std":0.3}}]}""")
+            assertEquals(mapOf("excitation" to 0.15, "stationary_accel_std" to 0.3), IovnbdEval.readJobs(file).single().calibrator)
+        } finally {
+            Files.deleteIfExists(file)
+        }
+    }
+
+    @Test
     fun anUnknownJobProfileIsRejectedBeforeAnythingRuns() {
         val dir = Files.createTempDirectory("profile")
         try {
@@ -187,9 +218,36 @@ class IovnbdEvalTest {
     }
 
     @Test
+    fun theGateSmoothingArmsChangeOnlyTheGateAndOrTheOutageSwitch() {
+        val plain = IovnbdEval.Arm.EKF_NHC.config()
+        assertEquals(0.0, plain.nhcGateSmoothingS, 0.0)
+        assertEquals(plain.copy(nhcActiveDuringOutage = true), IovnbdEval.Arm.EKF_NHC_NHCOUT.config())
+        assertEquals(plain.copy(nhcGateSmoothingS = 1.0), IovnbdEval.Arm.EKF_NHC_SMOOTH1.config())
+        assertEquals(plain.copy(nhcGateSmoothingS = 1.0, nhcActiveDuringOutage = true), IovnbdEval.Arm.EKF_NHC_SMOOTH1_NHCOUT.config())
+    }
+
+    @Test
+    fun eachAblationArmDiffersFromTheShippedConfigurationInExactlyOneSwitch() {
+        val shipped = IovnbdEval.Arm.APP.config()
+        assertEquals(shipped.copy(aiSpeedEstimationEnabled = false), IovnbdEval.Arm.APP_NO_AI.config())
+        assertEquals(shipped.copy(adaptiveNoiseScalingEnabled = false), IovnbdEval.Arm.APP_NO_ADAPTIVE_NOISE.config())
+        assertEquals(shipped.copy(mountSlipDetectionEnabled = false), IovnbdEval.Arm.APP_NO_MOUNT_SLIP.config())
+        assertEquals(shipped.copy(adaptiveDecimationEnabled = false), IovnbdEval.Arm.APP_NO_DECIMATION.config())
+        listOf(IovnbdEval.Arm.APP_NO_AI, IovnbdEval.Arm.APP_NO_ADAPTIVE_NOISE, IovnbdEval.Arm.APP_NO_MOUNT_SLIP, IovnbdEval.Arm.APP_NO_DECIMATION)
+            .forEach { assertTrue(it.config() != shipped) }
+    }
+
+    @Test
     fun theAppArmsAreExactlyTheAppFusionConfigurationsWithAndWithoutTheMapSwitch() {
-        assertEquals(AppFusion.config(experimentalMapMatching = false), IovnbdEval.Arm.APP.config())
-        assertEquals(AppFusion.config(experimentalMapMatching = true), IovnbdEval.Arm.APP_MAP.config())
+        // `app` and `app_map` are frozen as the previous shipped configuration; `app_current` follows AppFusion.
+        assertEquals(AppFusion.config(experimentalMapMatching = false), IovnbdEval.Arm.APP_CURRENT.config())
+        assertEquals(IovnbdEval.Arm.APP_CURRENT.config(), IovnbdEval.Arm.APP_NO_SLIP_NO_AI.config().copy(
+            adaptiveNoiseScalingEnabled = true, mapHeadingFeedbackEnabled = true, adaptiveDecimationEnabled = true))
+        assertEquals(AppFusion.config(experimentalMapMatching = true), IovnbdEval.Arm.APP_CURRENT.config().copy(
+            hmmMapMatchingEnabled = true, mapCrossTrackEnabled = true, mapCrossTrackMinConfidence = AppFusion.MAP_CROSS_TRACK_MIN_CONFIDENCE))
+        assertFalse(AppFusion.config(experimentalMapMatching = false).aiSpeedEstimationEnabled)
+        assertFalse(AppFusion.config(experimentalMapMatching = false).mountSlipDetectionEnabled)
+        assertTrue(IovnbdEval.Arm.APP.config().aiSpeedEstimationEnabled && IovnbdEval.Arm.APP.config().mountSlipDetectionEnabled)
         assertTrue(IovnbdEval.Arm.APP_MAP.config().mapCrossTrackEnabled)
         assertEquals(AppFusion.MAP_CROSS_TRACK_MIN_CONFIDENCE, IovnbdEval.Arm.APP_MAP.config().mapCrossTrackMinConfidence, 0.0)
     }

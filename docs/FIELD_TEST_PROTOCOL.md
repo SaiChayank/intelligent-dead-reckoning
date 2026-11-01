@@ -28,7 +28,9 @@ This operational guide provides step-by-step instructions for conducting real-wo
    - The filter measures the local gravity vector to calculate pitch and roll leveling ($q_{\text{level}}$).
 
 2. **Forward Acceleration Segment**:
-   - Drive forward smoothly for 50–100 metres with good GNSS visibility.
+   - Drive normally with good GNSS visibility. The in-drive calibrator wants two clean straight acceleration or braking segments; on real phone-in-car data it
+     never locked, so the app also runs a batch calibrator that uses the first 2 minutes (then 4, then 8) of driving: it needs speed changes (pulling away, braking,
+     keeping up with traffic) and a stop or two near the start. Constant-speed cruising alone does not give it a forward direction.
    - The filter observes forward linear acceleration to lock the azimuth heading offset ($q_{\text{yaw}}$).
    - Once locked, the status banner updates to: `Mount calibration: valid · Localization: fused`.
    - The phone is now calibrated to the vehicle's chassis frame.
@@ -50,7 +52,7 @@ You can test the system either during a natural outage (underpass, flyover tunne
 
 2. **In-Tunnel Dead Reckoning**:
    - The map displays **`INTELLIGENT DEAD RECKONING ACTIVE`**.
-   - Watch the speed readout. The shipped Model A v1 is trained on synthetic data and is known to be unreliable on real drives; record what you see rather than assuming it is right.
+   - Watch the speed readout. The AI speed estimator (Model A v1, trained on synthetic data) is switched off in the shipped configuration because it made real-drive drift worse; if you turn it on for a comparison, record what you see rather than assuming it is right.
    - Watch road snap: Map-matching heading constraints keep the vehicle on the road centerline.
 
 3. **Convergence & Benchmark Evaluation**:

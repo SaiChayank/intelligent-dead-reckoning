@@ -1,0 +1,419 @@
+{
+ "split": "development",
+ "trips": 38,
+ "settings": {
+  "default": {
+   "thresholds": {},
+   "trips": 38,
+   "locked": 0,
+   "lock_rate": 0.0,
+   "median_seconds_to_first_position": null,
+   "p90_seconds_to_first_position": null,
+   "calibrator_codes_seen_on_trips_that_never_locked": {
+    "CALIBRATION_SESSION_STARTED": 38,
+    "CALIBRATION_YAW_UNMEASURED": 11,
+    "CALIBRATION_SEGMENT_NOT_STRAIGHT": 10,
+    "CALIBRATION_ACCEL_BIAS_NOT_JUSTIFIED": 5,
+    "CALIBRATION_SEGMENT_ACCEPTED": 3,
+    "CALIBRATION_SEGMENT_INSUFFICIENT_EXCITATION": 3,
+    "CALIBRATION_SEGMENT_SPEED_SLOPE_UNRELIABLE": 3,
+    "CALIBRATION_SEGMENT_BASELINE_TOO_SHORT": 2,
+    "CALIBRATION_SEGMENT_GNSS_SPARSE": 2,
+    "CALIBRATION_SEGMENT_COURSE_UNSTABLE": 1,
+    "CALIBRATION_WAITING_FOR_COURSE": 1
+   }
+  },
+  "stationary_relaxed": {
+   "thresholds": {
+    "stationary_accel_std": 0.3,
+    "stationary_gyro_std": 0.02
+   },
+   "trips": 38,
+   "locked": 0,
+   "lock_rate": 0.0,
+   "median_seconds_to_first_position": null,
+   "p90_seconds_to_first_position": null,
+   "calibrator_codes_seen_on_trips_that_never_locked": {
+    "CALIBRATION_ACCEL_BIAS_NOT_JUSTIFIED": 38,
+    "CALIBRATION_SEGMENT_NOT_STRAIGHT": 38,
+    "CALIBRATION_SESSION_STARTED": 38,
+    "CALIBRATION_YAW_UNMEASURED": 38,
+    "CALIBRATION_WINDOW_MOVING": 30,
+    "CALIBRATION_SEGMENT_INSUFFICIENT_EXCITATION": 25,
+    "CALIBRATION_SEGMENT_GNSS_SPARSE": 19,
+    "CALIBRATION_SEGMENT_SPEED_SLOPE_UNRELIABLE": 18,
+    "CALIBRATION_GYRO_BIAS_INCONSISTENT": 13,
+    "CALIBRATION_SEGMENT_ACCEPTED": 10,
+    "CALIBRATION_SEGMENT_BASELINE_TOO_SHORT": 6,
+    "CALIBRATION_SEGMENT_COURSE_UNSTABLE": 2,
+    "CALIBRATION_WAITING_FOR_COURSE": 1,
+    "CALIBRATION_YAW_INCONSISTENT": 1
+   }
+  },
+  "plus_straightness": {
+   "thresholds": {
+    "stationary_accel_std": 0.3,
+    "stationary_gyro_std": 0.02,
+    "gravity_spread": 0.1,
+    "yaw_rate": 0.08
+   },
+   "trips": 38,
+   "locked": 0,
+   "lock_rate": 0.0,
+   "median_seconds_to_first_position": null,
+   "p90_seconds_to_first_position": null,
+   "calibrator_codes_seen_on_trips_that_never_locked": {
+    "CALIBRATION_ACCEL_BIAS_NOT_JUSTIFIED": 38,
+    "CALIBRATION_SEGMENT_NOT_STRAIGHT": 38,
+    "CALIBRATION_SESSION_STARTED": 38,
+    "CALIBRATION_YAW_UNMEASURED": 38,
+    "CALIBRATION_SEGMENT_INSUFFICIENT_EXCITATION": 35,
+    "CALIBRATION_SEGMENT_SPEED_SLOPE_UNRELIABLE": 32,
+    "CALIBRATION_WINDOW_MOVING": 30,
+    "CALIBRATION_SEGMENT_GNSS_SPARSE": 19,
+    "CALIBRATION_GYRO_BIAS_INCONSISTENT": 13,
+    "CALIBRATION_SEGMENT_ACCEPTED": 13,
+    "CALIBRATION_SEGMENT_COURSE_UNSTABLE": 12,
+    "CALIBRATION_SEGMENT_BASELINE_TOO_SHORT": 6,
+    "CALIBRATION_SEGMENT_FORCE_SPEED_MISMATCH": 1,
+    "CALIBRATION_WAITING_FOR_COURSE": 1,
+    "CALIBRATION_YAW_INCONSISTENT": 1
+   }
+  },
+  "plus_excitation": {
+   "thresholds": {
+    "stationary_accel_std": 0.3,
+    "stationary_gyro_std": 0.02,
+    "gravity_spread": 0.1,
+    "yaw_rate": 0.08,
+    "excitation": 0.15,
+    "straight_fraction": 0.8
+   },
+   "trips": 38,
+   "locked": 0,
+   "lock_rate": 0.0,
+   "median_seconds_to_first_position": null,
+   "p90_seconds_to_first_position": null,
+   "calibrator_codes_seen_on_trips_that_never_locked": {
+    "CALIBRATION_ACCEL_BIAS_NOT_JUSTIFIED": 38,
+    "CALIBRATION_SEGMENT_NOT_STRAIGHT": 38,
+    "CALIBRATION_SESSION_STARTED": 38,
+    "CALIBRATION_YAW_UNMEASURED": 38,
+    "CALIBRATION_SEGMENT_SPEED_SLOPE_UNRELIABLE": 37,
+    "CALIBRATION_SEGMENT_INSUFFICIENT_EXCITATION": 31,
+    "CALIBRATION_WINDOW_MOVING": 30,
+    "CALIBRATION_SEGMENT_GNSS_SPARSE": 19,
+    "CALIBRATION_SEGMENT_COURSE_UNSTABLE": 18,
+    "CALIBRATION_GYRO_BIAS_INCONSISTENT": 13,
+    "CALIBRATION_SEGMENT_ACCEPTED": 13,
+    "CALIBRATION_SEGMENT_BASELINE_TOO_SHORT": 6,
+    "CALIBRATION_SEGMENT_FORCE_SPEED_MISMATCH": 5,
+    "CALIBRATION_WAITING_FOR_COURSE": 1,
+    "CALIBRATION_YAW_INCONSISTENT": 1
+   }
+  },
+  "plus_sparse_gnss": {
+   "thresholds": {
+    "stationary_accel_std": 0.3,
+    "stationary_gyro_std": 0.02,
+    "gravity_spread": 0.1,
+    "yaw_rate": 0.08,
+    "excitation": 0.15,
+    "straight_fraction": 0.8,
+    "speed_slope": 0.1,
+    "min_gnss_fixes": 2.0
+   },
+   "trips": 38,
+   "locked": 0,
+   "lock_rate": 0.0,
+   "median_seconds_to_first_position": null,
+   "p90_seconds_to_first_position": null,
+   "calibrator_codes_seen_on_trips_that_never_locked": {
+    "CALIBRATION_ACCEL_BIAS_NOT_JUSTIFIED": 38,
+    "CALIBRATION_SEGMENT_NOT_STRAIGHT": 38,
+    "CALIBRATION_SESSION_STARTED": 38,
+    "CALIBRATION_YAW_UNMEASURED": 38,
+    "CALIBRATION_SEGMENT_SPEED_SLOPE_UNRELIABLE": 37,
+    "CALIBRATION_SEGMENT_INSUFFICIENT_EXCITATION": 31,
+    "CALIBRATION_WINDOW_MOVING": 30,
+    "CALIBRATION_SEGMENT_COURSE_UNSTABLE": 25,
+    "CALIBRATION_SEGMENT_FORCE_SPEED_MISMATCH": 24,
+    "CALIBRATION_SEGMENT_ACCEPTED": 17,
+    "CALIBRATION_GYRO_BIAS_INCONSISTENT": 13,
+    "CALIBRATION_SEGMENT_GNSS_SPARSE": 11,
+    "CALIBRATION_SEGMENT_BASELINE_TOO_SHORT": 8,
+    "CALIBRATION_WAITING_FOR_COURSE": 2,
+    "CALIBRATION_YAW_INCONSISTENT": 2,
+    "CALIBRATION_REMOUNT_DETECTED": 1
+   }
+  }
+ },
+ "seconds_to_first_position_by_trip": {
+  "gsdc-2020-06-25-00-34-us-ca-mtv-sb-101-pixel4xl": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2020-07-08-22-28-us-ca-pixel4": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2020-08-04-00-20-us-ca-sb-mtv-101-pixel4xl": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2020-08-13-21-41-us-ca-mtv-sf-280-pixel4xl": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2020-08-13-21-42-us-ca-mtv-sf-280-pixel5": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2021-01-04-21-50-us-ca-e1highway280driveroutea-pixel4": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2021-01-05-21-12-us-ca-mtv-d-pixel4": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2021-01-05-21-52-us-ca-mtv-d-pixel4": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2021-03-10-23-13-us-ca-mtv-h-pixel5": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2021-03-16-18-59-us-ca-mtv-a-pixel5": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2021-04-02-20-43-us-ca-mtv-f-pixel5": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2021-07-14-20-50-us-ca-mtv-e-pixel4": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2021-07-19-20-49-us-ca-mtv-a-pixel4": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2021-08-04-20-40-us-ca-sjc-c-sm-g988b": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2021-08-24-20-32-us-ca-mtv-h-pixel5": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2021-12-07-19-22-us-ca-lax-d-pixel6pro": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2021-12-07-22-21-us-ca-lax-g-pixel6pro": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2021-12-08-17-22-us-ca-lax-a-pixel6pro": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2021-12-08-18-52-us-ca-lax-b-pixel6pro": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2021-12-08-20-28-us-ca-lax-c-pixel6pro": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2021-12-09-17-06-us-ca-lax-e-pixel6pro": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2022-01-11-18-48-us-ca-mtv-n-pixel6pro": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2022-02-24-18-29-us-ca-lax-o-pixel6pro": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2022-04-01-18-22-us-ca-lax-t-pixel5": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2022-05-13-20-57-us-ca-mtv-pe1-pixel6pro": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2022-08-04-20-07-us-ca-sjc-q-sm-a325f": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2022-10-06-21-51-us-ca-mtv-n-sm-a325f": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2023-03-08-21-34-us-ca-mtv-u-pixel7pro": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2023-05-24-20-26-us-ca-sjc-ge2-pixel7pro": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2023-09-05-20-13-us-ca-pixel7pro": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2023-09-05-20-59-us-ca-pixel5a": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2023-09-05-23-07-us-ca-routen-pixel7pro": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2023-09-06-00-01-us-ca-routen-pixel6pro": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2023-09-06-18-47-us-ca-pixel6pro": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2023-09-06-22-49-us-ca-routebb1-pixel7pro": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2023-09-07-18-59-us-ca-pixel7pro": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2023-09-07-22-47-us-ca-routebc2-pixel6pro": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  },
+  "gsdc-2023-09-07-22-48-us-ca-routebc2-pixel5a": {
+   "default": null,
+   "stationary_relaxed": null,
+   "plus_straightness": null,
+   "plus_excitation": null,
+   "plus_sparse_gnss": null
+  }
+ }
+}
