@@ -334,8 +334,8 @@ def status_rows() -> list[tuple[str, str, str]]:
                      f"SYNTHETIC drive: {g['gnss_denied']['rmse_m']:.0f} m RMSE during a 20 s outage, {g['gnss_denied']['final_m']:.0f} m "
                      f"final, {e['input']['paired_imu_processing_wall']['hz']:.2f} Hz paired processing, {e['queues']['ingress']['dropped']} "
                      "drops; no real FOG hardware", "Partly met (synthetic only)"))
-    rows.append(("Verification", "Host suites pass (Python, mobile JVM, edge); on-device suite had failures on its first run and needs the "
-                 "phone", "See the log"))
+    rows.append(("Verification", "Host suites pass (Python, mobile JVM, edge); the on-device suite passes on one physical phone (OnePlus CPH2585, "
+                 "Android 16) and on an emulator, after real bugs were fixed; no recorded vehicle drive exists", "See the log (N10 to N15)"))
     return rows
 
 

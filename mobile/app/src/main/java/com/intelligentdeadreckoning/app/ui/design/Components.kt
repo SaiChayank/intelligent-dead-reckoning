@@ -537,7 +537,11 @@ fun StatTile(
     }
 }
 
-/** Thin magnitude bar. Used for sensor amplitude and queue occupancy. */
+/**
+ * Thin magnitude bar. Used for sensor amplitude and queue occupancy, which are live readouts: the bar is drawn at the value it is given.
+ * It used to animate every change, which on a phone with live sensors started a dozen animations per update and kept Compose busy
+ * (frames were drawn continuously and UI tests could not go idle).
+ */
 @Composable
 fun IdrMeter(
     fraction: Float,
@@ -545,13 +549,7 @@ fun IdrMeter(
     tone: IdrTone = IdrTone.ACCENT,
     height: Dp = 4.dp,
 ) {
-    val reduced = LocalIdrReducedMotion.current
-    val clamped = fraction.coerceIn(0f, 1f)
-    val animated by animateFloatAsState(
-        targetValue = clamped,
-        animationSpec = IdrMotion.standardSpec(reduced),
-        label = "meter",
-    )
+    val animated = fraction.coerceIn(0f, 1f)
     Box(
         modifier
             .fillMaxWidth()

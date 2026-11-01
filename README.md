@@ -214,7 +214,8 @@ python tools/process_field_drive.py --session <session-dir>
 ```
 Prints what a recording really contains: duration, record counts, measured rates and the longest GNSS gap. It
 does **not** evaluate navigation or issue a certificate (an earlier version did, from a simulated drive; see the
-log). Drift scoring for IO-VNBD is `tools/iovnbd_outage_eval.py`; scoring field drives is not implemented yet.
+log). Drift scoring for IO-VNBD is `tools/iovnbd_outage_eval.py`; a drive recorded with the app is scored with
+`tools/field_drive_eval.py` (steps in the field protocol). It is tested, but no real drive has been scored.
 
 ### 4. SIH #26168 Official Technical Defense Deck
 - **Web Slideshow**: Open `http://localhost:8080/pitch.html` (or via `tools/launch_showcase.py`) for a 10-slide dark-mode deck with keyboard navigation (`←`/`→`/`Space`), fullscreen toggle, and certificate modal.
@@ -227,9 +228,16 @@ Step-by-step instructions for physical vehicle road tests: [`docs/FIELD_TEST_PRO
 
 ## Device status
 
-The debug app has been installed on a OnePlus CPH2585 (Android 16). The on-device test suite was run once and
-**some tests failed on the first run** (not yet investigated; counts are in reports/gap_closure_log.md). No drive has been recorded with this build, and
-CPU, refresh-rate, power and wake-up figures have not been measured.
+The debug app runs on a OnePlus CPH2585 (Android 16) and the on-device test suite passes there and on an emulator
+(counts and dates in `reports/gap_closure_log.md`, entries N10 to N15). Running it on the phone found and fixed real
+defects, for example the bundled demo drives not installing and heavy main-thread load with live sensors.
+
+Measured on that phone: accelerometer and gyroscope at 98.8 Hz and the magnetometer at 50 Hz with no dropped samples,
+and a still-phone IMU noise floor far below the engine's chosen noise settings (`reports/phone_imu_cph2585_desk.json`;
+a still phone understates in-vehicle noise, so the settings were not changed). With sensors running, about a fifth of
+frames are still janky.
+
+Not measured: any drive, GNSS outage behaviour on the phone, 10 Hz output rate on the device, power and wake-up figures.
 
 ---
 

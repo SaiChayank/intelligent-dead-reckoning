@@ -27,7 +27,7 @@ were typed in rather than measured; the correction is recorded in `reports/gap_c
 | 10 Hz output | Publication interval is 100 ms; host replay only | Met on host, not on device |
 | Offline map and matching | HMM matcher with cross-track feedback on synthetic motion over real Hyderabad roads (30 s outages): median 4-7 % against 14-15 % with no map; not a recorded drive; the in-app switch is experimental and off by default | Implemented; not verified in a vehicle |
 | Edge engine, external IMU at 200 Hz | SYNTHETIC drive: 12 m RMSE during a 20 s outage, 26 m final, 200.01 Hz paired processing, 0 drops; no real FOG hardware | Partly met (synthetic only) |
-| Verification | Host suites pass (Python, mobile JVM, edge); on-device suite had failures on its first run and needs the phone | See the log |
+| Verification | Host suites pass (Python, mobile JVM, edge); the on-device suite passes on one physical phone (OnePlus CPH2585, Android 16) and on an emulator, after real bugs were fixed; no recorded vehicle drive exists | See the log (N10 to N15) |
 <!-- CLAIMS:status_table:END -->
 
 ---
@@ -307,4 +307,4 @@ python tools/iovnbd_to_contract.py; python tools/iovnbd_outage_eval.py run --inp
 python tools/build_claims.py
 ```
 
-Test counts are recorded with dates in `reports/gap_closure_log.md`. On-device tests need a connected phone.
+Test counts are recorded with dates in `reports/gap_closure_log.md`. On-device tests need a connected phone or an emulator; they pass on a OnePlus CPH2585 and on an emulator.

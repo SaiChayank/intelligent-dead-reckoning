@@ -96,7 +96,7 @@ class SessionViewModel(application: Application, private val saved: SavedStateHa
     // The runtime state changes on every sensor record (about 400 a second on a phone). Unsampled, the screen recomposed every
     // frame (45 percent janky frames on a OnePlus phone) and Compose never went idle; the counters stay exact inside the runtime.
     @OptIn(FlowPreview::class)
-    val navigationState = navigation.state.sample(250).stateIn(viewModelScope, SharingStarted.Eagerly, navigation.state.value)
+    val navigationState = navigation.state.sample(500).stateIn(viewModelScope, SharingStarted.Eagerly, navigation.state.value)
     val navigationEvents = navigation.output
     /** The producer session the engine was bound to. One bind per session: a failed engine is
      *  never rebound or restarted — a new session must be started explicitly. */
