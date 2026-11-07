@@ -107,10 +107,21 @@ class GeneratedDocumentsTest(unittest.TestCase):
         self.assertIn("not a drive recorded with this app", evidence)
         calibration_evidence, calibration_status = rows["Auto mount calibration"]
         self.assertIn("Met on real phone-in-car data", calibration_status)
-        self.assertIn("not field-tested on a device", calibration_status)
+        self.assertIn("not run live in a vehicle", calibration_status)
         self.assertIn("0 of 38", calibration_evidence)
         self.assertIn("batch calibrator", calibration_evidence)
         self.assertEqual(rows["Phone IMU in a vehicle"][1], "Partly met")
+
+    def test_the_ten_hertz_row_quotes_the_device_report(self):
+        import json
+        report = json.loads((ROOT / "reports" / "device_real_drive_replay.json").read_text(encoding="utf-8"))
+        rows = {name: (evidence, status) for name, evidence, status in build_claims.status_rows()}
+        evidence, status = rows["10 Hz output"]
+        for hz in report["publication_hz_all_trips"]:
+            self.assertIn(f"{hz:.2f} Hz", evidence)
+        self.assertIn("on a phone", status)
+        self.assertLess(report["max_end_error_difference_m"], 0.5)
+        self.assertEqual(report["all_found_a_batch_mount_at_s"], [report["trips"][0]["calibration_after_s"]])
 
     def test_without_the_real_phone_files_the_old_wording_returns(self):
         from unittest import mock

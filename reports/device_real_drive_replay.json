@@ -1,0 +1,126 @@
+{
+ "what": "Real phone-in-car drives (Google Smartphone Decimeter Challenge, CC BY-NC-SA 3.0 IGO) replayed through the app's own engine and calibrator ON A PHONE (RealDriveEngineDeviceTest). The sensors are replayed, not live. The first 700 s of each trip, a 30 s and a 60 s forced outage, drift against the recording's reference fixes.",
+ "device": "OnePlus CPH2585",
+ "trips": [
+  {
+   "trip": "gsdc-2021-08-04-20-40-us-ca-sjc-c-sm-g988b",
+   "device": "OnePlus CPH2585",
+   "drive_s": 700,
+   "imu_records": 87400,
+   "gnss_offered": 613,
+   "gnss_withheld": 88,
+   "calibration_id": "batch-120",
+   "calibration_after_s": 120.6,
+   "first_position_after_s": 122.0,
+   "publication_hz": 10.0,
+   "fused_rows": 5781,
+   "failed_rows": 0,
+   "wall_s": 18.4,
+   "faster_than_real_time": 38.1,
+   "outages": [
+    {
+     "outage_s": 29,
+     "end_error_m": 159.4,
+     "drift_pct": 46.25
+    },
+    {
+     "outage_s": 59,
+     "end_error_m": 224.58,
+     "drift_pct": 15.75
+    }
+   ],
+   "host_jvm_end_error_m": [
+    159.41,
+    224.58
+   ],
+   "end_error_difference_m": [
+    0.01,
+    0.0
+   ]
+  },
+  {
+   "trip": "gsdc-2021-12-07-19-22-us-ca-lax-d-pixel6pro",
+   "device": "OnePlus CPH2585",
+   "drive_s": 699,
+   "imu_records": 81863,
+   "gnss_offered": 612,
+   "gnss_withheld": 88,
+   "calibration_id": "batch-120",
+   "calibration_after_s": 120.6,
+   "first_position_after_s": 163.4,
+   "publication_hz": 10.0,
+   "fused_rows": 5368,
+   "failed_rows": 0,
+   "wall_s": 21.1,
+   "faster_than_real_time": 33.1,
+   "outages": [
+    {
+     "outage_s": 29,
+     "end_error_m": 12.07,
+     "drift_pct": 1.45
+    },
+    {
+     "outage_s": 59,
+     "end_error_m": 104.31,
+     "drift_pct": 5.3
+    }
+   ],
+   "host_jvm_end_error_m": [
+    12.07,
+    104.31
+   ],
+   "end_error_difference_m": [
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "trip": "gsdc-2023-03-08-21-34-us-ca-mtv-u-pixel7pro",
+   "device": "OnePlus CPH2585",
+   "drive_s": 700,
+   "imu_records": 92756,
+   "gnss_offered": 612,
+   "gnss_withheld": 88,
+   "calibration_id": "batch-120",
+   "calibration_after_s": 120.6,
+   "first_position_after_s": 120.7,
+   "publication_hz": 10.0,
+   "fused_rows": 5794,
+   "failed_rows": 0,
+   "wall_s": 26.0,
+   "faster_than_real_time": 26.9,
+   "outages": [
+    {
+     "outage_s": 29,
+     "end_error_m": 25.17,
+     "drift_pct": 5.41
+    },
+    {
+     "outage_s": 59,
+     "end_error_m": 54.89,
+     "drift_pct": 7.0
+    }
+   ],
+   "host_jvm_end_error_m": [
+    25.17,
+    54.89
+   ],
+   "end_error_difference_m": [
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "publication_hz_all_trips": [
+  10.0
+ ],
+ "all_found_a_batch_mount_at_s": [
+  120.6
+ ],
+ "faster_than_real_time_range": [
+  26.9,
+  38.1
+ ],
+ "host_parity": "the same files, the same outage windows and the same configuration run on the host JVM (tools/gsdc_outage_eval.py runner) end each outage within 0.01 m of the phone",
+ "max_end_error_difference_m": 0.01
+}

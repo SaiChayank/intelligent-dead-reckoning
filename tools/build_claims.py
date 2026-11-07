@@ -407,8 +407,17 @@ def status_rows() -> list[tuple[str, str, str]]:
             rows.append(("Auto mount calibration", base + f"The app now also runs a batch calibrator (first 2 to 8 minutes of driving, gravity while stopped, forward "
                          f"from the speed derivative) beside it; the engine found a mount by itself on {found} of {total} real trips (within {worst:.1f} degrees of "
                          "the Python reference method) and drifted as with an offline calibration. Public data only; needs about two minutes of driving with "
-                         "speed changes; not tested on a device in a vehicle", "**Met on real phone-in-car data**; not field-tested on a device"))
-    rows.append(("10 Hz output", "Publication interval is 100 ms; host replay only", "Met on host, not on device"))
+                         "speed changes. " + ("" if load(REPORTS / "device_real_drive_replay.json") is None else
+                                              "Replayed on a phone, the engine found its own mount on every trip and matched the host to the centimetre. ") +
+                         "Not run live in a vehicle", "**Met on real phone-in-car data**; replayed on a device, not run live in a vehicle"))
+    dev = load(REPORTS / "device_real_drive_replay.json")
+    if dev is None:
+        rows.append(("10 Hz output", "Publication interval is 100 ms; host replay only", "Met on host, not on device"))
+    else:
+        hz = ", ".join(f"{h:.2f}" for h in dev["publication_hz_all_trips"])
+        rows.append(("10 Hz output", f"Publication interval is 100 ms. Replaying {len(dev['trips'])} real phone-in-car drives through the app's own engine on a "
+                     f"{dev['device']} measured {hz} Hz on every trip (it was 8.98 Hz before the publication schedule was moved onto a fixed grid; sensors "
+                     "replayed, not live)", "Met on host and on a phone (replayed real drives)"))
     mm = load(REPORTS / "map_matching_eval.json")
     if mm is not None:
         def med(arm, cond):

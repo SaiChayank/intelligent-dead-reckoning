@@ -1517,7 +1517,12 @@ class FusionNavigationEngine(
         val statusChanged = status != publishedStatus
         val due = solution.tNs - publishedAtNs >= publicationIntervalNs
         if (!force && !due && !statusChanged) return
-        publishedAtNs = solution.tNs
+        // A routine publication stays on a fixed grid: the next one is due one interval after this one was DUE, not after the sample that happened to
+        // trigger it. Counting from the triggering sample made every period up to one sensor interval too long, and on a 50 Hz phone with jittery timestamps
+        // the output averaged about 9 Hz instead of 10 Hz (measured on a real drive replayed on a phone). A forced or status-change publication, a first one,
+        // or a gap of two intervals or more restarts the grid.
+        val onGrid = due && !force && !statusChanged && publishedAtNs != Long.MIN_VALUE && solution.tNs - publishedAtNs < 2 * publicationIntervalNs
+        publishedAtNs = if (onGrid) publishedAtNs + publicationIntervalNs else solution.tNs
         publishedStatus = status
         emit(navigationState(solution, status))
         emit(confidence(solution))

@@ -49,6 +49,25 @@ python tools/gsdc_outage_eval.py --split held_out --tag inengine --in-engine-cal
 
 `summary.json` then carries a parity block: how many trips the Kotlin calibrator calibrated, the largest angle between its mount and the Python one, and when it released (about 0.6 s after the window closes, by design). Result: 38 of 38 development and 26 of 26 held-out trips, largest difference 0.44 degrees, and outage drift in line with the offline-handed runs.
 
+## Replaying real drives through the engine on a phone
+
+`RealDriveEngineDeviceTest` runs the app's own calibrator and fusion configuration on a real drive ON THE DEVICE, forces a 30 s and a 60 s outage and writes a
+report. The sensors are replayed, not live. It skips itself when no data is on the phone.
+
+```bash
+python tools/gsdc_trim_for_device.py                          # first 700 s of three trips -> data/processed/gsdc2023_device/
+bash mobile/gradlew -p mobile installDebug installDebugAndroidTest
+adb shell run-as com.intelligentdeadreckoning.app mkdir -p files/real_drives/<trip>
+adb push data/processed/gsdc2023_device/<trip>/measurements.jsonl /data/local/tmp/m.jsonl
+adb shell run-as com.intelligentdeadreckoning.app cp /data/local/tmp/m.jsonl files/real_drives/<trip>/measurements.jsonl
+adb shell am instrument -w -e class com.intelligentdeadreckoning.app.RealDriveEngineDeviceTest \
+    com.intelligentdeadreckoning.app.test/androidx.test.runner.AndroidJUnitRunner
+adb exec-out run-as com.intelligentdeadreckoning.app cat files/real_drives/report_<trip>.json
+```
+
+Use `installDebug installDebugAndroidTest` and `am instrument`, not `connectedDebugAndroidTest`, which uninstalls the app and the pushed data with it. Files in the shared
+storage folder are not readable by the app on every Android version; the app's own `files/` folder is.
+
 ## Limits
 
 California roads, modern phones, a good reference as aiding, an offline calibration, no drive recorded with this app, and no two-wheelers. 60 s outages are only just under the 10 % target in median (about half are under 10 %).

@@ -265,7 +265,12 @@ and a still-phone IMU noise floor far below the engine's chosen noise settings (
 a still phone understates in-vehicle noise, so the settings were not changed). With sensors running, about a fifth of
 frames are still janky.
 
-Not measured: any drive, GNSS outage behaviour on the phone, 10 Hz output rate on the device, power and wake-up figures.
+Real driving through the engine on that phone: three real phone-in-car drives (public dataset, replayed, not live sensors) ran through the app's own
+engine and calibrator on the device. Each found its own mount at 120.6 s, published at 10.00 Hz (it was 8.98 Hz until the publication schedule was fixed),
+never failed, ran 27 to 38 times faster than real time, and ended each forced GNSS outage within 0.01 m of the same run on the host
+(`reports/device_real_drive_replay.json`).
+
+Not measured: a drive recorded live with this phone, the calibrator on live sensors in a moving vehicle, power and wake-up figures.
 
 ---
 
