@@ -752,5 +752,6 @@
    "distance_km": 20.1,
    "duration_s": 1088.0
   }
- ]
+ ],
+ "config_note": "`app_current` in this run is the shipped configuration BEFORE tight GNSS velocity weighting was adopted (adaptive noise, map-heading feedback, adaptive decimation; AI estimator and mount-slip detector off). Later runs tagged `_vel` use the configuration the app ships now."
 }

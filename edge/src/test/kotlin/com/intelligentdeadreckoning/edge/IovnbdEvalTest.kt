@@ -242,7 +242,9 @@ class IovnbdEvalTest {
         // `app` and `app_map` are frozen as the previous shipped configuration; `app_current` follows AppFusion.
         assertEquals(AppFusion.config(experimentalMapMatching = false), IovnbdEval.Arm.APP_CURRENT.config())
         assertEquals(IovnbdEval.Arm.APP_CURRENT.config(), IovnbdEval.Arm.APP_NO_SLIP_NO_AI.config().copy(
-            adaptiveNoiseScalingEnabled = true, mapHeadingFeedbackEnabled = true, adaptiveDecimationEnabled = true))
+            adaptiveNoiseScalingEnabled = true, mapHeadingFeedbackEnabled = true, adaptiveDecimationEnabled = true,
+            gnssVelocitySigmaM_S = IovnbdEval.Arm.VELOCITY_SIGMA_M_S))
+        assertEquals(IovnbdEval.Arm.VELOCITY_SIGMA_M_S, AppFusion.GNSS_VELOCITY_SIGMA_M_S, 0.0)
         assertEquals(AppFusion.config(experimentalMapMatching = true), IovnbdEval.Arm.APP_CURRENT.config().copy(
             hmmMapMatchingEnabled = true, mapCrossTrackEnabled = true, mapCrossTrackMinConfidence = AppFusion.MAP_CROSS_TRACK_MIN_CONFIDENCE))
         assertFalse(AppFusion.config(experimentalMapMatching = false).aiSpeedEstimationEnabled)

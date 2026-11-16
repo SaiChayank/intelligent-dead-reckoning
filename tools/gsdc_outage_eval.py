@@ -168,6 +168,7 @@ def main(argv=None) -> int:
     parser.add_argument("--skip-run", action="store_true", help="score the engine outputs already on disk")
     parser.add_argument("--in-engine-calibration", action="store_true",
                         help="let the engine calibrate itself with the in-app batch calibrator instead of handing it the offline calibration")
+    parser.add_argument("--note", default="", help="recorded in summary.json: which configuration the arm names mean in THIS run (arms that follow the shipped code change meaning over time)")
     parser.add_argument("--tag", default="", help="suffix for the output folders, so a second experiment does not overwrite the first")
     args = parser.parse_args(argv)
     configs = tuple(c for c in args.configs.split(",") if c)
@@ -204,7 +205,7 @@ def main(argv=None) -> int:
     parity = calibration_parity(infos, work, results_path) if args.in_engine_calibration else None
     summary = {"dataset": "Google Smartphone Decimeter Challenge 2023-2024, train split (CC BY-NC-SA 3.0 IGO)", "split": args.split,
                "calibration_source": "in-app batch calibrator (Kotlin), found by the engine" if args.in_engine_calibration else "offline (Python), handed to the engine",
-               "calibration_parity_with_python": parity,
+               "calibration_parity_with_python": parity, "config_note": args.note or None,
                "trips": len(clean), "calibrated": len(calibrated), "drives_calibrated": len({i["drive"] for i in calibrated}),
                "reference": "NovAtel SPAN, 0.1 m; also used at 1 Hz as GNSS aiding with a declared 2.5 m accuracy",
                "mount_calibration": "offline, from the first minutes of each trip (tools/gsdc_batch_calibration.py)", "settle_s_after_calibration": SETTLE_S,

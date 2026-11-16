@@ -300,12 +300,13 @@ def _gsdc() -> dict | None:
 
 def _gsdc_wls() -> dict | None:
     """Held-out results with phone-grade GNSS aiding (WLS position and Doppler speed from the raw measurements), or None when not generated."""
-    inengine = load(REPORTS / "gsdc_eval_held_out_wls_inengine" / "summary.json")
+    inengine = load(REPORTS / "gsdc_eval_held_out_wls_inengine_vel" / "summary.json")
+    before = load(REPORTS / "gsdc_eval_held_out_wls_inengine" / "summary.json")
     offline = load(REPORTS / "gsdc_eval_held_out_wls" / "summary.json")
     quality = load(REPORTS / "gsdc_wls_aiding_quality.json")
     if inengine is None or quality is None or "app_current" not in next(iter(inengine["scenarios"].values())):
         return None
-    return {"inengine": inengine, "offline": offline, "quality": quality}
+    return {"inengine": inengine, "before": before, "offline": offline, "quality": quality}
 
 
 def gsdc_wls_headline() -> str | None:
@@ -355,15 +356,18 @@ def gsdc_wls_section() -> list[str]:
         c = summary["scenarios"][sc].get(name)
         return "-" if not c or not c.get("scored") else f"{c['drift_pct_median']} % ({100 * c['pass_rate_incl_failures']:.0f} %)"
 
-    rows = [("Shipped configuration", "found by the app itself", eng, "app_current")]
+    rows = [("Shipped configuration (GNSS velocity weighting 0.2 m/s)", "found by the app itself", eng, "app_current")]
+    if w["before"] is not None:
+        rows.append(("Same, before the velocity weighting was adopted", "found by the app itself", w["before"], "app_current"))
     if off is not None:
-        rows += [("Shipped configuration", "offline, handed to the engine", off, "app_current"), ("Plain EKF with constraints", "offline, handed to the engine", off, "ekf_nhc"),
+        rows += [("Before the velocity weighting was adopted", "offline, handed to the engine", off, "app_current"), ("Plain EKF with constraints", "offline, handed to the engine", off, "ekf_nhc"),
                  ("Plain EKF with GNSS velocity weighting 0.2 m/s", "offline, handed to the engine", off, "ekf_nhc_vel")]
     for label, calibration, summary, name in rows:
         if name in summary["scenarios"]["t60"]:
             lines.append(f"| {label} | {calibration} | " + " | ".join(cell(summary, name, sc) for sc in ("d50", "t30", "t60", "d1000")) + " |")
-    lines += ["", "_The 60 s outages are not under 10 % in median with phone-grade aiding. Weighting the GNSS velocity tightly lowers the median drift at every outage length on both splits, "
-                  "though its 90th percentile is worse on the held-out drives at 30 s and 1 km (it was chosen on the development drives and is not yet in the shipped configuration)._", ""]
+    lines += ["", "_Weighting the GNSS velocity tightly (0.2 m/s, chosen on IO-VNBD and tried on the development drives) lowers the median drift at every outage length on both splits "
+                  "and is now in the shipped configuration; the in-engine rows above are the before and after of that change on the same held-out drives. "
+                  "The 60 s median is under 10 % only just, and well under half of the individual 60 s outages are._", ""]
     return lines
 
 

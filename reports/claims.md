@@ -149,12 +149,13 @@ _* interval excludes zero. Citation: Fu, Khider, Gulati, van Diggelen, "Google S
 
 | Configuration | Mount calibration | 50 m | 30 s | 60 s | 1 km |
 |---|---|---:|---:|---:|---:|
-| Shipped configuration | found by the app itself | 5.06 % (85 %) | 6.65 % (65 %) | 12.95 % (36 %) | 7.51 % (58 %) |
-| Shipped configuration | offline, handed to the engine | 4.94 % (83 %) | 6.67 % (62 %) | 13.54 % (36 %) | 7.7 % (56 %) |
+| Shipped configuration (GNSS velocity weighting 0.2 m/s) | found by the app itself | 4.13 % (89 %) | 3.48 % (74 %) | 9.12 % (52 %) | 4.12 % (64 %) |
+| Same, before the velocity weighting was adopted | found by the app itself | 5.06 % (85 %) | 6.65 % (65 %) | 12.95 % (36 %) | 7.51 % (58 %) |
+| Before the velocity weighting was adopted | offline, handed to the engine | 4.94 % (83 %) | 6.67 % (62 %) | 13.54 % (36 %) | 7.7 % (56 %) |
 | Plain EKF with constraints | offline, handed to the engine | 4.89 % (83 %) | 6.31 % (63 %) | 13.22 % (39 %) | 7.69 % (57 %) |
 | Plain EKF with GNSS velocity weighting 0.2 m/s | offline, handed to the engine | 4.0 % (88 %) | 3.64 % (71 %) | 11.32 % (49 %) | 4.88 % (62 %) |
 
-_The 60 s outages are not under 10 % in median with phone-grade aiding. Weighting the GNSS velocity tightly lowers the median drift at every outage length on both splits, though its 90th percentile is worse on the held-out drives at 30 s and 1 km (it was chosen on the development drives and is not yet in the shipped configuration)._
+_Weighting the GNSS velocity tightly (0.2 m/s, chosen on IO-VNBD and tried on the development drives) lowers the median drift at every outage length on both splits and is now in the shipped configuration; the in-engine rows above are the before and after of that change on the same held-out drives. The 60 s median is under 10 % only just, and well under half of the individual 60 s outages are._
 
 **Learned GNSS trust** (behind a flag, off by default; leave-one-drive-out, 6283 phone fixes): rank correlation with true fix error 0.28 (reported accuracy: 0.048); mean absolute error 2.487 m (reported accuracy: 2.638 m).
 

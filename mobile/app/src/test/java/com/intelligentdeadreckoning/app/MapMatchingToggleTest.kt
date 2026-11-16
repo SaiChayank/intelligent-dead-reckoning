@@ -113,8 +113,10 @@ class MapMatchingToggleTest {
         // (reports/gsdc_eval_development*, entry N17 in reports/gap_closure_log.md).
         val shipped = FusionConfig(
             adaptiveNoiseScalingEnabled = true, mapHeadingFeedbackEnabled = true, adaptiveDecimationEnabled = true,
+            gnssVelocitySigmaM_S = 0.2,
         )
         assertEquals("the off configuration must equal the shipped app configuration", shipped, c.config)
+        assertEquals(0.2, AppFusion.GNSS_VELOCITY_SIGMA_M_S, 0.0)
         assertFalse(c.config!!.aiSpeedEstimationEnabled)
         assertFalse(c.config!!.mountSlipDetectionEnabled)
         assertFalse(c.config!!.hmmMapMatchingEnabled)

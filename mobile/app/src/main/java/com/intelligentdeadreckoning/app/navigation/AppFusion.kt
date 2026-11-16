@@ -17,6 +17,15 @@ object AppFusion {
     const val MAP_CROSS_TRACK_MIN_CONFIDENCE = 0.6
 
     /**
+     * How tightly the filter trusts the GNSS speed and course, m/s, instead of deriving their weight from the fix's position accuracy. A fix's position
+     * error (metres) says little about its Doppler velocity error (centimetres per second), so the position-based weight threw velocity information
+     * away: on real phone-in-car drives fed phone-grade GNSS this lowered the median outage drift at every length on both the development and the held-out
+     * drives (reports/gsdc_eval_*_wls, `ekf_nhc_vel` against `ekf_nhc`) and it helped on IO-VNBD earlier. 0.2 m/s was chosen on IO-VNBD and sits
+     * near the measured 95th-percentile Doppler speed error of 0.23 m/s on the held-out drives (reports/gsdc_wls_aiding_quality.json).
+     */
+    const val GNSS_VELOCITY_SIGMA_M_S = 0.2
+
+    /**
      * The shipped app configuration; [experimentalMapMatching] adds the HMM matcher and its cross-track correction.
      *
      * The AI speed estimator and the mount-slip detector are OFF. On 38 real phone-in-car drives (Google Smartphone Decimeter Challenge,
@@ -30,6 +39,7 @@ object AppFusion {
             adaptiveNoiseScalingEnabled = true,
             mapHeadingFeedbackEnabled = true,
             adaptiveDecimationEnabled = true,
+            gnssVelocitySigmaM_S = GNSS_VELOCITY_SIGMA_M_S,
         )
         return if (experimentalMapMatching) base.copy(
             hmmMapMatchingEnabled = true, mapCrossTrackEnabled = true, mapCrossTrackMinConfidence = MAP_CROSS_TRACK_MIN_CONFIDENCE,
