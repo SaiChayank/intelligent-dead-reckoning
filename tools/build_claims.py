@@ -298,6 +298,30 @@ def _gsdc() -> dict | None:
     return {"held": held, "cmp": cmp_}
 
 
+def _gsdc_wls() -> dict | None:
+    """Held-out results with phone-grade GNSS aiding (WLS position and Doppler speed from the raw measurements), or None when not generated."""
+    inengine = load(REPORTS / "gsdc_eval_held_out_wls_inengine" / "summary.json")
+    offline = load(REPORTS / "gsdc_eval_held_out_wls" / "summary.json")
+    quality = load(REPORTS / "gsdc_wls_aiding_quality.json")
+    if inengine is None or quality is None or "app_current" not in next(iter(inengine["scenarios"].values())):
+        return None
+    return {"inengine": inengine, "offline": offline, "quality": quality}
+
+
+def gsdc_wls_headline() -> str | None:
+    w = _gsdc_wls()
+    if w is None:
+        return None
+    sc = w["inengine"]["scenarios"]
+    med = {k: sc[k]["app_current"]["drift_pct_median"] for k in ("t30", "t60", "d1000")}
+    q = w["quality"]["held_out"]["position_error_median_m"]["median"]
+    under = [label for key, label in (("t30", "30 s"), ("t60", "60 s"), ("d1000", "1 km")) if med[key] < 10.0]
+    over = [label for key, label in (("t30", "30 s"), ("t60", "60 s"), ("d1000", "1 km")) if med[key] >= 10.0]
+    verdict = (f"the median is under 10 % at {' and '.join(under)}" + (f" and not at {' and '.join(over)}" if over else ""))
+    return (f"With phone-grade GNSS aiding instead (a position from the raw pseudoranges, median error {q:.1f} m, and a Doppler speed) and the app finding its own "
+            f"mount, the shipped configuration's median drift is {med['t30']:.1f} % (30 s), {med['t60']:.1f} % (60 s) and {med['d1000']:.1f} % (1 km): {verdict}")
+
+
 def gsdc_headline() -> str | None:
     g = _gsdc()
     if g is None:
@@ -309,7 +333,38 @@ def gsdc_headline() -> str | None:
             f"calibration, reference-grade GNSS aiding) the shipped configuration's median drift is {now['t30']['drift_pct_median']:.1f} % (30 s), "
             f"{now['t60']['drift_pct_median']:.1f} % (60 s) and {now['d1000']['drift_pct_median']:.1f} % (1 km); the configuration shipped before it "
             f"drifted {before['t30']['drift_pct_median']:.0f} %, {before['t60']['drift_pct_median']:.0f} % and {before['d1000']['drift_pct_median']:.0f} %. "
-            f"Only {100 * now['t60']['pass_rate_incl_failures']:.0f} % of 60 s outages are under 10 %")
+            f"Only {100 * now['t60']['pass_rate_incl_failures']:.0f} % of 60 s outages are under 10 %"
+            + (f". {gsdc_wls_headline()}" if gsdc_wls_headline() else ""))
+
+
+def gsdc_wls_section() -> list[str]:
+    w = _gsdc_wls()
+    if w is None:
+        return []
+    q, off, eng = w["quality"], w["offline"], w["inengine"]
+    lines = ["**The same drives with phone-grade GNSS aiding.** The tables above feed the engine the 0.1 m reference as its GNSS, which is better than a phone receiver gives. "
+             "Here the engine is fed a position computed from the phone's own raw pseudoranges (weighted least squares) and a Doppler speed and course, with the real "
+             f"satellite count and an accuracy of {q['declared_accuracy_m']} m declared from the development trips only. Measured against the reference on the held-out trips, "
+             f"that aiding has a median position error of {q['held_out']['position_error_median_m']['median']} m (95th percentile "
+             f"{q['held_out']['position_error_p95_m']['median']} m), a 95th-percentile speed error of {q['held_out']['speed_error_p95_m_s']['median']} m/s and a median course "
+             f"error of {q['held_out']['course_error_median_deg']['median']} degrees. Outage drift is still scored against the reference. Held-out drives, median drift "
+             "(share of outages under 10 %):", "",
+             "| Configuration | Mount calibration | 50 m | 30 s | 60 s | 1 km |", "|---|---|---:|---:|---:|---:|"]
+
+    def cell(summary, name, sc):
+        c = summary["scenarios"][sc].get(name)
+        return "-" if not c or not c.get("scored") else f"{c['drift_pct_median']} % ({100 * c['pass_rate_incl_failures']:.0f} %)"
+
+    rows = [("Shipped configuration", "found by the app itself", eng, "app_current")]
+    if off is not None:
+        rows += [("Shipped configuration", "offline, handed to the engine", off, "app_current"), ("Plain EKF with constraints", "offline, handed to the engine", off, "ekf_nhc"),
+                 ("Plain EKF with GNSS velocity weighting 0.2 m/s", "offline, handed to the engine", off, "ekf_nhc_vel")]
+    for label, calibration, summary, name in rows:
+        if name in summary["scenarios"]["t60"]:
+            lines.append(f"| {label} | {calibration} | " + " | ".join(cell(summary, name, sc) for sc in ("d50", "t30", "t60", "d1000")) + " |")
+    lines += ["", "_The 60 s outages are not under 10 % in median with phone-grade aiding. Weighting the GNSS velocity tightly lowers the median drift at every outage length on both splits, "
+                  "though its 90th percentile is worse on the held-out drives at 30 s and 1 km (it was chosen on the development drives and is not yet in the shipped configuration)._", ""]
+    return lines
 
 
 def gsdc_section() -> list[str]:
@@ -342,7 +397,7 @@ def gsdc_section() -> list[str]:
             lines.append(f"| {SCENARIO_LABELS[sc_name]} | {r['paired_outages']} | {r['drives']} | {r['mean_paired_difference_pct_points']:+.1f} | "
                          f"{lo:+.1f} to {hi:+.1f}{' *' if r['interval_excludes_zero'] else ''} |")
     lines += ["", f"_* interval excludes zero. Citation: {GSDC_CITATION} Not a drive recorded with this app, and no Indian roads._", ""]
-    return lines
+    return lines + gsdc_wls_section()
 
 
 def _held() -> dict | None:
@@ -374,8 +429,17 @@ def status_rows() -> list[tuple[str, str, str]]:
         sc = gsdc["held"]["scenarios"]
         shipped = {k: sc[k][GSDC_SHIPPED] for k in ("t30", "t60", "d1000")}
         all_under = all(v["drift_pct_median"] < 10.0 for v in shipped.values())
-        rows.append(("Dead-reckoning drift under 10 %, real phone-in-car drives", gsdc_headline() + "; public data, not a drive recorded with this app",
-                     "**Met in median on these data**, 60 s outages only just" if all_under else "**Not met**"))
+        wls_headline = gsdc_wls_headline()
+        if wls_headline is not None:
+            w = _gsdc_wls()["inengine"]["scenarios"]
+            labels = {"t30": "30 s", "t60": "60 s", "d1000": "1 km"}
+            under = [labels[k] for k in labels if w[k]["app_current"]["drift_pct_median"] < 10.0]
+            over = [labels[k] for k in labels if w[k]["app_current"]["drift_pct_median"] >= 10.0]
+            status = ("**Met in median on these data**" if not over else
+                      f"**Partly met**: under 10 % in median at {' and '.join(under)}, not at {' and '.join(over)} with phone-grade aiding" if under else "**Not met**")
+        else:
+            status = "**Met in median on these data**, 60 s outages only just" if all_under else "**Not met**"
+        rows.append(("Dead-reckoning drift under 10 %, real phone-in-car drives", gsdc_headline() + "; public data, not a drive recorded with this app", status))
         rows.append(("Phone IMU in a vehicle", f"Scored on {gsdc['held']['drives_calibrated']} held-out and 38 development real drives of a public dataset "
                      "with an offline mount calibration; no drive recorded with this app", "Partly met"))
     s = load(REPORTS / "speed_v3_eval.json")

@@ -167,6 +167,17 @@ Paired difference, shipped before minus shipped now (percentage points; 95 % int
 
 _* interval excludes zero. Citation: Fu, Khider, Gulati, van Diggelen, "Google Smartphone Decimeter Challenge" (2023), kaggle.com/competitions/smartphone-decimeter-2023/data; Fu, Khider, van Diggelen, ION GNSS+ 2020, doi:10.33012/2020.17628. Data licence CC BY-NC-SA 3.0 IGO. Not a drive recorded with this app, and no Indian roads._
 
+**The same drives with phone-grade GNSS aiding.** The tables above feed the engine the 0.1 m reference as its GNSS, which is better than a phone receiver gives. Here the engine is fed a position computed from the phone's own raw pseudoranges (weighted least squares) and a Doppler speed and course, with the real satellite count and an accuracy of 3.1 m declared from the development trips only. Measured against the reference on the held-out trips, that aiding has a median position error of 2.47 m (95th percentile 5.79 m), a 95th-percentile speed error of 0.23 m/s and a median course error of 0.14 degrees. Outage drift is still scored against the reference. Held-out drives, median drift (share of outages under 10 %):
+
+| Configuration | Mount calibration | 50 m | 30 s | 60 s | 1 km |
+|---|---|---:|---:|---:|---:|
+| Shipped configuration | found by the app itself | 5.06 % (85 %) | 6.65 % (65 %) | 12.95 % (36 %) | 7.51 % (58 %) |
+| Shipped configuration | offline, handed to the engine | 4.94 % (83 %) | 6.67 % (62 %) | 13.54 % (36 %) | 7.7 % (56 %) |
+| Plain EKF with constraints | offline, handed to the engine | 4.89 % (83 %) | 6.31 % (63 %) | 13.22 % (39 %) | 7.69 % (57 %) |
+| Plain EKF with GNSS velocity weighting 0.2 m/s | offline, handed to the engine | 4.0 % (88 %) | 3.64 % (71 %) | 11.32 % (49 %) | 4.88 % (62 %) |
+
+_The 60 s outages are not under 10 % in median with phone-grade aiding. Weighting the GNSS velocity tightly lowers the median drift at every outage length on both splits, though its 90th percentile is worse on the held-out drives at 30 s and 1 km (it was chosen on the development drives and is not yet in the shipped configuration)._
+
 **Learned GNSS trust** (behind a flag, off by default; leave-one-drive-out, 6283 phone fixes): rank correlation with true fix error 0.28 (reported accuracy: 0.048); mean absolute error 2.487 m (reported accuracy: 2.638 m).
 
 Engine-level paired comparison on IO-VNBD (the best arm with and without the trust weighting; weights trained without the drive being run; positive difference = trust helps; interval is a 95 % bootstrap of the mean paired difference in percentage points):

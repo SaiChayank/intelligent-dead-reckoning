@@ -64,6 +64,18 @@ def trips(root: Path, split: str) -> list[Path]:
     return out
 
 
+def load_truth(recording: Path) -> dict:
+    """The scoring truth: `reference.csv` when the recording was made with phone-grade aiding (the aiding is then not the truth), else its own GNSS fixes."""
+    reference = recording / "reference.csv"
+    if not reference.is_file():
+        return fd.load_fixes(recording)
+    d = np.genfromtxt(reference, delimiter=",", names=True)
+    lat, lon = d["latitude_deg"], d["longitude_deg"]
+    step = np.hypot(np.radians(np.diff(lat)) * ev.EARTH_R, np.radians(np.diff(lon)) * ev.EARTH_R * np.cos(np.radians(lat[:-1])))
+    return {"t": d["t_ns"].astype(np.int64), "lat": lat, "lon": lon, "speed": d["speed_m_s"], "dist": np.concatenate([[0.0], np.cumsum(step)]),
+            "accuracy": np.full(len(lat), 0.1)}
+
+
 def plan_trip(recording: Path, work: Path, configs: tuple[str, ...], in_engine: bool = False) -> tuple[list[dict], dict]:
     """Jobs for one trip, plus what is known about it (calibration, planned outages).
 
@@ -73,9 +85,10 @@ def plan_trip(recording: Path, work: Path, configs: tuple[str, ...], in_engine: 
     info = {"recording": recording.name, "drive": recording.parent.name, "calibration_status": calibration["status"], "_recording": recording.as_posix()}
     if calibration["status"] != "valid":
         return [], {**info, "reasons": calibration.get("reasons")}
-    truth = fd.load_fixes(recording)
+    truth = load_truth(recording)
     start_after = bc.ORIGIN_NS + int((calibration["available_s"] + SETTLE_S) * 1e9)
-    planned = {sc.name: ev.plan_outages(truth, truth["t"], sc, start_after) for sc in ev.SCENARIOS}
+    delivered = ev.gnss_times(recording)            # the fixes the engine receives (the aiding), not the reference times
+    planned = {sc.name: ev.plan_outages(truth, delivered, sc, start_after) for sc in ev.SCENARIOS}
     job_calibration = {"id": calibration["id"], "q_vehicle_from_device_wxyz": calibration["q_vehicle_from_device_wxyz"],
                        "gyro_bias_rad_s": calibration["gyro_bias_rad_s"], "available_ns": calibration["available_ns"]}
     jobs = []

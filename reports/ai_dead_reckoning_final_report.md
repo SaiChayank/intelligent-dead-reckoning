@@ -16,14 +16,14 @@ sensor or network permission.
 replaces an earlier version whose headline numbers (1.44 % drift, 24x margin, 0.28 ms latency, 417 tests)
 were typed in rather than measured; the correction is recorded in `reports/gap_closure_log.md`.
 
-**Real phone-in-car evidence.** <!--CV:gsdc_headline-->On real phone-in-car drives (Google Smartphone Decimeter Challenge, 26 held-out drives, offline mount calibration, reference-grade GNSS aiding) the shipped configuration's median drift is 3.1 % (30 s), 9.2 % (60 s) and 3.6 % (1 km); the configuration shipped before it drifted 284 %, 749 % and 271 %. Only 55 % of 60 s outages are under 10 %.<!--/CV-->
+**Real phone-in-car evidence.** <!--CV:gsdc_headline-->On real phone-in-car drives (Google Smartphone Decimeter Challenge, 26 held-out drives, offline mount calibration, reference-grade GNSS aiding) the shipped configuration's median drift is 3.1 % (30 s), 9.2 % (60 s) and 3.6 % (1 km); the configuration shipped before it drifted 284 %, 749 % and 271 %. Only 55 % of 60 s outages are under 10 %. With phone-grade GNSS aiding instead (a position from the raw pseudoranges, median error 2.5 m, and a Doppler speed) and the app finding its own mount, the shipped configuration's median drift is 6.7 % (30 s), 12.9 % (60 s) and 7.5 % (1 km): the median is under 10 % at 30 s and 1 km and not at 60 s.<!--/CV-->
 
 <!-- CLAIMS:status_table:BEGIN -->
 | Requirement | Evidence | Status |
 | :--- | :--- | :--- |
 | No OBD-II / CAN-bus / wheel sensor | Engine inputs are IMU and GNSS only | Met by design |
 | Dead-reckoning drift under 10 % | IO-VNBD, vehicle-frame IMU, held-out drives, best arm: median 22 % (30 s), 24 % (60 s), 17 % (1 km); holding the last GNSS velocity gives 60 %, 79 %, 62 % | **Not met** |
-| Dead-reckoning drift under 10 %, real phone-in-car drives | On real phone-in-car drives (Google Smartphone Decimeter Challenge, 26 held-out drives, offline mount calibration, reference-grade GNSS aiding) the shipped configuration's median drift is 3.1 % (30 s), 9.2 % (60 s) and 3.6 % (1 km); the configuration shipped before it drifted 284 %, 749 % and 271 %. Only 55 % of 60 s outages are under 10 %; public data, not a drive recorded with this app | **Met in median on these data**, 60 s outages only just |
+| Dead-reckoning drift under 10 %, real phone-in-car drives | On real phone-in-car drives (Google Smartphone Decimeter Challenge, 26 held-out drives, offline mount calibration, reference-grade GNSS aiding) the shipped configuration's median drift is 3.1 % (30 s), 9.2 % (60 s) and 3.6 % (1 km); the configuration shipped before it drifted 284 %, 749 % and 271 %. Only 55 % of 60 s outages are under 10 %. With phone-grade GNSS aiding instead (a position from the raw pseudoranges, median error 2.5 m, and a Doppler speed) and the app finding its own mount, the shipped configuration's median drift is 6.7 % (30 s), 12.9 % (60 s) and 7.5 % (1 km): the median is under 10 % at 30 s and 1 km and not at 60 s; public data, not a drive recorded with this app | **Partly met**: under 10 % in median at 30 s and 1 km, not at 60 s with phone-grade aiding |
 | Phone IMU in a vehicle | Scored on 26 held-out and 38 development real drives of a public dataset with an offline mount calibration; no drive recorded with this app | Partly met |
 | AI speed estimation | v1 (synthetic) fails on real drives and is switched off in the shipped app; v3 lowers leave-one-drive-out speed RMSE from 4.273 (integrated acceleration) and 4.785 (hold last speed) to 2.554 m/s | Partly met, external-IMU input only |
 | Auto mount calibration | The app's in-drive calibrator reached VALID on 0 of 38 real phone-in-car trips under every threshold setting tried (a phone in a running car vibrates too much for its parked test). The app now also runs a batch calibrator (first 2 to 8 minutes of driving, gravity while stopped, forward from the speed derivative) beside it; the engine found a mount by itself on 64 of 64 real trips (within 0.4 degrees of the Python reference method) and drifted as with an offline calibration. Public data only; needs about two minutes of driving with speed changes. Replayed on a phone, the engine found its own mount on every trip and matched the host to the centimetre. Not run live in a vehicle | **Met on real phone-in-car data**; replayed on a device, not run live in a vehicle |
@@ -260,6 +260,17 @@ Paired difference, shipped before minus shipped now (percentage points; 95 % int
 | 1 km outage | 120 | 26 | +874.7 | +542.9 to +1291.1 * |
 
 _* interval excludes zero. Citation: Fu, Khider, Gulati, van Diggelen, "Google Smartphone Decimeter Challenge" (2023), kaggle.com/competitions/smartphone-decimeter-2023/data; Fu, Khider, van Diggelen, ION GNSS+ 2020, doi:10.33012/2020.17628. Data licence CC BY-NC-SA 3.0 IGO. Not a drive recorded with this app, and no Indian roads._
+
+**The same drives with phone-grade GNSS aiding.** The tables above feed the engine the 0.1 m reference as its GNSS, which is better than a phone receiver gives. Here the engine is fed a position computed from the phone's own raw pseudoranges (weighted least squares) and a Doppler speed and course, with the real satellite count and an accuracy of 3.1 m declared from the development trips only. Measured against the reference on the held-out trips, that aiding has a median position error of 2.47 m (95th percentile 5.79 m), a 95th-percentile speed error of 0.23 m/s and a median course error of 0.14 degrees. Outage drift is still scored against the reference. Held-out drives, median drift (share of outages under 10 %):
+
+| Configuration | Mount calibration | 50 m | 30 s | 60 s | 1 km |
+|---|---|---:|---:|---:|---:|
+| Shipped configuration | found by the app itself | 5.06 % (85 %) | 6.65 % (65 %) | 12.95 % (36 %) | 7.51 % (58 %) |
+| Shipped configuration | offline, handed to the engine | 4.94 % (83 %) | 6.67 % (62 %) | 13.54 % (36 %) | 7.7 % (56 %) |
+| Plain EKF with constraints | offline, handed to the engine | 4.89 % (83 %) | 6.31 % (63 %) | 13.22 % (39 %) | 7.69 % (57 %) |
+| Plain EKF with GNSS velocity weighting 0.2 m/s | offline, handed to the engine | 4.0 % (88 %) | 3.64 % (71 %) | 11.32 % (49 %) | 4.88 % (62 %) |
+
+_The 60 s outages are not under 10 % in median with phone-grade aiding. Weighting the GNSS velocity tightly lowers the median drift at every outage length on both splits, though its 90th percentile is worse on the held-out drives at 30 s and 1 km (it was chosen on the development drives and is not yet in the shipped configuration)._
 
 **Learned GNSS trust** (behind a flag, off by default; leave-one-drive-out, 6283 phone fixes): rank correlation with true fix error 0.28 (reported accuracy: 0.048); mean absolute error 2.487 m (reported accuracy: 2.638 m).
 

@@ -172,7 +172,9 @@ fun IdrApp(state: SimulationState, onStart: () -> Unit, onStop: () -> Unit,
                         verticalArrangement = Arrangement.spacedBy(IdrSpace.xl),
                     ) {
                         if (selected !in consoleFreeScreens) {
-                            RecordingPanel(recording, capture, source, replayVisible, replay.busy,
+                            // Only two facts about the sensors matter here, so pass them as one boolean: the whole capture state changes at the capture
+                            // rate and would recompose this card on every update.
+                            RecordingPanel(recording, capture.running && capture.sensors.isNotEmpty(), source, replayVisible, replay.busy,
                                 onStartRecording, onStopRecording, detailsOpen, { detailsOpen = !detailsOpen },
                                 currentSession, elapsedNs, export,
                                 { sessionsOpen = true; onRefreshSessions(null) })
@@ -327,7 +329,7 @@ private fun AppHeader(
 @Composable
 private fun RecordingPanel(
     recording: RecorderState,
-    capture: CaptureState,
+    captureReady: Boolean,
     source: InputSource,
     replayVisible: Boolean,
     replayBusy: Boolean,
@@ -369,8 +371,8 @@ private fun RecordingPanel(
             IdrButton(
                 "Start recording",
                 onStartRecording,
-                enabled = !replayVisible && !replayBusy && source == InputSource.REAL && capture.running &&
-                    capture.sensors.isNotEmpty() && !recording.busy && !export.busy,
+                enabled = !replayVisible && !replayBusy && source == InputSource.REAL && captureReady &&
+                    !recording.busy && !export.busy,
                 variant = IdrButtonVariant.PRIMARY,
                 glyph = IdrGlyph.RECORD,
                 testTag = "recording_start",

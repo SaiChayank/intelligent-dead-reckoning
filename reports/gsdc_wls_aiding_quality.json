@@ -1,0 +1,1418 @@
+{
+ "dataset": "Google Smartphone Decimeter Challenge 2023-2024, train split (CC BY-NC-SA 3.0 IGO)",
+ "aiding": "WLS position from the raw pseudoranges and a Doppler velocity solved per epoch (tools/gsdc_wls_aiding.py)",
+ "development": {
+  "trips": 38,
+  "position_error_median_m": {
+   "p10": 1.31,
+   "median": 2.32,
+   "p90": 3.85
+  },
+  "position_error_p68_m": {
+   "p10": 1.76,
+   "median": 3.12,
+   "p90": 4.78
+  },
+  "position_error_p95_m": {
+   "p10": 3.23,
+   "median": 4.94,
+   "p90": 7.83
+  },
+  "speed_error_p95_m_s": {
+   "p10": 0.08,
+   "median": 0.2,
+   "p90": 0.31
+  },
+  "course_error_median_deg": {
+   "p10": 0.07,
+   "median": 0.13,
+   "p90": 0.36
+  },
+  "doppler_solution_share": {
+   "p10": 1.0,
+   "median": 1.0,
+   "p90": 1.0
+  }
+ },
+ "held_out": {
+  "trips": 26,
+  "position_error_median_m": {
+   "p10": 1.78,
+   "median": 2.47,
+   "p90": 3.62
+  },
+  "position_error_p68_m": {
+   "p10": 2.31,
+   "median": 3.11,
+   "p90": 4.46
+  },
+  "position_error_p95_m": {
+   "p10": 3.92,
+   "median": 5.79,
+   "p90": 8.38
+  },
+  "speed_error_p95_m_s": {
+   "p10": 0.08,
+   "median": 0.23,
+   "p90": 0.58
+  },
+  "course_error_median_deg": {
+   "p10": 0.07,
+   "median": 0.14,
+   "p90": 0.6
+  },
+  "doppler_solution_share": {
+   "p10": 1.0,
+   "median": 1.0,
+   "p90": 1.01
+  }
+ },
+ "declared_accuracy_m": 3.1,
+ "declared_accuracy_rule": "median across development trips of each trip's 68th percentile horizontal error",
+ "trips": [
+  {
+   "drive": "2020-06-25-00-34-us-ca-mtv-sb-101",
+   "phone": "pixel4xl",
+   "split": "development",
+   "epochs": 1302,
+   "doppler_solutions": 1302,
+   "position_error_m": {
+    "median": 1.29,
+    "p68": 1.65,
+    "p95": 2.83
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.05,
+    "p95_abs": 0.24
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.13,
+    "p95_abs": 2.25
+   },
+   "satellites_median": 26.0
+  },
+  {
+   "drive": "2020-07-08-22-28-us-ca",
+   "phone": "pixel4",
+   "split": "development",
+   "epochs": 2127,
+   "doppler_solutions": 2127,
+   "position_error_m": {
+    "median": 2.08,
+    "p68": 2.72,
+    "p95": 5.06
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.02,
+    "p95_abs": 0.13
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.18,
+    "p95_abs": 2.21
+   },
+   "satellites_median": 26.0
+  },
+  {
+   "drive": "2020-07-17-23-13-us-ca-sf-mtv-280",
+   "phone": "pixel4xl",
+   "split": "held_out",
+   "epochs": 1699,
+   "doppler_solutions": 1534,
+   "position_error_m": {
+    "median": 2.64,
+    "p68": 3.42,
+    "p95": 6.33
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.34
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.11,
+    "p95_abs": 1.25
+   },
+   "satellites_median": 17.0
+  },
+  {
+   "drive": "2020-08-04-00-19-us-ca-sb-mtv-101",
+   "phone": "pixel4",
+   "split": "held_out",
+   "epochs": 1690,
+   "doppler_solutions": 1691,
+   "position_error_m": {
+    "median": 2.44,
+    "p68": 2.9,
+    "p95": 4.56
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.04,
+    "p95_abs": 0.26
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.08,
+    "p95_abs": 1.54
+   },
+   "satellites_median": 23.0
+  },
+  {
+   "drive": "2020-08-04-00-20-us-ca-sb-mtv-101",
+   "phone": "pixel4xl",
+   "split": "development",
+   "epochs": 1607,
+   "doppler_solutions": 1605,
+   "position_error_m": {
+    "median": 1.81,
+    "p68": 2.27,
+    "p95": 3.94
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.16
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.07,
+    "p95_abs": 1.8
+   },
+   "satellites_median": 23.0
+  },
+  {
+   "drive": "2020-08-13-21-41-us-ca-mtv-sf-280",
+   "phone": "pixel4xl",
+   "split": "development",
+   "epochs": 1869,
+   "doppler_solutions": 1869,
+   "position_error_m": {
+    "median": 1.3,
+    "p68": 1.7,
+    "p95": 3.27
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.02,
+    "p95_abs": 0.11
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.08,
+    "p95_abs": 0.86
+   },
+   "satellites_median": 22.0
+  },
+  {
+   "drive": "2020-08-13-21-42-us-ca-mtv-sf-280",
+   "phone": "pixel5",
+   "split": "development",
+   "epochs": 1725,
+   "doppler_solutions": 1725,
+   "position_error_m": {
+    "median": 1.48,
+    "p68": 1.98,
+    "p95": 3.74
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.02,
+    "p95_abs": 0.09
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.06,
+    "p95_abs": 0.7
+   },
+   "satellites_median": 22.0
+  },
+  {
+   "drive": "2020-12-10-22-17-us-ca-sjc-c",
+   "phone": "mi8",
+   "split": "held_out",
+   "epochs": 1495,
+   "doppler_solutions": 1495,
+   "position_error_m": {
+    "median": 2.02,
+    "p68": 2.94,
+    "p95": 10.16
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.07,
+    "p95_abs": 1.02
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.24,
+    "p95_abs": 5.02
+   },
+   "satellites_median": 25.0
+  },
+  {
+   "drive": "2020-12-10-22-52-us-ca-sjc-c",
+   "phone": "pixel4",
+   "split": "held_out",
+   "epochs": 1407,
+   "doppler_solutions": 1407,
+   "position_error_m": {
+    "median": 1.82,
+    "p68": 2.4,
+    "p95": 5.3
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.04,
+    "p95_abs": 0.22
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.17,
+    "p95_abs": 6.04
+   },
+   "satellites_median": 21.0
+  },
+  {
+   "drive": "2021-01-04-21-50-us-ca-e1highway280driveroutea",
+   "phone": "pixel4",
+   "split": "development",
+   "epochs": 2003,
+   "doppler_solutions": 2000,
+   "position_error_m": {
+    "median": 1.25,
+    "p68": 1.62,
+    "p95": 3.12
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.14
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.08,
+    "p95_abs": 2.49
+   },
+   "satellites_median": 26.0
+  },
+  {
+   "drive": "2021-01-04-22-40-us-ca-mtv-a",
+   "phone": "pixel4",
+   "split": "held_out",
+   "epochs": 1850,
+   "doppler_solutions": 1850,
+   "position_error_m": {
+    "median": 2.06,
+    "p68": 2.46,
+    "p95": 3.96
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.02,
+    "p95_abs": 0.13
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.07,
+    "p95_abs": 2.66
+   },
+   "satellites_median": 28.0
+  },
+  {
+   "drive": "2021-01-05-21-12-us-ca-mtv-d",
+   "phone": "pixel4",
+   "split": "development",
+   "epochs": 1298,
+   "doppler_solutions": 1298,
+   "position_error_m": {
+    "median": 1.51,
+    "p68": 2.0,
+    "p95": 3.76
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.04,
+    "p95_abs": 0.27
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.16,
+    "p95_abs": 3.75
+   },
+   "satellites_median": 26.0
+  },
+  {
+   "drive": "2021-01-05-21-52-us-ca-mtv-d",
+   "phone": "pixel4",
+   "split": "development",
+   "epochs": 1159,
+   "doppler_solutions": 1160,
+   "position_error_m": {
+    "median": 1.26,
+    "p68": 1.66,
+    "p95": 3.23
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.04,
+    "p95_abs": 0.23
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.17,
+    "p95_abs": 2.72
+   },
+   "satellites_median": 27.0
+  },
+  {
+   "drive": "2021-03-10-23-13-us-ca-mtv-h",
+   "phone": "pixel5",
+   "split": "development",
+   "epochs": 1464,
+   "doppler_solutions": 1465,
+   "position_error_m": {
+    "median": 3.45,
+    "p68": 4.36,
+    "p95": 6.99
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.01,
+    "p95_abs": 0.07
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.09,
+    "p95_abs": 0.94
+   },
+   "satellites_median": 27.0
+  },
+  {
+   "drive": "2021-03-16-18-59-us-ca-mtv-a",
+   "phone": "pixel5",
+   "split": "development",
+   "epochs": 2159,
+   "doppler_solutions": 2158,
+   "position_error_m": {
+    "median": 3.06,
+    "p68": 3.7,
+    "p95": 5.72
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.01,
+    "p95_abs": 0.07
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.06,
+    "p95_abs": 2.82
+   },
+   "satellites_median": 30.0
+  },
+  {
+   "drive": "2021-03-16-19-00-us-ca-mtv-a",
+   "phone": "pixel4xl",
+   "split": "held_out",
+   "epochs": 2091,
+   "doppler_solutions": 2092,
+   "position_error_m": {
+    "median": 2.68,
+    "p68": 3.17,
+    "p95": 4.64
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.02,
+    "p95_abs": 0.11
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.08,
+    "p95_abs": 2.86
+   },
+   "satellites_median": 31.0
+  },
+  {
+   "drive": "2021-03-16-20-40-us-ca-mtv-b",
+   "phone": "pixel4xl",
+   "split": "held_out",
+   "epochs": 1461,
+   "doppler_solutions": 1476,
+   "position_error_m": {
+    "median": 2.39,
+    "p68": 2.97,
+    "p95": 4.71
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.11
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.1,
+    "p95_abs": 1.98
+   },
+   "satellites_median": 33.0
+  },
+  {
+   "drive": "2021-04-02-20-43-us-ca-mtv-f",
+   "phone": "pixel5",
+   "split": "development",
+   "epochs": 2284,
+   "doppler_solutions": 2284,
+   "position_error_m": {
+    "median": 2.98,
+    "p68": 3.64,
+    "p95": 5.55
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.01,
+    "p95_abs": 0.07
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.06,
+    "p95_abs": 2.19
+   },
+   "satellites_median": 32.0
+  },
+  {
+   "drive": "2021-04-08-21-28-us-ca-mtv-k",
+   "phone": "pixel5",
+   "split": "held_out",
+   "epochs": 992,
+   "doppler_solutions": 993,
+   "position_error_m": {
+    "median": 2.58,
+    "p68": 3.12,
+    "p95": 5.0
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.02,
+    "p95_abs": 0.08
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.2,
+    "p95_abs": 4.07
+   },
+   "satellites_median": 27.0
+  },
+  {
+   "drive": "2021-04-26-23-38-us-ca-mtv-h",
+   "phone": "mi8",
+   "split": "held_out",
+   "epochs": 3119,
+   "doppler_solutions": 3119,
+   "position_error_m": {
+    "median": 2.39,
+    "p68": 3.1,
+    "p95": 5.93
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.1,
+    "p95_abs": 0.86
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.14,
+    "p95_abs": 0.96
+   },
+   "satellites_median": 28.0
+  },
+  {
+   "drive": "2021-07-14-20-50-us-ca-mtv-e",
+   "phone": "pixel4",
+   "split": "development",
+   "epochs": 1188,
+   "doppler_solutions": 1188,
+   "position_error_m": {
+    "median": 4.22,
+    "p68": 4.76,
+    "p95": 6.19
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.21
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.13,
+    "p95_abs": 4.92
+   },
+   "satellites_median": 25.0
+  },
+  {
+   "drive": "2021-07-19-20-49-us-ca-mtv-a",
+   "phone": "pixel4",
+   "split": "development",
+   "epochs": 1897,
+   "doppler_solutions": 1897,
+   "position_error_m": {
+    "median": 2.05,
+    "p68": 2.49,
+    "p95": 3.87
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.24
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.08,
+    "p95_abs": 1.84
+   },
+   "satellites_median": 25.0
+  },
+  {
+   "drive": "2021-07-27-19-49-us-ca-mtv-b",
+   "phone": "pixel5",
+   "split": "held_out",
+   "epochs": 1679,
+   "doppler_solutions": 1678,
+   "position_error_m": {
+    "median": 1.74,
+    "p68": 2.23,
+    "p95": 4.69
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.01,
+    "p95_abs": 0.07
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.05,
+    "p95_abs": 2.63
+   },
+   "satellites_median": 34.0
+  },
+  {
+   "drive": "2021-08-04-20-40-us-ca-sjc-c",
+   "phone": "sm-g988b",
+   "split": "development",
+   "epochs": 1553,
+   "doppler_solutions": 1553,
+   "position_error_m": {
+    "median": 2.3,
+    "p68": 3.06,
+    "p95": 6.54
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.02,
+    "p95_abs": 0.19
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.18,
+    "p95_abs": 4.94
+   },
+   "satellites_median": 26.0
+  },
+  {
+   "drive": "2021-08-24-20-32-us-ca-mtv-h",
+   "phone": "pixel5",
+   "split": "development",
+   "epochs": 3139,
+   "doppler_solutions": 3140,
+   "position_error_m": {
+    "median": 2.39,
+    "p68": 3.18,
+    "p95": 4.82
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.01,
+    "p95_abs": 0.06
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.07,
+    "p95_abs": 0.44
+   },
+   "satellites_median": 25.0
+  },
+  {
+   "drive": "2021-12-07-19-22-us-ca-lax-d",
+   "phone": "pixel6pro",
+   "split": "development",
+   "epochs": 1761,
+   "doppler_solutions": 1760,
+   "position_error_m": {
+    "median": 1.57,
+    "p68": 1.96,
+    "p95": 3.02
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.21
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.14,
+    "p95_abs": 2.02
+   },
+   "satellites_median": 21.0
+  },
+  {
+   "drive": "2021-12-07-22-21-us-ca-lax-g",
+   "phone": "pixel6pro",
+   "split": "development",
+   "epochs": 1434,
+   "doppler_solutions": 1434,
+   "position_error_m": {
+    "median": 2.04,
+    "p68": 2.71,
+    "p95": 4.89
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.17
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.21,
+    "p95_abs": 3.4
+   },
+   "satellites_median": 21.0
+  },
+  {
+   "drive": "2021-12-08-17-22-us-ca-lax-a",
+   "phone": "pixel6pro",
+   "split": "development",
+   "epochs": 1442,
+   "doppler_solutions": 1438,
+   "position_error_m": {
+    "median": 3.06,
+    "p68": 3.44,
+    "p95": 4.85
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.21
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.15,
+    "p95_abs": 2.11
+   },
+   "satellites_median": 23.0
+  },
+  {
+   "drive": "2021-12-08-18-52-us-ca-lax-b",
+   "phone": "pixel6pro",
+   "split": "development",
+   "epochs": 1418,
+   "doppler_solutions": 1416,
+   "position_error_m": {
+    "median": 1.92,
+    "p68": 2.53,
+    "p95": 4.84
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.22
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.15,
+    "p95_abs": 2.71
+   },
+   "satellites_median": 22.0
+  },
+  {
+   "drive": "2021-12-08-20-28-us-ca-lax-c",
+   "phone": "pixel6pro",
+   "split": "development",
+   "epochs": 923,
+   "doppler_solutions": 923,
+   "position_error_m": {
+    "median": 2.06,
+    "p68": 2.56,
+    "p95": 4.41
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.15
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.11,
+    "p95_abs": 2.19
+   },
+   "satellites_median": 19.0
+  },
+  {
+   "drive": "2021-12-09-17-06-us-ca-lax-e",
+   "phone": "pixel6pro",
+   "split": "development",
+   "epochs": 1101,
+   "doppler_solutions": 1099,
+   "position_error_m": {
+    "median": 1.84,
+    "p68": 2.39,
+    "p95": 4.84
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.27
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.1,
+    "p95_abs": 2.47
+   },
+   "satellites_median": 23.0
+  },
+  {
+   "drive": "2022-01-11-18-48-us-ca-mtv-n",
+   "phone": "pixel6pro",
+   "split": "development",
+   "epochs": 939,
+   "doppler_solutions": 971,
+   "position_error_m": {
+    "median": 2.09,
+    "p68": 2.55,
+    "p95": 4.99
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.26
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.13,
+    "p95_abs": 4.55
+   },
+   "satellites_median": 17.0
+  },
+  {
+   "drive": "2022-01-26-20-02-us-ca-mtv-pe1",
+   "phone": "pixel5",
+   "split": "held_out",
+   "epochs": 1696,
+   "doppler_solutions": 1696,
+   "position_error_m": {
+    "median": 2.58,
+    "p68": 2.96,
+    "p95": 3.87
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.01,
+    "p95_abs": 0.06
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.06,
+    "p95_abs": 1.39
+   },
+   "satellites_median": 21.0
+  },
+  {
+   "drive": "2022-02-24-18-29-us-ca-lax-o",
+   "phone": "pixel6pro",
+   "split": "development",
+   "epochs": 2423,
+   "doppler_solutions": 2419,
+   "position_error_m": {
+    "median": 3.92,
+    "p68": 5.17,
+    "p95": 11.33
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.17,
+    "p95_abs": 0.81
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.83,
+    "p95_abs": 5.27
+   },
+   "satellites_median": 20.0
+  },
+  {
+   "drive": "2022-04-01-18-22-us-ca-lax-t",
+   "phone": "pixel5",
+   "split": "development",
+   "epochs": 1465,
+   "doppler_solutions": 1466,
+   "position_error_m": {
+    "median": 3.47,
+    "p68": 4.05,
+    "p95": 6.09
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.02,
+    "p95_abs": 0.11
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.11,
+    "p95_abs": 2.05
+   },
+   "satellites_median": 24.0
+  },
+  {
+   "drive": "2022-05-13-20-57-us-ca-mtv-pe1",
+   "phone": "pixel6pro",
+   "split": "development",
+   "epochs": 2161,
+   "doppler_solutions": 2178,
+   "position_error_m": {
+    "median": 3.29,
+    "p68": 3.96,
+    "p95": 5.59
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.11
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.09,
+    "p95_abs": 1.7
+   },
+   "satellites_median": 20.0
+  },
+  {
+   "drive": "2022-07-26-21-01-us-ca-sjc-s",
+   "phone": "samsunga325g",
+   "split": "held_out",
+   "epochs": 1486,
+   "doppler_solutions": 1502,
+   "position_error_m": {
+    "median": 1.9,
+    "p68": 2.7,
+    "p95": 42.91
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.07,
+    "p95_abs": 0.43
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.14,
+    "p95_abs": 3.17
+   },
+   "satellites_median": 17.0
+  },
+  {
+   "drive": "2022-08-04-20-07-us-ca-sjc-q",
+   "phone": "sm-a325f",
+   "split": "development",
+   "epochs": 1433,
+   "doppler_solutions": 1451,
+   "position_error_m": {
+    "median": 2.34,
+    "p68": 3.44,
+    "p95": 8.12
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.15,
+    "p95_abs": 0.62
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.43,
+    "p95_abs": 4.43
+   },
+   "satellites_median": 16.0
+  },
+  {
+   "drive": "2022-10-06-21-51-us-ca-mtv-n",
+   "phone": "sm-a325f",
+   "split": "development",
+   "epochs": 1228,
+   "doppler_solutions": 1222,
+   "position_error_m": {
+    "median": 2.75,
+    "p68": 3.61,
+    "p95": 7.08
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.15,
+    "p95_abs": 0.6
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.31,
+    "p95_abs": 4.01
+   },
+   "satellites_median": 16.0
+  },
+  {
+   "drive": "2022-11-15-00-53-us-ca-mtv-a",
+   "phone": "pixel7pro",
+   "split": "held_out",
+   "epochs": 1193,
+   "doppler_solutions": 1231,
+   "position_error_m": {
+    "median": 2.92,
+    "p68": 3.48,
+    "p95": 5.64
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.19
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.13,
+    "p95_abs": 2.18
+   },
+   "satellites_median": 20.0
+  },
+  {
+   "drive": "2023-03-08-21-34-us-ca-mtv-u",
+   "phone": "pixel7pro",
+   "split": "development",
+   "epochs": 1099,
+   "doppler_solutions": 1100,
+   "position_error_m": {
+    "median": 2.17,
+    "p68": 2.71,
+    "p95": 4.28
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.28
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.15,
+    "p95_abs": 2.91
+   },
+   "satellites_median": 20.0
+  },
+  {
+   "drive": "2023-05-09-21-32-us-ca-mtv-pe1",
+   "phone": "pixel7pro",
+   "split": "held_out",
+   "epochs": 2130,
+   "doppler_solutions": 2129,
+   "position_error_m": {
+    "median": 3.06,
+    "p68": 3.89,
+    "p95": 8.26
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.23
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.11,
+    "p95_abs": 2.09
+   },
+   "satellites_median": 21.0
+  },
+  {
+   "drive": "2023-05-16-19-54-us-ca-mtv-xe1",
+   "phone": "pixel5",
+   "split": "held_out",
+   "epochs": 2321,
+   "doppler_solutions": 2320,
+   "position_error_m": {
+    "median": 3.76,
+    "p68": 4.79,
+    "p95": 7.62
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.01,
+    "p95_abs": 0.07
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.05,
+    "p95_abs": 0.79
+   },
+   "satellites_median": 20.0
+  },
+  {
+   "drive": "2023-05-16-19-55-us-ca-mtv-xe1",
+   "phone": "pixel7pro",
+   "split": "held_out",
+   "epochs": 2323,
+   "doppler_solutions": 2323,
+   "position_error_m": {
+    "median": 2.34,
+    "p68": 2.89,
+    "p95": 4.5
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.17
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.09,
+    "p95_abs": 1.39
+   },
+   "satellites_median": 19.0
+  },
+  {
+   "drive": "2023-05-19-20-10-us-ca-mtv-ie2",
+   "phone": "pixel7pro",
+   "split": "held_out",
+   "epochs": 1233,
+   "doppler_solutions": 1232,
+   "position_error_m": {
+    "median": 2.33,
+    "p68": 2.99,
+    "p95": 6.4
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.04,
+    "p95_abs": 0.33
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.55,
+    "p95_abs": 5.8
+   },
+   "satellites_median": 18.0
+  },
+  {
+   "drive": "2023-05-23-19-16-us-ca-mtv-ie2",
+   "phone": "pixel5",
+   "split": "held_out",
+   "epochs": 1070,
+   "doppler_solutions": 1071,
+   "position_error_m": {
+    "median": 4.57,
+    "p68": 5.71,
+    "p95": 8.51
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.02,
+    "p95_abs": 0.18
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.26,
+    "p95_abs": 5.75
+   },
+   "satellites_median": 15.0
+  },
+  {
+   "drive": "2023-05-23-19-56-us-ca-mtv-ie2",
+   "phone": "sm-a226b",
+   "split": "held_out",
+   "epochs": 1112,
+   "doppler_solutions": 1112,
+   "position_error_m": {
+    "median": 2.51,
+    "p68": 3.43,
+    "p95": 7.21
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.14,
+    "p95_abs": 0.63
+   },
+   "course_error_deg_moving": {
+    "median_abs": 1.31,
+    "p95_abs": 7.49
+   },
+   "satellites_median": 15.0
+  },
+  {
+   "drive": "2023-05-24-20-26-us-ca-sjc-ge2",
+   "phone": "pixel7pro",
+   "split": "development",
+   "epochs": 1383,
+   "doppler_solutions": 1384,
+   "position_error_m": {
+    "median": 3.68,
+    "p68": 4.66,
+    "p95": 8.47
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.04,
+    "p95_abs": 0.29
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.54,
+    "p95_abs": 4.9
+   },
+   "satellites_median": 22.0
+  },
+  {
+   "drive": "2023-05-25-19-10-us-ca-sjc-be2",
+   "phone": "pixel7pro",
+   "split": "held_out",
+   "epochs": 1393,
+   "doppler_solutions": 1393,
+   "position_error_m": {
+    "median": 1.68,
+    "p68": 2.16,
+    "p95": 3.84
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.05,
+    "p95_abs": 0.35
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.27,
+    "p95_abs": 4.39
+   },
+   "satellites_median": 21.0
+  },
+  {
+   "drive": "2023-05-25-20-11-us-ca-sjc-he2",
+   "phone": "pixel7pro",
+   "split": "held_out",
+   "epochs": 1258,
+   "doppler_solutions": 1259,
+   "position_error_m": {
+    "median": 1.54,
+    "p68": 1.98,
+    "p95": 3.75
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.23
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.21,
+    "p95_abs": 2.49
+   },
+   "satellites_median": 23.0
+  },
+  {
+   "drive": "2023-05-26-18-50-us-ca-sjc-ge2",
+   "phone": "sm-s908b",
+   "split": "held_out",
+   "epochs": 1524,
+   "doppler_solutions": 1524,
+   "position_error_m": {
+    "median": 3.24,
+    "p68": 4.19,
+    "p95": 8.14
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.05,
+    "p95_abs": 0.43
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.59,
+    "p95_abs": 4.6
+   },
+   "satellites_median": 30.0
+  },
+  {
+   "drive": "2023-05-26-18-51-us-ca-sjc-ge2",
+   "phone": "pixel7pro",
+   "split": "held_out",
+   "epochs": 1461,
+   "doppler_solutions": 1462,
+   "position_error_m": {
+    "median": 3.76,
+    "p68": 4.64,
+    "p95": 8.2
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.04,
+    "p95_abs": 0.3
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.62,
+    "p95_abs": 5.29
+   },
+   "satellites_median": 19.0
+  },
+  {
+   "drive": "2023-06-06-23-26-us-ca-sjc-he2",
+   "phone": "sm-a226b",
+   "split": "held_out",
+   "epochs": 1663,
+   "doppler_solutions": 1663,
+   "position_error_m": {
+    "median": 2.44,
+    "p68": 3.23,
+    "p95": 6.03
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.15,
+    "p95_abs": 0.53
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.63,
+    "p95_abs": 5.34
+   },
+   "satellites_median": 14.0
+  },
+  {
+   "drive": "2023-09-05-20-13-us-ca",
+   "phone": "pixel7pro",
+   "split": "development",
+   "epochs": 1706,
+   "doppler_solutions": 1706,
+   "position_error_m": {
+    "median": 4.07,
+    "p68": 4.83,
+    "p95": 6.72
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.21
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.27,
+    "p95_abs": 2.61
+   },
+   "satellites_median": 25.0
+  },
+  {
+   "drive": "2023-09-05-20-59-us-ca",
+   "phone": "pixel5a",
+   "split": "development",
+   "epochs": 1506,
+   "doppler_solutions": 1506,
+   "position_error_m": {
+    "median": 3.82,
+    "p68": 5.16,
+    "p95": 9.44
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.02,
+    "p95_abs": 0.09
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.11,
+    "p95_abs": 2.06
+   },
+   "satellites_median": 22.0
+  },
+  {
+   "drive": "2023-09-05-23-07-us-ca-routen",
+   "phone": "pixel7pro",
+   "split": "development",
+   "epochs": 1564,
+   "doppler_solutions": 1564,
+   "position_error_m": {
+    "median": 1.31,
+    "p68": 1.78,
+    "p95": 3.22
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.04,
+    "p95_abs": 0.37
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.4,
+    "p95_abs": 3.33
+   },
+   "satellites_median": 28.0
+  },
+  {
+   "drive": "2023-09-06-00-01-us-ca-routen",
+   "phone": "pixel6pro",
+   "split": "development",
+   "epochs": 1650,
+   "doppler_solutions": 1650,
+   "position_error_m": {
+    "median": 1.96,
+    "p68": 2.47,
+    "p95": 4.02
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.04,
+    "p95_abs": 0.27
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.34,
+    "p95_abs": 3.42
+   },
+   "satellites_median": 26.0
+  },
+  {
+   "drive": "2023-09-06-18-04-us-ca",
+   "phone": "pixel7pro",
+   "split": "held_out",
+   "epochs": 1452,
+   "doppler_solutions": 1452,
+   "position_error_m": {
+    "median": 2.69,
+    "p68": 3.33,
+    "p95": 4.81
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.26
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.12,
+    "p95_abs": 2.65
+   },
+   "satellites_median": 22.0
+  },
+  {
+   "drive": "2023-09-06-18-47-us-ca",
+   "phone": "pixel6pro",
+   "split": "development",
+   "epochs": 1486,
+   "doppler_solutions": 1485,
+   "position_error_m": {
+    "median": 2.96,
+    "p68": 3.34,
+    "p95": 4.74
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.25
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.13,
+    "p95_abs": 2.44
+   },
+   "satellites_median": 22.0
+  },
+  {
+   "drive": "2023-09-06-22-49-us-ca-routebb1",
+   "phone": "pixel7pro",
+   "split": "development",
+   "epochs": 1601,
+   "doppler_solutions": 1602,
+   "position_error_m": {
+    "median": 2.64,
+    "p68": 3.34,
+    "p95": 5.09
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.18
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.09,
+    "p95_abs": 1.89
+   },
+   "satellites_median": 28.0
+  },
+  {
+   "drive": "2023-09-07-18-59-us-ca",
+   "phone": "pixel7pro",
+   "split": "development",
+   "epochs": 1174,
+   "doppler_solutions": 1175,
+   "position_error_m": {
+    "median": 4.4,
+    "p68": 5.02,
+    "p95": 6.41
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.02,
+    "p95_abs": 0.17
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.16,
+    "p95_abs": 1.82
+   },
+   "satellites_median": 22.0
+  },
+  {
+   "drive": "2023-09-07-19-33-us-ca",
+   "phone": "pixel6pro",
+   "split": "held_out",
+   "epochs": 1089,
+   "doppler_solutions": 1089,
+   "position_error_m": {
+    "median": 3.49,
+    "p68": 4.27,
+    "p95": 6.12
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.16
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.15,
+    "p95_abs": 2.25
+   },
+   "satellites_median": 22.0
+  },
+  {
+   "drive": "2023-09-07-22-47-us-ca-routebc2",
+   "phone": "pixel6pro",
+   "split": "development",
+   "epochs": 2066,
+   "doppler_solutions": 2066,
+   "position_error_m": {
+    "median": 2.95,
+    "p68": 3.74,
+    "p95": 6.79
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.03,
+    "p95_abs": 0.15
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.12,
+    "p95_abs": 2.11
+   },
+   "satellites_median": 26.0
+  },
+  {
+   "drive": "2023-09-07-22-48-us-ca-routebc2",
+   "phone": "pixel5a",
+   "split": "development",
+   "epochs": 2071,
+   "doppler_solutions": 2069,
+   "position_error_m": {
+    "median": 3.1,
+    "p68": 4.0,
+    "p95": 7.7
+   },
+   "speed_error_m_s": {
+    "median_abs": 0.01,
+    "p95_abs": 0.08
+   },
+   "course_error_deg_moving": {
+    "median_abs": 0.05,
+    "p95_abs": 1.67
+   },
+   "satellites_median": 25.0
+  }
+ ]
+}

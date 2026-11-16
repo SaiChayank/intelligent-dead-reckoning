@@ -168,19 +168,24 @@ fun RealDiagnostics(state: CaptureState, start: () -> Unit, stop: () -> Unit,
                     color = IdrPalette.textMuted,
                     style = IdrType.monoSmall,
                 )
+                // Two text nodes per sensor, not fifteen: this screen redraws at the capture rate and every value changes each time, so the
+                // number of texts is what the main thread pays for (measured on a phone: frame time per update fell by about half).
                 if (imu == null) {
                     Text("No sample.", color = IdrPalette.textMuted, style = IdrType.bodySmall)
                 } else {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(IdrSpace.md)) {
-                        StatTile("X", number(imu.xyz.x), modifier = Modifier.weight(1f), unit = imu.unit.wire)
-                        StatTile("Y", number(imu.xyz.y), modifier = Modifier.weight(1f), unit = imu.unit.wire)
-                        StatTile("Z", number(imu.xyz.z), modifier = Modifier.weight(1f), unit = imu.unit.wire)
-                    }
-                    KeyValueRow("Accuracy", imu.accuracy.wire, mono = true)
+                    Text(
+                        "X ${number(imu.xyz.x)}   Y ${number(imu.xyz.y)}   Z ${number(imu.xyz.z)}  ${imu.unit.wire}",
+                        color = IdrPalette.textPrimary,
+                        style = IdrType.mono,
+                        maxLines = 2,
+                    )
                 }
                 reading?.let {
-                    KeyValueRow("Event ns", it.record.event.t_ns.toString(), mono = true)
-                    KeyValueRow("Receipt ns", it.record.event.received_ns.toString(), mono = true)
+                    Text(
+                        "Accuracy ${imu?.accuracy?.wire ?: "n/a"}\nEvent ns ${it.record.event.t_ns}\nReceipt ns ${it.record.event.received_ns}",
+                        color = IdrPalette.textMuted,
+                        style = IdrType.monoSmall,
+                    )
                 }
             }
         }

@@ -49,6 +49,20 @@ python tools/gsdc_outage_eval.py --split held_out --tag inengine --in-engine-cal
 
 `summary.json` then carries a parity block: how many trips the Kotlin calibrator calibrated, the largest angle between its mount and the Python one, and when it released (about 0.6 s after the window closes, by design). Result: 38 of 38 development and 26 of 26 held-out trips, largest difference 0.44 degrees, and outage drift in line with the offline-handed runs.
 
+## Phone-grade GNSS aiding (the honest version of the aiding)
+
+The first evaluation fed the engine the 0.1 m reference as its GNSS, which is far better than a phone receiver gives. The dataset withholds the phone's own position but ships the raw GNSS measurements, so the second evaluation computes what a phone would: a weighted-least-squares position from the raw pseudoranges and a Doppler speed and course (`tools/gsdc_wls_aiding.py`), with the real satellite count and an accuracy declared from the development trips only (`tools/gsdc_wls_quality.py`). The reference then goes only into `reference.csv` beside each recording, for scoring.
+
+```bash
+python tools/gsdc_extract_gnss.py <zip>                          # device_gnss.csv of the converted trips (about 2.5 GB)
+python tools/gsdc_wls_quality.py                                 # how good the aiding is -> reports/gsdc_wls_aiding_quality.json
+python tools/gsdc_to_recording.py --split development --aiding wls --out data/processed/gsdc2023_wls
+python tools/gsdc_to_recording.py --split held_out --aiding wls --out data/processed/gsdc2023_wls
+python tools/gsdc_outage_eval.py --root data/processed/gsdc2023_wls --split held_out --tag wls_inengine --in-engine-calibration --configs app_current
+```
+
+Measured against the reference on the held-out trips the aiding has a median position error of 2.5 m (95th percentile 5.8 m), a 95th-percentile speed error of 0.23 m/s and a median course error of 0.14 degrees: realistic for a dual-frequency phone under mostly open sky, and better than a single-frequency phone in a deep urban canyon. With it, and the app finding its own mount, the shipped configuration's held-out median drift is about 6.7 % (30 s), 13 % (60 s) and 7.5 % (1 km): the 60 s outages are NOT under 10 % in median.
+
 ## Replaying real drives through the engine on a phone
 
 `RealDriveEngineDeviceTest` runs the app's own calibrator and fusion configuration on a real drive ON THE DEVICE, forces a 30 s and a 60 s outage and writes a
